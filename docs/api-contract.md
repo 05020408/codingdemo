@@ -231,4 +231,26 @@ API30 请求：
 
 API01 至 API10 → API12、API13 与 API31 → API16 至 API20 → API21 至 API30 → 删除、重试和跨用户异常回归。AI 预览 API24 是可选增强；未配置 AI 时手工保存重点、批量录入和基础检索仍可用。
 
-后续 AI 对话、笔记、习题与作答接口在对应故事精化时补充，不把当前列表误称为全部产品 API。
+笔记、习题与作答接口在对应故事精化时补充，不把当前列表误称为全部产品 API。
+
+## 9 v0.4.0 阅读答疑实际接口
+
+以下端点均要求会话登录，写操作要求 CSRF；创建、发送和重试另需 `Idempotency-Key`，缓存只存结果标识，重放重新检查归属和当前状态。
+
+| 方法与路径 | 输入 | 返回 |
+| --- | --- | --- |
+| GET `/materials/{id}/chat-capabilities` | 无 | aiAvailable、imageAvailable、remainingToday、maxQuestionLength=2000、maxTurns=100 |
+| GET `/courses/{id}/chat-sessions?materialId=` | 可选当前课件过滤 | 最近 50 段会话，含 id、courseId、materialId、title、updatedAt、materialAvailable |
+| POST `/materials/{id}/chat-sessions` | 无正文 | 201，会话；创建本身不调用 AI |
+| GET `/chat-sessions/{id}` | 无 | session 与按顺序排列的 turns，最多 100 轮 |
+| POST `/chat-sessions/{id}/turns` | question、slideId、useImage、continuePrevious | 202，持久轮次；问题1–2000 Unicode码点，来源必须属于该会话课件 |
+| POST `/chat-turns/{id}/retry` | 无正文，新的幂等键 | 202，同一轮次的新任务；仅最后一轮 FAILED/CANCELLED 可明确重试，来源修订必须仍有效 |
+| POST `/chat-turns/{id}/cancel` | 无正文 | 200，最新轮次；重复取消安全，终态不反转 |
+
+Turn：id、sessionId、sequence、question、status、jobId、answer、sources、errorCode、errorMessage。客户端轮询会话，无需调用通用 jobs 查询接口。answer 包含 explanation、supplement、limitations 和 citations；citations 为 `{slideId,kind:TEXT|IMAGE,quote}`，最多3个不同引用。同页可有多段不同引文，完全重复或不连续原文拒绝；IMAGE 只能指向实际发送的当前页图片，quote 为空。
+
+sources 仅返回来源摘要 `{slideId,materialId,materialName,pageNo,imageAttached,truncated,available,changed}`，不返回持久化提示词快照、内部文件路径或 API Key。服务端提供的来源才能形成跳转。接口没有把模型自由生成的 URL 作为文件访问地址。
+
+同课程最多一个 QUEUED/RUNNING 答疑；其他课程数据隔离。取消轮询上游连接、阻止发布迟到结果，不承诺服务商停止计费。每次任务最多一次调用，未知/失败不会自动重发；重试保留轮次、创建新任务并可能再次计费。关闭浏览器不等于取消，重新打开可继续观察任务。当前使用整段结果，未实现流式 token 接口。
+
+新增错误码：AI_DISABLED、VISION_DISABLED、AI_QUOTA_EXCEEDED、CHAT_BUSY、CHAT_FULL、CHAT_NOT_RETRYABLE、CHAT_RETRY_ORDER、CHAT_CANCELLED、PAGE_HAS_NO_TEXT、IMAGE_NOT_READY、IMAGE_UNAVAILABLE、SOURCE_CHANGED、SOURCE_UNAVAILABLE、AI_HTTP_ERROR、AI_INVALID_RESPONSE、AI_RESULT_UNKNOWN、WORKER_INTERRUPTED。失败信息保留在轮次，轮询 GET 正常返回200；错误码不暴露上游完整响应。

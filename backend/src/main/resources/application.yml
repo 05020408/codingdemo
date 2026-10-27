@@ -14,7 +14,7 @@ spring:
   task:
     scheduling:
       pool:
-        size: 2
+        size: 3
   application:
     name: review-workspace
   datasource:
@@ -51,6 +51,7 @@ app:
     base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
     model: ${DEEPSEEK_MODEL:deepseek-flash}
     daily-limit: ${AI_DAILY_REQUEST_LIMIT:0}
+    vision-enabled: ${AI_VISION_ENABLED:false}
 logging:
   level:
     root: INFO

@@ -10,6 +10,7 @@ import {
 import { useRoute } from "vue-router";
 import { message, request } from "../api";
 import type { Material, Page, ReadingProgress, Slide } from "../api";
+import ReaderChat from "../components/ReaderChat.vue";
 const route = useRoute();
 const id = String(route.params.id);
 const material = ref<Material | null>(null),
@@ -25,6 +26,11 @@ const material = ref<Material | null>(null),
   saveError = ref(""),
   savedPage = ref<number | null>(null);
 const focusContext = ref("");
+const readerPanel = ref("read");
+function openSource(target: number) {
+  go(target);
+  readerPanel.value = "read";
+}
 const focusId = computed(() =>
   typeof route.query.focus === "string" ? route.query.focus : "",
 );
@@ -220,7 +226,23 @@ onBeforeUnmount(() => {
           >← 返回重点与定位结果</RouterLink
         >
       </aside>
-      <div class="reader-layout">
+      <nav class="reader-panel-tabs" aria-label="阅读面板">
+        <button
+          :class="{ active: readerPanel === 'read' }"
+          @click="readerPanel = 'read'"
+        >
+          课件阅读</button
+        ><button
+          :class="{ active: readerPanel === 'chat' }"
+          @click="readerPanel = 'chat'"
+        >
+          AI 答疑
+        </button>
+      </nav>
+      <div
+        class="reader-layout reader-with-chat"
+        :class="{ 'show-chat': readerPanel === 'chat' }"
+      >
         <aside
           ref="thumbnails"
           class="thumbnail-list"
@@ -331,6 +353,15 @@ onBeforeUnmount(() => {
             }}</pre>
           </details>
         </div>
+        <ReaderChat
+          :course-id="material.courseId"
+          :material-id="material.id"
+          :slide="selected"
+          :session-id="
+            typeof route.query.chat === 'string' ? route.query.chat : undefined
+          "
+          @navigate="openSource"
+        />
       </div>
     </template>
   </section>

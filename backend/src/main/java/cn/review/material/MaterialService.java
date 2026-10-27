@@ -308,6 +308,35 @@ public class MaterialService {
 
   void cancel(String id) {
     db.update(
+        "UPDATE async_jobs j JOIN chat_turns t ON t.last_job_id=j.id JOIN chat_sessions s ON"
+            + " s.id=t.session_id SET j.status='CANCELLED',j.finished_at=CURRENT_TIMESTAMP(3) WHERE"
+            + " s.material_id=? AND j.type='READER_CHAT' AND j.status IN ('QUEUED','RUNNING')",
+        id);
+    db.update(
+        "UPDATE job_attempts a JOIN async_jobs j ON j.id=a.job_id JOIN chat_turns t ON"
+            + " t.id=j.target_id JOIN chat_sessions s ON s.id=t.session_id SET"
+            + " a.outcome='CANCELLED',a.finished_at=CURRENT_TIMESTAMP(3) WHERE s.material_id=? AND"
+            + " j.status='CANCELLED' AND a.outcome='RUNNING'",
+        id);
+    db.update(
+        "UPDATE chat_turns t JOIN chat_sessions s ON s.id=t.session_id SET"
+            + " t.status='CANCELLED',t.error_code='SOURCE_UNAVAILABLE',t.error_message='来源课件已删除，回答已停止',t.updated_at=CURRENT_TIMESTAMP(3)"
+            + " WHERE s.material_id=? AND t.status IN ('QUEUED','RUNNING')",
+        id);
+    for (int page = 0; page < 3; page++) {
+      db.update(
+          "UPDATE chat_turns t JOIN chat_sessions s ON s.id=t.session_id SET"
+              + " t.context_snapshot=JSON_SET(t.context_snapshot,?,'') WHERE s.material_id=? AND"
+              + " JSON_LENGTH(t.context_snapshot)>?",
+          "$[" + page + "].text",
+          id,
+          page);
+    }
+    db.update(
+        "UPDATE chat_turns t JOIN chat_sessions s ON s.id=t.session_id SET"
+            + " t.history_snapshot=JSON_ARRAY() WHERE s.material_id=?",
+        id);
+    db.update(
         "UPDATE async_jobs SET status='CANCELLED',finished_at=CURRENT_TIMESTAMP(3) WHERE"
             + " target_id=? AND type IN ('TEXT_EXTRACT','PREVIEW_RENDER','INDEX_BUILD') AND status"
             + " IN ('QUEUED','RUNNING')",

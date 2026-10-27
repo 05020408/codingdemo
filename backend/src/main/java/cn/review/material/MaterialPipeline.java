@@ -96,12 +96,12 @@ public class MaterialPipeline {
           db.update(
               "UPDATE job_attempts a JOIN async_jobs j ON j.id=a.job_id SET"
                   + " a.outcome='INTERRUPTED',a.finished_at=CURRENT_TIMESTAMP(3),a.error_code='WORKER_INTERRUPTED'"
-                  + " WHERE a.outcome='RUNNING' AND j.status='RUNNING' AND j.type<>'FOCUS_LOCATE'"
-                  + " AND j.lease_until<CURRENT_TIMESTAMP(3)");
+                  + " WHERE a.outcome='RUNNING' AND j.status='RUNNING' AND j.type NOT IN"
+                  + " ('FOCUS_LOCATE','READER_CHAT') AND j.lease_until<CURRENT_TIMESTAMP(3)");
           db.update(
               "UPDATE async_jobs SET"
                   + " status=IF(attempt_count<max_attempts,'QUEUED','FAILED'),lease_token=NULL,lease_until=NULL,error_code='WORKER_INTERRUPTED',error_message='处理被中断，等待恢复或重试',run_after=CURRENT_TIMESTAMP(3)"
-                  + " WHERE status='RUNNING' AND type<>'FOCUS_LOCATE' AND"
+                  + " WHERE status='RUNNING' AND type NOT IN ('FOCUS_LOCATE','READER_CHAT') AND"
                   + " lease_until<CURRENT_TIMESTAMP(3)");
           db.update(
               "UPDATE material_stages s JOIN async_jobs j ON j.id=s.job_id SET"
@@ -462,6 +462,11 @@ public class MaterialPipeline {
           db.queryForList("SELECT id FROM courses WHERE id=? FOR UPDATE", claim.course());
           live(claim);
           if (claim.type().equals("COURSE_PURGE")) {
+            db.update(
+                "DELETE t FROM chat_turns t JOIN chat_sessions s ON s.id=t.session_id WHERE"
+                    + " s.course_id=?",
+                claim.course());
+            db.update("DELETE FROM chat_sessions WHERE course_id=?", claim.course());
             db.update(
                 "DELETE l FROM focus_slide_links l JOIN focus_items f ON f.id=l.focus_id WHERE"
                     + " f.course_id=?",

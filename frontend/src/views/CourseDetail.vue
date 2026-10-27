@@ -6,6 +6,7 @@ import type { Course, Job } from "../api";
 import CourseForm from "../components/CourseForm.vue";
 import MaterialList from "../components/MaterialList.vue";
 import FocusPanel from "../components/FocusPanel.vue";
+import ChatHistory from "../components/ChatHistory.vue";
 const route = useRoute(),
   router = useRouter();
 const course = ref<Course | null>(null),
@@ -91,17 +92,28 @@ watch(() => route.params.id, load);
       <nav class="course-tabs" aria-label="课程功能">
         <RouterLink
           :to="{ query: { tab: 'materials' } }"
-          :class="{ active: route.query.tab !== 'focus' }"
+          :class="{
+            active: !['focus', 'chat'].includes(String(route.query.tab)),
+          }"
           >课程课件</RouterLink
         ><RouterLink
           :to="{ query: { tab: 'focus' } }"
           :class="{ active: route.query.tab === 'focus' }"
           >复习重点</RouterLink
         >
+        <RouterLink
+          :to="{ query: { tab: 'chat' } }"
+          :class="{ active: route.query.tab === 'chat' }"
+          >答疑记录</RouterLink
+        >
       </nav>
       <FocusPanel
         v-if="route.query.tab === 'focus'"
         :key="course.id"
+        :course-id="course.id"
+      />
+      <ChatHistory
+        v-else-if="route.query.tab === 'chat'"
         :course-id="course.id"
       />
       <MaterialList v-else :course-id="course.id" />

@@ -1,8 +1,17 @@
 # 首轮数据库设计
 
-设计基线日期：2026 年 10 月 27 日；执行更新于 10 月 28 日。V1 创建五张基础表，V2 新增五张课件/阅读表，V3 新增 focus_items、focus_slide_links、ai_calls，当前共13张业务表，另有 Flyway 历史表；V4 增加关联结果排序列。本机 MySQL 8.0.26 已执行迁移和集成测试，8.4 尚未实测，见[重点定位记录](records/focus-location-20261028.md)。
+设计基线日期：2026 年 10 月 27 日；执行更新于 10 月 28 日。V1 创建五张基础表，V2 新增五张课件/阅读表，V3 新增三张重点/AI 表，V4 增加关联排序，V5 新增 chat_sessions 与 chat_turns；当前共 15 张业务表，另有 Flyway 历史表。本机 MySQL 8.0.26 已执行迁移和集成测试，8.4 尚未实测，见[阅读答疑记录](records/reader-ai-20261028.md)。
 
-实际精简差异：file_assets 通过 material_id 获取归属，status 使用 READY/RETIRED/DELETED；课件以 original_asset_id/pdf_asset_id 引用资产。material_stages 主键为 `(material_id,stage)`；reading_progress 主键为 `(owner_id,material_id)`，owner_id 指向 app_users。slides 的 source_slide_id 为 PPT 内部数字标识，另以 UUID id 对外引用。v0.3.0 删除课件时保留被重点引用页面的最小来源壳，未引用页面及阅读位置移除。后续笔记与题目必须纳入同一来源保留策略，不能据此宣称未来 PB20 已全部完成。准确列、索引和约束以 V1–V4 迁移为准。
+实际精简差异：file_assets 通过 material_id 获取归属，status 使用 READY/RETIRED/DELETED；课件以 original_asset_id/pdf_asset_id 引用资产。material_stages 主键为 `(material_id,stage)`；reading_progress 主键为 `(owner_id,material_id)`，owner_id 指向 app_users。slides 的 source_slide_id 为 PPT 内部数字标识，另以 UUID id 对外引用。重点引用页面保留最小来源壳；答疑通过 JSON 来源快照保留历史，不新增页面外键。准确列、索引和约束以 V1–V5 迁移为准；笔记与习题仍须补充删除一致性。
+
+### V5 阅读答疑的实际结构
+
+- `chat_sessions`：id、course_id、material_id、title、created_at、updated_at，外键引用课程与课件，按课程/课件与更新时间索引。归属通过课程检查，不接受客户端指定 owner。
+- `chat_turns`：id、session_id、sequence_no、question、context_snapshot、history_snapshot、status、last_job_id、answer、error_code/error_message、创建/更新时间；同段对话序号唯一。状态为 QUEUED/RUNNING/SUCCEEDED/FAILED/CANCELLED。
+- `context_snapshot` 固定来源标识、原页号、课件名、文字修订、最多 12000 UTF-16 字符正文和可选预览资产标识；不保存图片 Base64。`history_snapshot` 固定最近至多 4 轮成功对话的有限文本。
+- `answer` 保存 explanation/supplement/limitations/citations。多个不同的连续引文可引用同一页，完全重复引用拒绝；文字证据可逐字核对，图像证据须对照原图。
+- async_jobs 新增 READER_CHAT 类型，每任务最多一次 HTTP 尝试。ai_calls.scene 为 READER_CHAT，与 FOCUS_LOCATE 共用北京时间每日额度；失败/未知尝试保留计数，课程删除不退还额度。
+- 删除课件立即停止回答，保留问题、已完成回答和来源摘要；清空 context_snapshot 中正文和 history_snapshot 副本。课程清理先删除 chat_turns，再删除 chat_sessions；AI 审计仅保留技术元数据。
 
 ## 1 命名和通用约定
 

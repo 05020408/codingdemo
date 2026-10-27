@@ -21,6 +21,7 @@ if($EnableAi -and -not $TestDatabase){
     if(-not $env:DEEPSEEK_API_KEY){throw '未找到 DeepSeek API key，请设置环境变量或在项目外 apikey.txt 中配置。'}
     $env:AI_ENABLED='true'
     if(-not $env:AI_DAILY_REQUEST_LIMIT){$env:AI_DAILY_REQUEST_LIMIT='10'}
+    if(-not $env:AI_VISION_ENABLED){$env:AI_VISION_ENABLED='true'}
 }
 $env:STORAGE_ROOT = Join-Path $projectRoot $(if($TestDatabase){'.runtime/test-data'}else{'.runtime/data'})
 if(-not $env:CONVERTER_PATH) {
