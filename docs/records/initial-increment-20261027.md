@@ -82,6 +82,8 @@ MySQL 8.4 是原设计目标，本轮未安装或验证。GitHub CI 将使用官
 
 远程 CI 已实际触发：[初始提交运行](https://github.com/05020408/codingdemo/actions/runs/40520124745)、[标签运行](https://github.com/05020408/codingdemo/actions/runs/40520135711)。首次查询时均为 in_progress，尚无通过结论；后续以链接当前状态为准。
 
+随后再次查询，初始提交运行 `40520124745` 已 completed / success；原生 MySQL 准备、Backend verification 和 Frontend build 步骤均成功。该结果对应 `70d8bfe`；`v0.1.1` 的启动脚本修复已在本机启停回归，并以 `54cade4` 同步，远程检查需分别查看对应 SHA，不能用初始运行冒充全部后续提交的结果。
+
 LibreOffice 准备曾被自动审批拒绝：`msiexec` 行政提取命令返回“blocked by policy”，没有更具体原因。未执行安装器；后改为对官方签名有效的 MSI 只读解析文件表，用 7-Zip 提取归档并在项目工具目录组装文件，无安装动作、注册表修改或 MSI 自定义操作，版本命令及上述转换实际成功。该处理不作为完整安装/字体兼容性的证明。
 
 ## 尚需完成
