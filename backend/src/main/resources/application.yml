@@ -1,6 +1,8 @@
 server:
   address: ${SERVER_ADDRESS:127.0.0.1}
   port: ${SERVER_PORT:18080}
+  tomcat:
+    max-swallow-size: 24MB
   servlet:
     session:
       timeout: 60m
@@ -9,6 +11,10 @@ server:
         same-site: lax
         secure: ${SESSION_COOKIE_SECURE:false}
 spring:
+  task:
+    scheduling:
+      pool:
+        size: 2
   application:
     name: review-workspace
   datasource:
@@ -30,6 +36,10 @@ mybatis:
     map-underscore-to-camel-case: true
     arg-name-based-constructor-auto-mapping: true
 app:
+  material:
+    storage-root: ${STORAGE_ROOT:.runtime/data}
+    converter: ${CONVERTER_PATH:}
+    convert-timeout-seconds: ${CONVERT_TIMEOUT_SECONDS:120}
   jobs:
     enabled: ${JOB_WORKER_ENABLED:true}
   ai:

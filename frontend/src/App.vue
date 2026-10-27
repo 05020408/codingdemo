@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuth } from "./stores/auth";
 import { message } from "./api";
+import CleanupStatus from "./components/CleanupStatus.vue";
 const auth = useAuth();
 const router = useRouter();
 const logoutError = ref("");
@@ -51,9 +52,10 @@ async function logout() {
     <main class="main">
       <header class="topbar">
         <span>学习空间 <span class="breadcrumb">/</span> 课程</span
-        ><span class="version-label">初始版本 · 0.1</span>
+        ><span class="version-label">课件阅读 · 0.2</span>
       </header>
-      <RouterView />
+      <CleanupStatus />
+      <RouterView :key="$route.path" />
     </main>
   </div>
   <RouterView v-else />

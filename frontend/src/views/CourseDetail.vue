@@ -4,6 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { message, request } from "../api";
 import type { Course, Job } from "../api";
 import CourseForm from "../components/CourseForm.vue";
+import MaterialList from "../components/MaterialList.vue";
 const route = useRoute(),
   router = useRouter();
 const course = ref<Course | null>(null),
@@ -86,38 +87,7 @@ watch(() => route.params.id, load);
         </button>
       </div>
       <p v-if="notice" class="notice" role="status">{{ notice }}</p>
-      <div class="section-line">
-        <h2>课程空间</h2>
-        <span>建设进度</span>
-      </div>
-      <section class="coming-panel">
-        <span class="small-label">下一步 · 课件与重点</span>
-        <h2>课程已就绪，接下来接入课件。</h2>
-        <p>当前版本支持课程管理。课件上传、阅读和重点定位将在后续版本开放。</p>
-        <ol class="roadmap">
-          <li>
-            <span>01</span>
-            <div>
-              <strong>上传 PPTX</strong>
-              <p>保留课件页码，在线阅读课件。</p>
-            </div>
-          </li>
-          <li>
-            <span>02</span>
-            <div>
-              <strong>输入复习重点</strong>
-              <p>找到课件中与重点相关的页面。</p>
-            </div>
-          </li>
-          <li>
-            <span>03</span>
-            <div>
-              <strong>围绕内容复习</strong>
-              <p>逐步加入 AI 答疑、笔记和习题。</p>
-            </div>
-          </li>
-        </ol>
-      </section>
+      <MaterialList :course-id="course.id" />
       <section class="danger-section">
         <div>
           <h2>删除课程</h2>

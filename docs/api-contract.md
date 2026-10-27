@@ -1,6 +1,10 @@
 # 首轮接口契约
 
-日期：2026 年 10 月 27 日。以下 31 个端点是 PB01 至 PB08 和首轮 PB20 的目标契约，未全部实现。当前实现 auth 下的 csrf/register/login/logout/me、courses 的列表/创建/详情/编辑/删除及 jobs 的详情；另提供 /api/health。其他端点均未开放。实体字段见[数据库设计](database-design.md)，实际范围见[执行记录](records/initial-increment-20261027.md)。
+日期：2026 年 10 月 27 日。以下 31 个端点是目标契约。v0.2.0 已实现 API01–API20、API31，另提供 `/api/health`；API21–API30 的重点相关能力尚未开放。实际响应及限制见[本轮记录](records/material-reader-20261027.md)。
+
+本轮增加 `GET /api/cleanup-jobs`，返回本人尚未完成或失败的清理任务（最多 20 条），以及 `POST /api/jobs/{id}/retries`，携带 Idempotency-Key，以 202 重试本人失败的 COURSE_PURGE/MATERIAL_PURGE。普通处理重试仍走 API15。
+
+实际 DTO 以源码为准：CourseDTO 暂无 counts；上传 jobs 为 `{jobId,type}` 列表；删除与处理重试返回 `{id,status}`；MaterialDTO 的 `stages` 是 TEXT、PREVIEW、INDEX、QUESTION_GENERATION 的对象映射。阶段含 status、available、publishedRevision、requestedRevision、jobId、error；失败信息为安全的 code/message/retryable。当前 canLocate=false，INDEX/QUESTION_GENERATION 为 NOT_APPLICABLE。SlideDTO 有 previewAvailable、previewUrl、thumbnailUrl，文字修订独立于预览修订。JobDTO 的 progress/error 可为空，清理重试不重置 attemptCount。
 
 ## 1 通用协议
 

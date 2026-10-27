@@ -8,11 +8,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class HealthController {
-    private final JdbcTemplate jdbc;
-    public HealthController(JdbcTemplate jdbc) { this.jdbc = jdbc; }
-    @GetMapping("/api/health")
-    Api<Map<String, String>> health(HttpServletRequest request) {
-        jdbc.queryForObject("SELECT 1", Integer.class);
-        return Api.ok(Map.of("status", "UP", "database", "UP", "version", "0.1.0"), request);
-    }
+  private final JdbcTemplate jdbc;
+
+  public HealthController(JdbcTemplate jdbc) {
+    this.jdbc = jdbc;
+  }
+
+  @GetMapping("/api/health")
+  Api<Map<String, String>> health(HttpServletRequest request) {
+    jdbc.queryForObject("SELECT 1", Integer.class);
+    return Api.ok(Map.of("status", "UP", "database", "UP", "version", "0.2.0"), request);
+  }
 }

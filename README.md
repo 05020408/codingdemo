@@ -2,7 +2,7 @@
 
 帮助学生按课程整理课件，把复习重点定位到 PPT 原页，并逐步加入阅读答疑、笔记和习题。平台名称由用户于 2026 年 10 月 27 日确定为“知笺”。
 
-当前仓库版本 `v0.1.1`（含本机数据库启停修复），应用功能版本 `0.1.0` 已实现注册、登录、退出及个人课程的创建、首页展示、编辑和异步删除。课程真实保存到 MySQL，刷新、重登仍可读取。课件上传、在线阅读、重点定位、AI 答疑、笔记和三种习题来源仍在开发计划中，当前没有这些业务入口。
+当前应用版本 `0.2.0`：已实现账户与个人课程管理，以及课程内 PPTX 上传、后台文字提取和预览转换、缩略图阅读、翻页跳转、阅读位置保存、原件下载、失败重试和删除清理。课件与阅读数据真实保存到 MySQL 和本机文件目录。重点定位、AI 答疑、笔记和三种习题来源仍在开发计划中。
 
 项目直接在本机运行，**不使用 Docker**。DeepSeek 基础连接此前已验证，当前应用 AI 默认关闭，本次开发与常规测试没有付费请求。
 
@@ -36,6 +36,12 @@
 
 `.env.example` 仅说明变量，Spring Boot 不会自动加载根目录 `.env`。本地脚本从被忽略的 JSON 配置注入进程环境；不修改全局 Java 配置，不读取或打印仓库外的 API Key。
 
+课件预览需要本机 LibreOffice。启动后端前设置 `$env:CONVERTER_PATH='C:/Program Files/LibreOffice/program/soffice.exe'`；Windows 使用 `soffice.exe`，Linux 可用 `/usr/bin/libreoffice`。本机已有 `.runtime/tools/libreoffice/program/soffice.exe` 时脚本自动使用，不随源码分发。未配置转换程序时，上传及文字提取仍可进行，预览明确提示失败，配置后可以重试。
+
+上传支持 `.pptx`，每份最多 **20 MiB、300 页**；旧 `.ppt`、加密、损坏、带宏或外部链接资源的文件会被拒绝。隐藏页和空白页保留原始页号；转换后校验页数与可提取的逐页文字锚点，再发布 PDF、图片和缩略图。阅读器提供上下页、键盘左右键、缩略图、页码跳转和续读。静态预览不播放动画、音视频；图片和公式不做 OCR。字体替换及复杂排版仍需用原件核对。
+
+开发文件存于忽略的 `.runtime/data`，测试接口文件使用系统临时目录 `zhijian-material-integration`。文件没有公开静态目录，每次下载均检查登录和课程归属。删除立即停止访问，后台移除文件和阅读数据；页面显示未完成清理及重试入口。备份时须同时保存数据库与存储目录。
+
 ## 验证与构建
 
 先停止前端开发服务器，避免 Windows 正在使用 `esbuild.exe` 时干净安装失败，然后运行：
@@ -44,9 +50,9 @@
 ./scripts/Test-Local.ps1
 ```
 
-命令运行 Maven `verify`（7 项测试：5 项真实 MySQL 集成测试、2 项 PPT 提取测试），随后 `npm ci`、Vue 类型检查和生产构建。测试 profile 默认使用独立测试库，不写开发课程。测试账号使用随机名称，不清空已有数据库；测试库会累积测试记录，可单独归档处理。
+命令运行 Maven `verify`（当前 19 项测试），随后 `npm ci`、Vue 类型检查和生产构建。包括真实 MySQL 接口测试、提取/校验/清理测试及原生转换测试。原生转换子项需要 `CONVERTER_PATH`，缺少时跳过且计入 skipped；CI 显式安装原生转换器执行该项。接口故障测试使用转换替身，不能替代真实转换测试。测试 profile 使用独立测试库，不写开发课程；随机测试记录会累积，不清空已有数据库。
 
-GitHub Actions 使用 Ubuntu 24.04 自带的原生 MySQL 服务执行检查，不使用容器，不需要 DeepSeek Key。[CI 工作流](.github/workflows/verify.yml)的远程结果以 [Actions](https://github.com/05020408/codingdemo/actions) 的真实运行状态为准。
+GitHub Actions 使用 Ubuntu 24.04 的原生 MySQL、LibreOffice Impress 和字体执行检查，不使用容器，不需要 DeepSeek Key。[CI 工作流](.github/workflows/verify.yml)的远程结果以 [Actions](https://github.com/05020408/codingdemo/actions) 的真实运行状态为准。
 
 PPT 技术探针独立于产品接口，结果只写入被忽略的 `.runtime/probes`：
 
@@ -56,7 +62,7 @@ PPT 技术探针独立于产品接口，结果只写入被忽略的 `.runtime/pr
 ./scripts/Test-Ppt.ps1 -SourcePath '../上课课件/0 课程简介.pptx' -ConverterPath 'C:/Program Files/LibreOffice/program/soffice.exe'
 ```
 
-本机本轮另在 `.runtime/tools/libreoffice` 准备了用于探针的归档解压版本，不会随 Git 分发，也不是新克隆仓库的前置条件。探针未覆盖全部图表、公式、字体、资源上限、超时故障和后台发布流程，不能据此宣称课件模块完成。
+探针仍用于独立排查；产品接口的本轮执行结果见[课件阅读记录](docs/records/material-reader-20261027.md)。真实上传了 5 页专用样本、8 页及 145 页教师课件，仅在本地保存，没有发送到 GitHub 或 AI。测试未覆盖所有图表、公式、字体、磁盘满和实际进程被强制终止情形。
 
 ## 目录与文档
 
@@ -77,6 +83,7 @@ docs/       需求、设计、Scrum 计划、AI 日志及实际执行记录
 | [课件流程](docs/material-pipeline.md) / [技术验证计划](docs/technical-validation.md) | 提取、映射与失败恢复方案 |
 | [质量与验收](docs/quality-and-acceptance.md) | 35 条验收用例及实际执行状态 |
 | [本轮执行记录](docs/records/initial-increment-20261027.md) | 环境、测试、探针结果与缺陷回归 |
+| [课件阅读执行记录](docs/records/material-reader-20261027.md) | v0.2.0 功能、故障测试、真实上传和浏览器证据 |
 | [实验过程材料](docs/process-evidence.md) / [AI 使用日志](docs/ai-usage-log.md) | 报告证据、真实活动与人工审阅待办 |
 | [开发与版本管理](docs/development-workflow.md) / [变更记录](CHANGELOG.md) | 提交、推送、版本和配置规则 |
 

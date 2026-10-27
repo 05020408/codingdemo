@@ -1,6 +1,8 @@
 # 首轮数据库设计
 
-日期：2026 年 10 月 27 日。覆盖 PB01 至 PB08 和首轮 PB20，共 13 张目标表。目前 V1 迁移仅创建 app_users、courses、async_jobs、job_attempts、idempotency_requests 五张业务表，另有 Flyway 历史表。其余表未创建。已在本机 MySQL 8.0.26 验证迁移，MySQL 8.4 尚未实测，见[执行记录](records/initial-increment-20261027.md)。
+日期：2026 年 10 月 27 日。以下为 13 张表的目标设计。V1 已创建五张基础表，V2 新增 materials、file_assets、slides、material_stages、reading_progress，共十张业务表，另有 Flyway 历史表；重点与 AI 三张目标表未创建。已在本机 MySQL 8.0.26 验证迁移，MySQL 8.4 尚未实测，见[本轮记录](records/material-reader-20261027.md)。
+
+V2 的实际精简差异：file_assets 通过 material_id 获取归属，status 使用 READY/RETIRED/DELETED；材料以 original_asset_id/pdf_asset_id 引用资产。material_stages 主键为 `(material_id,stage)`，没有单独 id。reading_progress 主键为 `(owner_id,material_id)`，没有单独 id，owner_id 指向 app_users。slides 的 source_slide_id 为 PPT 内部数字标识，另以 UUID id 对外引用。当前尚无笔记/题目/重点引用，删除直接移除 slides 与阅读位置；后续引入来源引用前，需要迁移并实现最小来源壳，不能沿用当前删除行为而宣称 PB20 全部完成。准确列、索引及约束以 V1/V2 迁移为准。
 
 ## 1 命名和通用约定
 
@@ -267,6 +269,6 @@ erDiagram
 
 ## 9 分阶段迁移和后续扩展
 
-当前已实现用户、课程、任务尝试和幂等存储；后续分批引入课件、重点和 AI 表。课程删除接口返回 202 后有实际清理工作线程；当前只清理本版本已有课程文本及缓存响应，保留不含原课程文本的删除标记和请求键，避免旧创建请求使课程复活。上传与学习数据上线前必须扩展清理流程。迁移只前进，已合并迁移使用新迁移修正，不能假定规划中的全部约束已经执行。
+当前已实现用户、课程、课件、资产、页面、阶段、阅读位置、任务尝试和幂等存储。删除立即拒绝访问、取消处理，清理原件/预览/阅读位置与页面正文，保留脱敏课件及课程删除标记和请求键，避免旧请求使对象复活。重点、索引、笔记、题目和 AI 数据仍待后续扩展。迁移只前进，已合并迁移使用新迁移修正，不能假定规划中的全部约束已经执行。
 
 Sprint 2 再设计 notes 与来源关联、questions 与不可变版本、练习及作答快照、错题与收藏、对话及消息引用。它们复用课程和稳定 slideId，题目来源不是分建三个题库；历史作答必须保存当时版本，不能只指向可变题干。

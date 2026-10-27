@@ -29,12 +29,17 @@ jobs:
           CREATE USER 'review_ci'@'127.0.0.1' IDENTIFIED BY 'RunnerOnly_2026';
           GRANT ALL PRIVILEGES ON review_workspace_test.* TO 'review_ci'@'127.0.0.1';
           SQL
+      - name: Prepare native preview converter
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libreoffice-impress fonts-liberation fonts-noto-cjk
       - name: Backend verification
         env:
           TEST_DB_URL: jdbc:mysql://127.0.0.1:3306/review_workspace_test?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&characterEncoding=UTF-8&sslMode=DISABLED&allowPublicKeyRetrieval=true
           DB_USERNAME: review_ci
           DB_PASSWORD: RunnerOnly_2026
           AI_ENABLED: 'false'
+          CONVERTER_PATH: /usr/bin/libreoffice
         run: bash backend/mvnw -B -ntp -f backend/pom.xml verify
       - name: Frontend build
         working-directory: frontend

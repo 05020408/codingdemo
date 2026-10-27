@@ -26,7 +26,8 @@ export async function request<T>(
   if (method !== "GET") {
     if (!csrf) await refreshCsrf();
     headers[csrf!.headerName] = csrf!.token;
-    if (body !== undefined) headers["Content-Type"] = "application/json";
+    if (body !== undefined && !(body instanceof FormData))
+      headers["Content-Type"] = "application/json";
   }
   if (key) headers["Idempotency-Key"] = key;
   let response: Response;
@@ -35,7 +36,12 @@ export async function request<T>(
       method,
       credentials: "same-origin",
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body:
+        body === undefined
+          ? undefined
+          : body instanceof FormData
+            ? body
+            : JSON.stringify(body),
     });
   } catch {
     throw new Error("网络连接失败，请检查服务后重试");
@@ -56,6 +62,8 @@ export async function request<T>(
       envelope?.requestId,
     );
   }
+  if (method === "DELETE")
+    window.dispatchEvent(new Event("review-cleanup-changed"));
   return envelope.data as T;
 }
 export interface User {
@@ -80,6 +88,47 @@ export interface Page<T> {
 export interface Job {
   id: string;
   status: string;
+}
+export interface MaterialStage {
+  status: string;
+  available: boolean;
+  publishedRevision: number | null;
+  requestedRevision: number;
+  jobId: string | null;
+  error: { code: string; message: string; retryable: boolean } | null;
+}
+export interface Material {
+  id: string;
+  courseId: string;
+  displayName: string;
+  sizeBytes: number;
+  slideCount: number;
+  version: number;
+  mappingStatus: string;
+  stages: Record<string, MaterialStage>;
+  capabilities: {
+    canDownload: boolean;
+    canReadPreview: boolean;
+    canLocate: boolean;
+  };
+  originalDownloadUrl: string;
+  pdfUrl: string | null;
+  createdAt: string;
+}
+export interface Slide {
+  id: string;
+  materialId: string;
+  pageNo: number;
+  isHidden: boolean;
+  title: string | null;
+  text: string | null;
+  previewAvailable: boolean;
+  previewUrl: string | null;
+  thumbnailUrl: string | null;
+}
+export interface ReadingProgress {
+  lastPageNo: number | null;
+  updatedAt: string | null;
 }
 export function message(error: unknown): string {
   return error instanceof Error ? error.message : "操作失败，请稍后重试";

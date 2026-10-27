@@ -11,3 +11,8 @@ $env:DB_PASSWORD = $settings.dbPassword
 if ($TestDatabase) { $env:TEST_DB_URL = $env:DB_URL }
 $env:SERVER_PORT = [string]$settings.backendPort
 $env:AI_ENABLED = 'false'
+$env:STORAGE_ROOT = Join-Path $projectRoot $(if($TestDatabase){'.runtime/test-data'}else{'.runtime/data'})
+if(-not $env:CONVERTER_PATH) {
+    $localConverter=Join-Path $projectRoot '.runtime/tools/libreoffice/program/soffice.exe'
+    if(Test-Path -LiteralPath $localConverter){$env:CONVERTER_PATH=$localConverter}
+}

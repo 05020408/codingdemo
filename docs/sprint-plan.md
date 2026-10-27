@@ -117,6 +117,8 @@ PB01 至 PB07 为目标范围候选，初估共 37 点；PB08 为伸展项。37 
 
 ## 8 技术设计与开发入口
 
+v0.2.0 已推进 PB03、PB04 的提取/预览部分、PB05，以及适用于当前数据的 PB20。[本轮记录](records/material-reader-20261027.md)包含 19 项自动化测试及真实上传/阅读证据。重点清单和定位尚未实现，完整 Sprint 1 未结束；本轮自动编码和自检不代替团队评审、看板或燃尽图。
+
 首轮已形成[技术架构](technical-architecture.md)、[数据库设计](database-design.md)、[接口契约](api-contract.md)、[课件处理流程](material-pipeline.md)与[技术验证计划](technical-validation.md)。这些覆盖首轮候选故事；工程与局部功能已实现，完整 Sprint 范围仍未交付，实际状态见本轮记录。
 
 Java 侧计划承担课件处理、检索、后台任务与 DeepSeek 调用，无需增加 Python 业务服务。初始化时固定兼容版本，先执行 TV01 至 TV03，再逐步建立已选故事的业务链路；设计变更同步上述文档，不视作用户故事已验收完成。
