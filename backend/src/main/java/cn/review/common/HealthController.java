@@ -17,6 +17,6 @@ public class HealthController {
   @GetMapping("/api/health")
   Api<Map<String, String>> health(HttpServletRequest request) {
     jdbc.queryForObject("SELECT 1", Integer.class);
-    return Api.ok(Map.of("status", "UP", "database", "UP", "version", "0.2.0"), request);
+    return Api.ok(Map.of("status", "UP", "database", "UP", "version", "0.3.0"), request);
   }
 }

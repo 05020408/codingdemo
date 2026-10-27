@@ -52,7 +52,7 @@ async function logout() {
     <main class="main">
       <header class="topbar">
         <span>学习空间 <span class="breadcrumb">/</span> 课程</span
-        ><span class="version-label">课件阅读 · 0.2</span>
+        ><span class="version-label">重点定位 · 0.3</span>
       </header>
       <CleanupStatus />
       <RouterView :key="$route.path" />

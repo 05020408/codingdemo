@@ -27,7 +27,7 @@ let timer: ReturnType<typeof setTimeout> | undefined,
   lastState = "";
 const operations = new Map<string, { key: string; version: number }>();
 function processing(item: Material) {
-  return ["TEXT", "PREVIEW"].some((stage) =>
+  return ["TEXT", "PREVIEW", "INDEX"].some((stage) =>
     ["QUEUED", "RUNNING"].includes(item.stages[stage]?.status ?? ""),
   );
 }
@@ -40,6 +40,7 @@ function label(status: string) {
         SUCCEEDED: "已完成",
         FAILED: "处理失败",
         CANCELLED: "已取消",
+        NOT_APPLICABLE: "等待文字提取",
       } as Record<string, string>
     )[status] ?? status
   );
@@ -261,15 +262,17 @@ onBeforeUnmount(() => {
           </p>
           <div class="stage-row">
             <span
-              v-for="stage in ['TEXT', 'PREVIEW']"
+              v-for="stage in ['TEXT', 'PREVIEW', 'INDEX']"
               :key="stage"
               class="stage-badge"
               :class="item.stages[stage]?.status.toLowerCase()"
-              >{{ stage === "TEXT" ? "文字" : "预览" }} ·
-              {{ label(item.stages[stage]?.status ?? "") }}</span
+              >{{
+                stage === "TEXT" ? "文字" : stage === "INDEX" ? "检索" : "预览"
+              }}
+              · {{ label(item.stages[stage]?.status ?? "") }}</span
             >
           </div>
-          <template v-for="stage in ['TEXT', 'PREVIEW']" :key="stage"
+          <template v-for="stage in ['TEXT', 'PREVIEW', 'INDEX']" :key="stage"
             ><p v-if="item.stages[stage]?.error" class="stage-error">
               {{ item.stages[stage]!.error!.message }}
               <button
@@ -280,7 +283,12 @@ onBeforeUnmount(() => {
                 {{
                   retrying === item.id + stage
                     ? "提交中…"
-                    : "重试" + (stage === "TEXT" ? "文字提取" : "预览")
+                    : "重试" +
+                      (stage === "TEXT"
+                        ? "文字提取"
+                        : stage === "INDEX"
+                          ? "索引"
+                          : "预览")
                 }}
               </button>
             </p></template

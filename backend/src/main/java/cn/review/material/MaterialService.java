@@ -19,18 +19,21 @@ public class MaterialService {
   final MaterialStorage storage;
   private final IdempotencyService idempotency;
   private final PptValidator validator;
+  private final cn.review.search.SearchCatalog catalog;
 
   public MaterialService(
       JdbcTemplate db,
       TransactionTemplate tx,
       MaterialStorage storage,
       IdempotencyService idempotency,
-      PptValidator validator) {
+      PptValidator validator,
+      cn.review.search.SearchCatalog catalog) {
     this.db = db;
     this.tx = tx;
     this.storage = storage;
     this.idempotency = idempotency;
     this.validator = validator;
+    this.catalog = catalog;
   }
 
   void course(String owner, String id, boolean lock) {
@@ -130,7 +133,10 @@ public class MaterialService {
         row.version(),
         row.mapping(),
         stages,
-        new Capabilities(true, "VERIFIED".equals(row.mapping()) && row.pdfAsset() != null, false),
+        new Capabilities(
+            true,
+            "VERIFIED".equals(row.mapping()) && row.pdfAsset() != null,
+            catalog.scope(owner, row.courseId()).stream().anyMatch(s -> s.materialId().equals(id))),
         url(row.originalAsset()),
         url(row.pdfAsset()),
         row.createdAt(),
@@ -303,8 +309,8 @@ public class MaterialService {
   void cancel(String id) {
     db.update(
         "UPDATE async_jobs SET status='CANCELLED',finished_at=CURRENT_TIMESTAMP(3) WHERE"
-            + " target_id=? AND type IN ('TEXT_EXTRACT','PREVIEW_RENDER') AND status IN"
-            + " ('QUEUED','RUNNING')",
+            + " target_id=? AND type IN ('TEXT_EXTRACT','PREVIEW_RENDER','INDEX_BUILD') AND status"
+            + " IN ('QUEUED','RUNNING')",
         id);
     db.update(
         "UPDATE job_attempts a JOIN async_jobs j ON j.id=a.job_id SET"
@@ -319,8 +325,8 @@ public class MaterialService {
 
   public DeleteResult retry(String owner, String id, Retry input, String key) {
     row(owner, id, false);
-    if (input.stage() == null || !List.of("TEXT", "PREVIEW").contains(input.stage()))
-      throw new ApiException(400, "VALIDATION_FAILED", "当前可重试文字提取或预览生成");
+    if (input.stage() == null || !List.of("TEXT", "PREVIEW", "INDEX").contains(input.stage()))
+      throw new ApiException(400, "VALIDATION_FAILED", "可重试文字提取、预览生成或搜索索引");
     return idempotency.execute(
         owner,
         "RETRY_" + input.stage(),
@@ -342,14 +348,30 @@ public class MaterialService {
             return new DeleteResult(
                 (String) stage.get("job_id"), String.valueOf(stage.get("status")));
           long revision = ((Number) stage.get("requested_revision")).longValue() + 1;
+          Long textRevision =
+              db.queryForObject(
+                  "SELECT published_revision FROM material_stages WHERE material_id=? AND"
+                      + " stage='TEXT'",
+                  Long.class,
+                  id);
+          if (input.stage().equals("INDEX") && textRevision == null)
+            throw new ApiException(409, "PROCESSING_NOT_READY", "请等待文字提取完成后再建立索引");
           String job =
               enqueue(
                   owner,
                   material.courseId(),
                   id,
-                  input.stage().equals("TEXT") ? "TEXT_EXTRACT" : "PREVIEW_RENDER",
+                  input.stage().equals("TEXT")
+                      ? "TEXT_EXTRACT"
+                      : input.stage().equals("INDEX") ? "INDEX_BUILD" : "PREVIEW_RENDER",
                   material.lifecycle(),
                   revision);
+          if (input.stage().equals("INDEX"))
+            db.update(
+                "UPDATE async_jobs SET input_snapshot=JSON_SET(input_snapshot,'$.textRevision',?)"
+                    + " WHERE id=?",
+                textRevision,
+                job);
           db.update(
               "UPDATE material_stages SET"
                   + " status='QUEUED',requested_revision=?,job_id=?,error_code=NULL,error_message=NULL"

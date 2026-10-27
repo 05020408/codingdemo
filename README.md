@@ -2,9 +2,9 @@
 
 帮助学生按课程整理课件，把复习重点定位到 PPT 原页，并逐步加入阅读答疑、笔记和习题。平台名称由用户于 2026 年 10 月 27 日确定为“知笺”。
 
-当前应用版本 `0.2.0`：已实现账户与个人课程管理，以及课程内 PPTX 上传、后台文字提取和预览转换、缩略图阅读、翻页跳转、阅读位置保存、原件下载、失败重试和删除清理。课件与阅读数据真实保存到 MySQL 和本机文件目录。重点定位、AI 答疑、笔记和三种习题来源仍在开发计划中。
+当前应用版本 `0.3.0`：已实现账户、个人课程、PPTX 上传与阅读，并新增复习重点清单、按行批量添加、课程内重点定位、原文依据、确认/排除/手动关联和掌握状态。定位结果能直接打开课件原页；支持可选 DeepSeek 辅助判断。AI 阅读答疑、笔记和三种习题来源仍在开发计划中。
 
-项目直接在本机运行，**不使用 Docker**。DeepSeek 基础连接此前已验证，当前应用 AI 默认关闭，本次开发与常规测试没有付费请求。
+项目直接在本机运行，**不使用 Docker**。AI 默认关闭，关键词定位可独立使用；常规自动化测试使用本地 HTTP 替身，不需要 API Key。真实 AI 业务验证与用量单独记录在[本轮执行记录](docs/records/focus-location-20261028.md)。
 
 ## 本地启动（Windows / PowerShell 7）
 
@@ -34,7 +34,11 @@
 
 停止时在前后端终端按 Ctrl+C；如需停止项目数据库，执行 `./scripts/Stop-Database.ps1`。脚本先核对进程归属，不停止其他实例，数据文件保留。
 
-`.env.example` 仅说明变量，Spring Boot 不会自动加载根目录 `.env`。本地脚本从被忽略的 JSON 配置注入进程环境；不修改全局 Java 配置，不读取或打印仓库外的 API Key。
+`.env.example` 仅说明变量，Spring Boot 不会自动加载根目录 `.env`。本地脚本从被忽略的 JSON 配置注入进程环境，不修改全局 Java 配置。常规启动不读取 API Key。需要 AI 时使用 `./scripts/Start-Backend.ps1 -EnableAi`：优先使用进程环境中的 `DEEPSEEK_API_KEY`，否则从仓库外上一级 `apikey.txt` 读取，仅保存在后端进程内存中，不打印或复制进仓库。默认每个用户每天最多 10 次 AI 尝试（北京时间）；可通过 `AI_DAILY_REQUEST_LIMIT` 调整，失败和结果未知的尝试也计入额度。
+
+课程详情中切换“复习重点”，输入一条重点或按行批量预览后保存。文字提取完成后自动建立 Lucene 中文索引；“定位相关页”只检索本人当前课程已就绪的课件，最多检索 20 个候选并展示 5 个结果，不把检索分数伪装为匹配百分比。可选 AI 只接收当前重点和候选页文字片段，返回的页面标识与连续原文引文必须通过后端校验；不可用时明确回退关键词结果。图片课件不做 OCR，语义改写和复杂公式仍可能漏检，需结合原文确认或手动关联。批量拆分当前使用换行规则，尚未接入 AI 拆分。
+
+已确认/排除的位置会在重新定位时保留；编辑重点或课件文字更新后提示重新核对。删除课件后关联只保留历史来源记录，无法继续打开原件；删除课程会清理重点与关联。索引保存在忽略的 `.runtime/index`，丢失后可从数据库重建；备份仍须包含数据库与原件存储。AI 审计只保存状态、请求指纹、模型与用量，不保存完整提示词或密钥。
 
 课件预览需要本机 LibreOffice。启动后端前设置 `$env:CONVERTER_PATH='C:/Program Files/LibreOffice/program/soffice.exe'`；Windows 使用 `soffice.exe`，Linux 可用 `/usr/bin/libreoffice`。本机已有 `.runtime/tools/libreoffice/program/soffice.exe` 时脚本自动使用，不随源码分发。未配置转换程序时，上传及文字提取仍可进行，预览明确提示失败，配置后可以重试。
 
@@ -44,13 +48,13 @@
 
 ## 验证与构建
 
-先停止前端开发服务器，避免 Windows 正在使用 `esbuild.exe` 时干净安装失败，然后运行：
+先停止前端开发服务器，避免 Windows 正在使用 `esbuild.exe` 时干净安装失败。如果运行的是打包后的 JAR，也先停止它，避免 Windows 阻止构建时替换文件。然后运行：
 
 ```powershell
 ./scripts/Test-Local.ps1
 ```
 
-命令运行 Maven `verify`（当前 19 项测试），随后 `npm ci`、Vue 类型检查和生产构建。包括真实 MySQL 接口测试、提取/校验/清理测试及原生转换测试。原生转换子项需要 `CONVERTER_PATH`，缺少时跳过且计入 skipped；CI 显式安装原生转换器执行该项。接口故障测试使用转换替身，不能替代真实转换测试。测试 profile 使用独立测试库，不写开发课程；随机测试记录会累积，不清空已有数据库。
+命令运行 Maven `verify`，随后 `npm ci`、Vue 类型检查和生产构建。覆盖真实 MySQL 接口、课件处理、中文索引、重点定位竞态、人工关联保留及本地 HTTP 的 AI 引文校验/额度/降级。原生转换子项需要 `CONVERTER_PATH`，缺少时跳过且计入 skipped；CI 显式安装原生转换器执行该项。接口故障测试使用转换替身，不能替代真实转换测试。测试 profile 使用独立测试库和随机临时索引，不写开发课程；随机测试记录会累积，不清空已有数据库。实际数量和结果见本轮记录。
 
 GitHub Actions 使用 Ubuntu 24.04 的原生 MySQL、LibreOffice Impress 和字体执行检查，不使用容器，不需要 DeepSeek Key。[CI 工作流](.github/workflows/verify.yml)的远程结果以 [Actions](https://github.com/05020408/codingdemo/actions) 的真实运行状态为准。
 
@@ -84,6 +88,7 @@ docs/       需求、设计、Scrum 计划、AI 日志及实际执行记录
 | [质量与验收](docs/quality-and-acceptance.md) | 35 条验收用例及实际执行状态 |
 | [本轮执行记录](docs/records/initial-increment-20261027.md) | 环境、测试、探针结果与缺陷回归 |
 | [课件阅读执行记录](docs/records/material-reader-20261027.md) | v0.2.0 功能、故障测试、真实上传和浏览器证据 |
+| [重点定位执行记录](docs/records/focus-location-20261028.md) | v0.3.0 功能、检索与 AI 校验、竞态测试及浏览器证据 |
 | [实验过程材料](docs/process-evidence.md) / [AI 使用日志](docs/ai-usage-log.md) | 报告证据、真实活动与人工审阅待办 |
 | [开发与版本管理](docs/development-workflow.md) / [变更记录](CHANGELOG.md) | 提交、推送、版本和配置规则 |
 

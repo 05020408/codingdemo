@@ -5,6 +5,7 @@ import { message, request } from "../api";
 import type { Course, Job } from "../api";
 import CourseForm from "../components/CourseForm.vue";
 import MaterialList from "../components/MaterialList.vue";
+import FocusPanel from "../components/FocusPanel.vue";
 const route = useRoute(),
   router = useRouter();
 const course = ref<Course | null>(null),
@@ -87,7 +88,23 @@ watch(() => route.params.id, load);
         </button>
       </div>
       <p v-if="notice" class="notice" role="status">{{ notice }}</p>
-      <MaterialList :course-id="course.id" />
+      <nav class="course-tabs" aria-label="课程功能">
+        <RouterLink
+          :to="{ query: { tab: 'materials' } }"
+          :class="{ active: route.query.tab !== 'focus' }"
+          >课程课件</RouterLink
+        ><RouterLink
+          :to="{ query: { tab: 'focus' } }"
+          :class="{ active: route.query.tab === 'focus' }"
+          >复习重点</RouterLink
+        >
+      </nav>
+      <FocusPanel
+        v-if="route.query.tab === 'focus'"
+        :key="course.id"
+        :course-id="course.id"
+      />
+      <MaterialList v-else :course-id="course.id" />
       <section class="danger-section">
         <div>
           <h2>删除课程</h2>

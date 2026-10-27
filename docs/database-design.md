@@ -1,8 +1,8 @@
 # 首轮数据库设计
 
-日期：2026 年 10 月 27 日。以下为 13 张表的目标设计。V1 已创建五张基础表，V2 新增 materials、file_assets、slides、material_stages、reading_progress，共十张业务表，另有 Flyway 历史表；重点与 AI 三张目标表未创建。已在本机 MySQL 8.0.26 验证迁移，MySQL 8.4 尚未实测，见[本轮记录](records/material-reader-20261027.md)。
+设计基线日期：2026 年 10 月 27 日；执行更新于 10 月 28 日。V1 创建五张基础表，V2 新增五张课件/阅读表，V3 新增 focus_items、focus_slide_links、ai_calls，当前共13张业务表，另有 Flyway 历史表；V4 增加关联结果排序列。本机 MySQL 8.0.26 已执行迁移和集成测试，8.4 尚未实测，见[重点定位记录](records/focus-location-20261028.md)。
 
-V2 的实际精简差异：file_assets 通过 material_id 获取归属，status 使用 READY/RETIRED/DELETED；材料以 original_asset_id/pdf_asset_id 引用资产。material_stages 主键为 `(material_id,stage)`，没有单独 id。reading_progress 主键为 `(owner_id,material_id)`，没有单独 id，owner_id 指向 app_users。slides 的 source_slide_id 为 PPT 内部数字标识，另以 UUID id 对外引用。当前尚无笔记/题目/重点引用，删除直接移除 slides 与阅读位置；后续引入来源引用前，需要迁移并实现最小来源壳，不能沿用当前删除行为而宣称 PB20 全部完成。准确列、索引及约束以 V1/V2 迁移为准。
+实际精简差异：file_assets 通过 material_id 获取归属，status 使用 READY/RETIRED/DELETED；课件以 original_asset_id/pdf_asset_id 引用资产。material_stages 主键为 `(material_id,stage)`；reading_progress 主键为 `(owner_id,material_id)`，owner_id 指向 app_users。slides 的 source_slide_id 为 PPT 内部数字标识，另以 UUID id 对外引用。v0.3.0 删除课件时保留被重点引用页面的最小来源壳，未引用页面及阅读位置移除。后续笔记与题目必须纳入同一来源保留策略，不能据此宣称未来 PB20 已全部完成。准确列、索引和约束以 V1–V4 迁移为准。
 
 ## 1 命名和通用约定
 
@@ -269,6 +269,8 @@ erDiagram
 
 ## 9 分阶段迁移和后续扩展
 
-当前已实现用户、课程、课件、资产、页面、阶段、阅读位置、任务尝试和幂等存储。删除立即拒绝访问、取消处理，清理原件/预览/阅读位置与页面正文，保留脱敏课件及课程删除标记和请求键，避免旧请求使对象复活。重点、索引、笔记、题目和 AI 数据仍待后续扩展。迁移只前进，已合并迁移使用新迁移修正，不能假定规划中的全部约束已经执行。
+v0.3.0 已实现用户、课程、课件、资产、页面、阶段、阅读位置、重点、重点页面关联、AI 调用审计、任务尝试和幂等存储。V3 新增重点和审计表及索引输入修订、页面删除时间；V4 增加匹配顺序。重点内容/掌握状态与匹配进度分别存储，ai_calls 对 job_id/scene 唯一并按 owner_id/quota_date 统计额度。连接使用 READ COMMITTED，配合课程优先锁和乐观版本读取最新已提交状态。
+
+删除立即拒绝访问并取消处理，清理原件/预览/索引/阅读位置与页面正文。被重点引用的页面保留最小墓碑；课件来源摘要保留在关联中。课程清理删除重点与关联；AI 用量审计仅保留技术标识和实际用量，不因删除课程返还额度。幂等结果中的重点只存 ID，不能重放出已删正文。笔记及题库尚未实现。迁移只前进，已合并迁移使用新迁移修正，不能假定规划中的全部约束已经执行。
 
 Sprint 2 再设计 notes 与来源关联、questions 与不可变版本、练习及作答快照、错题与收藏、对话及消息引用。它们复用课程和稳定 slideId，题目来源不是分建三个题库；历史作答必须保存当时版本，不能只指向可变题干。

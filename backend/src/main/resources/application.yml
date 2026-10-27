@@ -23,6 +23,7 @@ spring:
     password: ${DB_PASSWORD:}
     hikari:
       maximum-pool-size: 5
+      transaction-isolation: TRANSACTION_READ_COMMITTED
   flyway:
     enabled: true
   jackson:
@@ -36,6 +37,8 @@ mybatis:
     map-underscore-to-camel-case: true
     arg-name-based-constructor-auto-mapping: true
 app:
+  search:
+    root: ${INDEX_ROOT:.runtime/index}
   material:
     storage-root: ${STORAGE_ROOT:.runtime/data}
     converter: ${CONVERTER_PATH:}
@@ -44,6 +47,10 @@ app:
     enabled: ${JOB_WORKER_ENABLED:true}
   ai:
     enabled: ${AI_ENABLED:false}
+    key: ${DEEPSEEK_API_KEY:}
+    base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+    model: ${DEEPSEEK_MODEL:deepseek-flash}
+    daily-limit: ${AI_DAILY_REQUEST_LIMIT:0}
 logging:
   level:
     root: INFO

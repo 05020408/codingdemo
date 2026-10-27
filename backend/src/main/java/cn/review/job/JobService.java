@@ -56,8 +56,10 @@ public class JobService {
     var list =
         jdbc.query(
             "SELECT j.* FROM async_jobs j JOIN courses c ON c.id=j.course_id LEFT JOIN materials m"
-                + " ON m.id=j.target_id WHERE j.id=? AND j.owner_id=? AND (j.type='COURSE_PURGE' OR"
-                + " (c.status='ACTIVE' AND (m.status='ACTIVE' OR j.type='MATERIAL_PURGE')))",
+                + " ON m.id=j.target_id LEFT JOIN focus_items f ON f.id=j.target_id WHERE j.id=?"
+                + " AND j.owner_id=? AND (j.type='COURSE_PURGE' OR (c.status='ACTIVE' AND"
+                + " (m.status='ACTIVE' OR j.type='MATERIAL_PURGE' OR (j.type='FOCUS_LOCATE' AND"
+                + " f.deleted_at IS NULL AND f.id IS NOT NULL))))",
             (rs, n) ->
                 new JobView(
                     rs.getString("id"),

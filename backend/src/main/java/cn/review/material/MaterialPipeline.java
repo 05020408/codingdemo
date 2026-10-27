@@ -19,6 +19,7 @@ public class MaterialPipeline {
   private final MaterialStorage storage;
   private final PreviewConverter converter;
   private final ObjectMapper json;
+  private final cn.review.search.PageIndex index;
   private final AtomicBoolean running = new AtomicBoolean();
 
   public MaterialPipeline(
@@ -27,13 +28,15 @@ public class MaterialPipeline {
       MaterialService materials,
       MaterialStorage storage,
       PreviewConverter converter,
-      ObjectMapper json) {
+      ObjectMapper json,
+      cn.review.search.PageIndex index) {
     this.db = db;
     this.tx = tx;
     this.materials = materials;
     this.storage = storage;
     this.converter = converter;
     this.json = json;
+    this.index = index;
   }
 
   public boolean runOne() {
@@ -42,6 +45,7 @@ public class MaterialPipeline {
     ScheduledExecutorService heartbeat = null;
     try {
       recover();
+      ensureIndexes();
       claim = claim();
       if (claim == null) return false;
       Claim current = claim;
@@ -92,12 +96,13 @@ public class MaterialPipeline {
           db.update(
               "UPDATE job_attempts a JOIN async_jobs j ON j.id=a.job_id SET"
                   + " a.outcome='INTERRUPTED',a.finished_at=CURRENT_TIMESTAMP(3),a.error_code='WORKER_INTERRUPTED'"
-                  + " WHERE a.outcome='RUNNING' AND j.status='RUNNING' AND"
-                  + " j.lease_until<CURRENT_TIMESTAMP(3)");
+                  + " WHERE a.outcome='RUNNING' AND j.status='RUNNING' AND j.type<>'FOCUS_LOCATE'"
+                  + " AND j.lease_until<CURRENT_TIMESTAMP(3)");
           db.update(
               "UPDATE async_jobs SET"
                   + " status=IF(attempt_count<max_attempts,'QUEUED','FAILED'),lease_token=NULL,lease_until=NULL,error_code='WORKER_INTERRUPTED',error_message='处理被中断，等待恢复或重试',run_after=CURRENT_TIMESTAMP(3)"
-                  + " WHERE status='RUNNING' AND lease_until<CURRENT_TIMESTAMP(3)");
+                  + " WHERE status='RUNNING' AND type<>'FOCUS_LOCATE' AND"
+                  + " lease_until<CURRENT_TIMESTAMP(3)");
           db.update(
               "UPDATE material_stages s JOIN async_jobs j ON j.id=s.job_id SET"
                   + " s.status=j.status,s.error_code=IF(j.status='FAILED',j.error_code,NULL),s.error_message=IF(j.status='FAILED',j.error_message,NULL)"
@@ -111,8 +116,8 @@ public class MaterialPipeline {
           var candidates =
               db.queryForList(
                   "SELECT * FROM async_jobs WHERE status='QUEUED' AND type IN"
-                      + " ('TEXT_EXTRACT','PREVIEW_RENDER','MATERIAL_PURGE','COURSE_PURGE') AND"
-                      + " run_after<=CURRENT_TIMESTAMP(3) ORDER BY CASE WHEN type LIKE '%PURGE'"
+                      + " ('TEXT_EXTRACT','PREVIEW_RENDER','INDEX_BUILD','MATERIAL_PURGE','COURSE_PURGE')"
+                      + " AND run_after<=CURRENT_TIMESTAMP(3) ORDER BY CASE WHEN type LIKE '%PURGE'"
                       + " THEN 0 ELSE 1 END,created_at,id LIMIT 1");
           if (candidates.isEmpty()) return null;
           var row = candidates.get(0);
@@ -157,7 +162,8 @@ public class MaterialPipeline {
                 type,
                 token,
                 input.path("lifecycleVersion").asLong(),
-                input.path("revision").asLong(1));
+                input.path("revision").asLong(1),
+                input.path("textRevision").asLong());
           } catch (Exception error) {
             throw new IllegalStateException("Invalid saved job snapshot", error);
           }
@@ -170,6 +176,42 @@ public class MaterialPipeline {
       return;
     }
     var material = materials.row(claim.owner(), claim.target(), false);
+    if (claim.type().equals("INDEX_BUILD")) {
+      var pages =
+          db.query(
+              "SELECT id,text_content FROM slides WHERE material_id=? AND text_revision=? AND"
+                  + " deleted_at IS NULL ORDER BY page_no",
+              (rs, n) ->
+                  new cn.review.search.PageIndex.Page(
+                      rs.getString(1), Optional.ofNullable(rs.getString(2)).orElse("")),
+              claim.target(),
+              claim.textRevision());
+      if (pages.size() != material.pages())
+        throw new ApiException(409, "SOURCE_CHANGED", "课件文字已更新，请重新建立索引");
+      index.build(claim.course(), claim.target(), claim.revision(), claim.textRevision(), pages);
+      tx.executeWithoutResult(
+          status -> {
+            fence(claim);
+            Long text =
+                db.queryForObject(
+                    "SELECT published_revision FROM material_stages WHERE material_id=? AND"
+                        + " stage='TEXT'",
+                    Long.class,
+                    claim.target());
+            if (text == null || text != claim.textRevision())
+              throw new ApiException(409, "SOURCE_CHANGED", "课件文字已更新，请重试索引");
+            db.update(
+                "UPDATE material_stages SET"
+                    + " status='SUCCEEDED',published_revision=?,input_text_revision=?,error_code=NULL,error_message=NULL"
+                    + " WHERE material_id=? AND stage='INDEX' AND job_id=?",
+                claim.revision(),
+                claim.textRevision(),
+                claim.target(),
+                claim.id());
+            success(claim);
+          });
+      return;
+    }
     var original = materials.file(claim.owner(), material.originalAsset()).path();
     List<PptTextExtractor.SlideText> slides;
     try (var input = Files.newInputStream(original)) {
@@ -202,6 +244,7 @@ public class MaterialPipeline {
                 claim.revision(),
                 claim.target(),
                 claim.id());
+            queueIndex(claim.owner(), claim.course(), claim.target(), claim.revision());
             success(claim);
           });
       return;
@@ -407,12 +450,24 @@ public class MaterialPipeline {
   private void purge(Claim claim) throws Exception {
     // Logical deletion already denies all reads. A cancelled older worker can only write
     // its own work directory; fencing stops it publishing back into this directory.
-    if (claim.type().equals("COURSE_PURGE")) storage.remove(storage.courseKey(claim.course()));
-    else storage.remove(storage.materialKey(claim.course(), claim.target()));
+    if (claim.type().equals("COURSE_PURGE")) {
+      index.removeCourse(claim.course());
+      storage.remove(storage.courseKey(claim.course()));
+    } else {
+      index.removeMaterial(claim.target());
+      storage.remove(storage.materialKey(claim.course(), claim.target()));
+    }
     tx.executeWithoutResult(
         status -> {
           db.queryForList("SELECT id FROM courses WHERE id=? FOR UPDATE", claim.course());
           live(claim);
+          if (claim.type().equals("COURSE_PURGE")) {
+            db.update(
+                "DELETE l FROM focus_slide_links l JOIN focus_items f ON f.id=l.focus_id WHERE"
+                    + " f.course_id=?",
+                claim.course());
+            db.update("DELETE FROM focus_items WHERE course_id=?", claim.course());
+          }
           List<String> ids =
               claim.type().equals("COURSE_PURGE")
                   ? db.queryForList(
@@ -422,7 +477,15 @@ public class MaterialPipeline {
             db.queryForList("SELECT id FROM materials WHERE id=? FOR UPDATE", id);
             materials.cancel(id);
             db.update("DELETE FROM reading_progress WHERE material_id=?", id);
-            db.update("DELETE FROM slides WHERE material_id=?", id);
+            db.update(
+                "DELETE s FROM slides s LEFT JOIN focus_slide_links l ON l.slide_id=s.id WHERE"
+                    + " s.material_id=? AND l.id IS NULL",
+                id);
+            db.update(
+                "UPDATE slides SET"
+                    + " title=NULL,text_content=NULL,preview_asset_id=NULL,thumbnail_asset_id=NULL,deleted_at=CURRENT_TIMESTAMP(3)"
+                    + " WHERE material_id=?",
+                id);
             db.update("UPDATE file_assets SET status='DELETED' WHERE material_id=?", id);
             db.update(
                 "UPDATE materials SET"
@@ -454,11 +517,93 @@ public class MaterialPipeline {
   }
 
   private String stage(String type) {
-    return type.equals("TEXT_EXTRACT") ? "TEXT" : type.equals("PREVIEW_RENDER") ? "PREVIEW" : null;
+    return type.equals("TEXT_EXTRACT")
+        ? "TEXT"
+        : type.equals("PREVIEW_RENDER") ? "PREVIEW" : type.equals("INDEX_BUILD") ? "INDEX" : null;
   }
 
   private String workKey(Claim claim) {
     return "work/" + claim.id() + "/" + claim.token();
+  }
+
+  public void ensureIndexes() {
+    var rows =
+        db.queryForList(
+            "SELECT m.id,m.course_id,c.owner_id,t.published_revision,i.published_revision AS"
+                + " indexed,i.input_text_revision FROM materials m JOIN courses c ON"
+                + " c.id=m.course_id JOIN material_stages t ON t.material_id=m.id AND"
+                + " t.stage='TEXT' JOIN material_stages i ON i.material_id=m.id AND i.stage='INDEX'"
+                + " WHERE m.status='ACTIVE' AND c.status='ACTIVE' AND t.published_revision IS NOT"
+                + " NULL AND i.status IN ('NOT_APPLICABLE','NOT_STARTED','SUCCEEDED')");
+    for (var row : rows) {
+      String id = (String) row.get("id");
+      long text = ((Number) row.get("published_revision")).longValue();
+      boolean exists = false;
+      try {
+        if (row.get("indexed") != null
+            && row.get("input_text_revision") != null
+            && ((Number) row.get("input_text_revision")).longValue() == text)
+          exists =
+              index.contains(
+                  cn.review.search.PageIndex.scope(
+                      id, ((Number) row.get("indexed")).longValue(), text));
+      } catch (Exception ignored) {
+      }
+      if (exists) continue;
+      tx.executeWithoutResult(
+          status -> {
+            try {
+              var material = materials.lock((String) row.get("owner_id"), id, false);
+              var stage =
+                  db.queryForMap(
+                      "SELECT status FROM material_stages WHERE material_id=? AND stage='INDEX'",
+                      id);
+              if (List.of("QUEUED", "RUNNING").contains(stage.get("status"))) return;
+              long latest =
+                  db.queryForObject(
+                      "SELECT published_revision FROM material_stages WHERE material_id=? AND"
+                          + " stage='TEXT'",
+                      Long.class,
+                      id);
+              queueIndex(material.owner(), material.courseId(), id, latest);
+            } catch (ApiException ignored) {
+            }
+          });
+    }
+  }
+
+  private void queueIndex(String owner, String course, String id, long textRevision) {
+    db.update(
+        "UPDATE async_jobs SET status='CANCELLED',finished_at=CURRENT_TIMESTAMP(3) WHERE"
+            + " target_id=? AND type='INDEX_BUILD' AND status IN ('QUEUED','RUNNING')",
+        id);
+    db.update(
+        "UPDATE job_attempts a JOIN async_jobs j ON j.id=a.job_id SET"
+            + " a.outcome='CANCELLED',a.finished_at=CURRENT_TIMESTAMP(3) WHERE j.target_id=? AND"
+            + " j.type='INDEX_BUILD' AND j.status='CANCELLED' AND a.outcome='RUNNING'",
+        id);
+    long revision =
+        db.queryForObject(
+                "SELECT requested_revision FROM material_stages WHERE material_id=? AND"
+                    + " stage='INDEX'",
+                Long.class,
+                id)
+            + 1;
+    long lifecycle =
+        db.queryForObject("SELECT lifecycle_version FROM materials WHERE id=?", Long.class, id);
+    String job = materials.enqueue(owner, course, id, "INDEX_BUILD", lifecycle, revision);
+    db.update(
+        "UPDATE async_jobs SET input_snapshot=JSON_SET(input_snapshot,'$.textRevision',?) WHERE"
+            + " id=?",
+        textRevision,
+        job);
+    db.update(
+        "UPDATE material_stages SET"
+            + " status='QUEUED',requested_revision=?,job_id=?,error_code=NULL,error_message=NULL"
+            + " WHERE material_id=? AND stage='INDEX'",
+        revision,
+        job,
+        id);
   }
 
   record Claim(
@@ -469,5 +614,6 @@ public class MaterialPipeline {
       String type,
       String token,
       long lifecycle,
-      long revision) {}
+      long revision,
+      long textRevision) {}
 }

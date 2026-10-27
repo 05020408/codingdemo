@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from "vue";
 import { useRoute } from "vue-router";
 import { message, request } from "../api";
 import type { Material, Page, ReadingProgress, Slide } from "../api";
@@ -17,6 +24,10 @@ const material = ref<Material | null>(null),
   imageRevision = ref(0),
   saveError = ref(""),
   savedPage = ref<number | null>(null);
+const focusContext = ref("");
+const focusId = computed(() =>
+  typeof route.query.focus === "string" ? route.query.focus : "",
+);
 const selected = computed(() => slides.value[page.value - 1]);
 const thumbnails = ref<HTMLElement>();
 let disposed = false,
@@ -45,6 +56,18 @@ async function load() {
     pageInput.value = String(page.value);
     savedPage.value = progress.lastPageNo;
     imageError.value = false;
+    if (focusId.value) {
+      try {
+        const focus = await request<{ content: string; courseId: string }>(
+          `/api/focuses/${encodeURIComponent(focusId.value)}`,
+        );
+        if (focus.courseId === meta.courseId)
+          focusContext.value = focus.content;
+      } catch {
+        focusContext.value = "";
+      }
+    }
+    applyQueryPage();
   } catch (cause) {
     if (!disposed) error.value = message(cause);
   } finally {
@@ -55,6 +78,28 @@ async function load() {
     }
   }
 }
+function applyQueryPage() {
+  if (route.query.page === undefined) return;
+  const raw = route.query.page;
+  if (typeof raw !== "string" || !/^\d+$/.test(raw)) {
+    pageError.value = "链接中的页码无效，请使用页码框跳转。";
+    return;
+  }
+  const target = Number(raw);
+  go(target);
+  if (
+    Number.isInteger(target) &&
+    target >= 1 &&
+    target <= (material.value?.slideCount ?? 0)
+  )
+    retrySave();
+}
+watch(
+  () => route.query.page,
+  () => {
+    if (!loading.value) applyQueryPage();
+  },
+);
 function scrollThumbnail() {
   thumbnails.value
     ?.querySelector(`[data-page="${page.value}"]`)
@@ -164,6 +209,17 @@ onBeforeUnmount(() => {
           >下载原件</a
         >
       </header>
+      <aside v-if="focusContext" class="reader-focus-context">
+        <strong>当前复习重点</strong>
+        <p>{{ focusContext }}</p>
+        <RouterLink
+          :to="{
+            path: `/courses/${material.courseId}`,
+            query: { tab: 'focus', focus: focusId },
+          }"
+          >← 返回重点与定位结果</RouterLink
+        >
+      </aside>
       <div class="reader-layout">
         <aside
           ref="thumbnails"

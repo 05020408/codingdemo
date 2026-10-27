@@ -1465,3 +1465,247 @@ textarea::placeholder {
     width: 100%;
   }
 }
+/* Focus workspace shares the course reader's paper-and-ink palette. */
+.course-tabs {
+  display: flex;
+  gap: 2rem;
+  border-bottom: 1px solid #d7e1ee;
+  margin: 1rem 0 2rem;
+}
+.course-tabs a {
+  padding: 0.85rem 0;
+  color: #66758c;
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+}
+.course-tabs a.active {
+  color: #465fbd;
+  border-color: #465fbd;
+  font-weight: 700;
+}
+.focus-create {
+  background: #fff;
+  border: 1px solid #d7e1ee;
+  padding: 1.5rem;
+  margin: 1rem 0 1.5rem;
+  border-radius: 10px;
+}
+.focus-section textarea {
+  display: block;
+  width: 100%;
+  resize: vertical;
+  margin: 0.5rem 0 0.8rem;
+  min-height: 90px;
+  font: inherit;
+  line-height: 1.7;
+  padding: 0.75rem;
+  border: 1px solid #bdcadc;
+  border-radius: 6px;
+  background: #fff;
+  color: #172640;
+}
+.focus-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.focus-create .focus-actions .button {
+  margin-left: auto;
+}
+.check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+.check-label input {
+  width: auto;
+  margin: 0;
+}
+.split-preview {
+  padding-left: 1.4rem;
+}
+.split-preview li {
+  margin: 0.6rem 0;
+}
+.split-preview input {
+  width: 100%;
+}
+.focus-layout {
+  display: grid;
+  grid-template-columns: minmax(210px, 29%) minmax(0, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  align-items: start;
+}
+.focus-list {
+  display: grid;
+  gap: 0.7rem;
+}
+.focus-list select,
+.focus-detail select {
+  padding: 0.55rem;
+  border: 1px solid #bdcadc;
+  border-radius: 5px;
+  background: white;
+  color: #172640;
+  font: inherit;
+  max-width: 100%;
+}
+.focus-item {
+  text-align: left;
+  border: 1px solid #d7e1ee;
+  border-radius: 8px;
+  background: #fff;
+  padding: 1rem;
+  cursor: pointer;
+  color: #172640;
+  font: inherit;
+  overflow-wrap: anywhere;
+}
+.focus-item strong {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.65;
+}
+.focus-item span {
+  display: block;
+  color: #66758c;
+  font-size: 0.78rem;
+  margin-top: 0.55rem;
+}
+.focus-item.selected {
+  border-color: #465fbd;
+  background: #eef2fc;
+  box-shadow: inset 3px 0 #465fbd;
+}
+.focus-detail {
+  background: #fff;
+  border: 1px solid #d7e1ee;
+  border-radius: 10px;
+  padding: 1.5rem;
+  min-width: 0;
+}
+.focus-detail .section-line {
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin: 0 0 1rem;
+}
+.focus-detail > .section-line:not(:first-child) {
+  margin-top: 1.5rem;
+}
+.focus-section .section-line > span {
+  display: inline;
+}
+.focus-section .status-chip {
+  color: #1b736e;
+  background: #edf7f5;
+  border: 1px solid #cce5df;
+  border-radius: 4px;
+  padding: 3px 7px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.focus-detail h3 {
+  margin: 0.25rem 0;
+}
+.locate-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem;
+  background: #f3f6fb;
+  padding: 1.1rem;
+  margin: 1.5rem 0 1rem;
+  border-radius: 6px;
+}
+.locate-panel > div {
+  flex: 1;
+  min-width: 160px;
+}
+.locate-panel p {
+  margin: 0.4rem 0 0;
+}
+.locate-panel small,
+.locate-panel .check-label {
+  flex-basis: 100%;
+}
+.focus-result-status {
+  color: #465fbd;
+  font-weight: 700;
+}
+.match-card {
+  border: 1px solid #d7e1ee;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  overflow-wrap: anywhere;
+}
+.match-card blockquote {
+  border-left: 3px solid #1b8982;
+  background: #f4f9f8;
+  margin: 0.8rem 0;
+  padding: 0.8rem 1rem;
+  white-space: pre-wrap;
+  font-size: 0.88rem;
+  line-height: 1.85;
+  max-height: 260px;
+  overflow: auto;
+}
+.match-card.rejected {
+  background: #f7f8fa;
+}
+.focus-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+}
+.reader-focus-context {
+  border-left: 3px solid #1b8982;
+  background: #fff;
+  padding: 1rem 1.3rem;
+  margin-bottom: 1rem;
+  overflow-wrap: anywhere;
+}
+.reader-focus-context p {
+  margin: 0.5rem 0;
+}
+.danger-text {
+  color: #a83e3e;
+}
+@media (max-width: 850px) {
+  .focus-layout {
+    grid-template-columns: 1fr;
+  }
+  .focus-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .focus-list > label,
+  .focus-list > select,
+  .focus-pagination {
+    grid-column: 1 / -1;
+  }
+  .focus-detail,
+  .focus-create {
+    padding: 1rem;
+  }
+  .course-tabs {
+    gap: 1.4rem;
+  }
+}
+@media (max-width: 480px) {
+  .focus-list {
+    grid-template-columns: 1fr;
+  }
+  .focus-actions .button {
+    padding: 0.65rem 0.8rem;
+  }
+  .match-card .section-line > strong {
+    font-size: 0.88rem;
+  }
+}

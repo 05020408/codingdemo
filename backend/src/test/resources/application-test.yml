@@ -1,3 +1,6 @@
 spring:
   datasource:
     url: ${TEST_DB_URL:jdbc:mysql://127.0.0.1:13306/review_workspace_test?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&characterEncoding=UTF-8&sslMode=DISABLED&allowPublicKeyRetrieval=true}
+app:
+  search:
+    root: ${java.io.tmpdir}/zhijian-test-index-${random.uuid}
