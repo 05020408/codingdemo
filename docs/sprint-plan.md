@@ -1,6 +1,6 @@
 # 期末复习网站 Sprint 计划
 
-日期：2026 年 10 月 27 日。状态：开发计划草案，尚未召开团队计划会议或开始功能开发；技术验证仅完成一次 DeepSeek 基础连接，见[实际记录](records/deepseek-connectivity-20261027.md)，完整验证仍待执行。
+日期：2026 年 10 月 27 日。状态：已开始工程初始化与 PB01、PB02 编码自检，尚无团队计划会议或整个 Sprint 验收结论。当前进展见[初始增量记录](records/initial-increment-20261027.md)；DeepSeek 基础连接见[独立记录](records/deepseek-connectivity-20261027.md)，完整技术验证仍待执行。
 
 ## 1 排期原则
 
@@ -21,7 +21,7 @@
 
 ## 3 早期技术验证
 
-以下是未来的验证任务，不能作为现有功能或通过结果引用。验证用小样本和隔离工作目录开展；避免先搭建复杂基础设施。
+以下为完整验证目标，已执行部分以实际记录为准，不能直接将整项标为通过。验证用小样本和隔离工作目录开展；避免先搭建复杂基础设施。
 
 | 编号 | 验证内容 | 通过条件 | 失败后的处理 |
 | --- | --- | --- | --- |
@@ -117,6 +117,6 @@ PB01 至 PB07 为目标范围候选，初估共 37 点；PB08 为伸展项。37 
 
 ## 8 技术设计与开发入口
 
-首轮已形成[技术架构](technical-architecture.md)、[数据库设计](database-design.md)、[接口契约](api-contract.md)、[课件处理流程](material-pipeline.md)与[技术验证计划](technical-validation.md)。这些覆盖首轮候选故事，尚未创建业务工程或通过技术验证。
+首轮已形成[技术架构](technical-architecture.md)、[数据库设计](database-design.md)、[接口契约](api-contract.md)、[课件处理流程](material-pipeline.md)与[技术验证计划](technical-validation.md)。这些覆盖首轮候选故事；工程与局部功能已实现，完整 Sprint 范围仍未交付，实际状态见本轮记录。
 
 Java 侧计划承担课件处理、检索、后台任务与 DeepSeek 调用，无需增加 Python 业务服务。初始化时固定兼容版本，先执行 TV01 至 TV03，再逐步建立已选故事的业务链路；设计变更同步上述文档，不视作用户故事已验收完成。

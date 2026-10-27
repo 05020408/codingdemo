@@ -1,6 +1,6 @@
 # 首轮接口契约
 
-日期：2026 年 10 月 27 日。以下 31 个端点是 PB01 至 PB08 和首轮 PB20 的待实现契约，不是已运行接口。实体字段见[数据库设计](database-design.md)，阶段和错误处理见[课件处理流程](material-pipeline.md)。
+日期：2026 年 10 月 27 日。以下 31 个端点是 PB01 至 PB08 和首轮 PB20 的目标契约，未全部实现。当前实现 auth 下的 csrf/register/login/logout/me、courses 的列表/创建/详情/编辑/删除及 jobs 的详情；另提供 /api/health。其他端点均未开放。实体字段见[数据库设计](database-design.md)，实际范围见[执行记录](records/initial-increment-20261027.md)。
 
 ## 1 通用协议
 

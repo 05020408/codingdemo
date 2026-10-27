@@ -1,0 +1,39 @@
+server:
+  address: ${SERVER_ADDRESS:127.0.0.1}
+  port: ${SERVER_PORT:18080}
+  servlet:
+    session:
+      timeout: 60m
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: ${SESSION_COOKIE_SECURE:false}
+spring:
+  application:
+    name: review-workspace
+  datasource:
+    url: ${DB_URL:jdbc:mysql://127.0.0.1:13306/review_workspace?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&characterEncoding=UTF-8}
+    username: ${DB_USERNAME:review_app}
+    password: ${DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 5
+  flyway:
+    enabled: true
+  jackson:
+    time-zone: UTC
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 22MB
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    arg-name-based-constructor-auto-mapping: true
+app:
+  jobs:
+    enabled: ${JOB_WORKER_ENABLED:true}
+  ai:
+    enabled: ${AI_ENABLED:false}
+logging:
+  level:
+    root: INFO
