@@ -73,3 +73,5 @@ Maven `verify`：19 项测试，0 failures、0 errors、0 skipped（本机设置
 ## 版本与远程证据
 
 本地通过后提交本增量，保留旧标签，以新的 v0.2.0 标签保存重要版本。远程 CI 使用原生 MySQL、原生 LibreOffice Impress 和字体，无 Docker。远程结论须按该提交的实际 Actions 结果补充；本地通过不代替远程通过。
+
+功能提交 `f08a823` 已实际推送到 `feature/material-reader`。本轮查询远程结果时 GitHub REST 返回共享出口的 API rate limit exceeded，Actions 网页读取也超时，未取得可验证的运行结论。因此当前只记录本地通过，远程 CI 待在 [Actions](https://github.com/05020408/codingdemo/actions) 核对；不沿用初始版本的成功结论。本地验证版本将快进合入 main 并打新标签，保留完整分支与旧标签历史。
