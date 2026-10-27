@@ -21,6 +21,11 @@
 | [需求说明](docs/requirements.md) | 功能、页面、业务规则、边界和待定事项 |
 | [产品待办列表](docs/product-backlog.md) | 用户故事、优先级、依赖、故事点初估及验收标准 |
 | [Sprint 计划](docs/sprint-plan.md) | 开发顺序、Sprint 候选范围、任务拆分和技术验证 |
+| [技术架构](docs/technical-architecture.md) | 首轮模块、技术基线、身份、存储与 DeepSeek 接入 |
+| [数据库设计](docs/database-design.md) | 首轮 13 张规划表、约束、事务和删除一致性 |
+| [接口契约](docs/api-contract.md) | 首轮 31 个规划端点、数据对象、错误与幂等规则 |
+| [课件处理流程](docs/material-pipeline.md) | 原页映射、后台阶段、重试、预览发布与清理 |
+| [技术验证计划](docs/technical-validation.md) | TV01 至 TV06 的操作、通过条件和执行记录模板 |
 | [质量与验收](docs/quality-and-acceptance.md) | 完成的定义、测试策略和未执行的测试用例 |
 | [实验过程记录](docs/process-evidence.md) | 实验要求对应材料、团队信息和 Scrum 记录模板 |
 | [AI 使用日志](docs/ai-usage-log.md) | 实际 AI 使用、人工修改和验证记录 |
