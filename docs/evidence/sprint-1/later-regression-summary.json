@@ -1,0 +1,119 @@
+{
+  "archivedOn": "2026-10-30",
+  "executionDateAsiaShanghai": "2026-10-28",
+  "applicationVersion": "0.4.0",
+  "scope": "Later regression evidence; not the original v0.3.0 report and not a new test run.",
+  "executionRecord": "docs/records/reader-ai-20261028.md",
+  "totals": {
+    "tests": 46,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "readerChatTests": 13,
+  "otherTests": 33,
+  "historicalSprint1CountSource": "docs/records/focus-location-20261028.md",
+  "testSuites": [
+    {
+      "testClass": "cn.review.AccountCourseIntegrationTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sourceFile": "backend/target/surefire-reports/TEST-cn.review.AccountCourseIntegrationTest.xml",
+      "sourceSha256": "3f73dc39424fc343dc4bbe2f3463d1dc430a5ac43fba3d18c2b54cba598b0538"
+    },
+    {
+      "testClass": "cn.review.chat.ReaderChatIntegrationTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sourceFile": "backend/target/surefire-reports/TEST-cn.review.chat.ReaderChatIntegrationTest.xml",
+      "sourceSha256": "4ced899b7fb6572159a68ef021af40ea59df5aa5cccf90a2fb8ca4657fe68195"
+    },
+    {
+      "testClass": "cn.review.focus.FocusIntegrationTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sourceFile": "backend/target/surefire-reports/TEST-cn.review.focus.FocusIntegrationTest.xml",
+      "sourceSha256": "0800fe79bef8ed7263e04fc6f1d212cbefffa1d923fd337e3f785b37647a42c3"
+    },
+    {
+      "testClass": "cn.review.MaterialIntegrationTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sourceFile": "backend/target/surefire-reports/TEST-cn.review.MaterialIntegrationTest.xml",
+      "sourceSha256": "9caebba17e0a852b44bcd717ff75784c9e57e2c2c6501443986e4e2fb2dc69f2"
+    },
+    {
+      "testClass": "cn.review.MaterialValidationTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sourceFile": "backend/target/surefire-reports/TEST-cn.review.MaterialValidationTest.xml",
+      "sourceSha256": "903cd34e88a43fbd78aacabff8d05a46ea8d181c6c062604cbeda5ca9079299e"
+    },
+    {
+      "testClass": "cn.review.PptTextExtractorTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sourceFile": "backend/target/surefire-reports/TEST-cn.review.PptTextExtractorTest.xml",
+      "sourceSha256": "aebb8c0c4bff4c47786c51828ed60df08d75b221e9b9bbc4978ebb33cb148808"
+    },
+    {
+      "testClass": "cn.review.PreviewConverterTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sourceFile": "backend/target/surefire-reports/TEST-cn.review.PreviewConverterTest.xml",
+      "sourceSha256": "3923d806b0aef73c373843b8429c5e98f89aa8db17c918703c976aac4973bcea"
+    },
+    {
+      "testClass": "cn.review.search.DeepSeekRerankerTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sourceFile": "backend/target/surefire-reports/TEST-cn.review.search.DeepSeekRerankerTest.xml",
+      "sourceSha256": "e79d5ffcd640b97e35f2a47ade3290ae28fa9e0fdf24d9a85f4353c42c0963a7"
+    },
+    {
+      "testClass": "cn.review.search.PageIndexTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sourceFile": "backend/target/surefire-reports/TEST-cn.review.search.PageIndexTest.xml",
+      "sourceSha256": "41f600f826cc2f07d940cb1adcd8dd03bc92bc0f711d479be2b9af596bbcfcbf"
+    },
+    {
+      "testClass": "cn.review.StorageReconcilerTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "sourceFile": "backend/target/surefire-reports/TEST-cn.review.StorageReconcilerTest.xml",
+      "sourceSha256": "c4085782b0cd3768a95fde59e54f1df426b6b0d643a3f318712381d6964439cd"
+    }
+  ],
+  "sourceLog": {
+    "file": ".runtime/verify-v040-final.log",
+    "sha256": "67c17ca0304a884284a0c9797640d5456ed801c5f29107d8ccf3623812d435f8",
+    "selectedSummaryLines": [
+      "[INFO] Tests run: 46, Failures: 0, Errors: 0, Skipped: 0",
+      "[INFO] BUILD SUCCESS",
+      "> review-workspace-frontend@0.4.0 build",
+      "> vue-tsc -b && vite build",
+      "✓ built in 851ms"
+    ]
+  }
+}

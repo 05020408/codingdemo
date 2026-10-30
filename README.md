@@ -85,6 +85,7 @@ docs/       需求、设计、Scrum 计划、AI 日志及实际执行记录
 | --- | --- |
 | [需求说明](docs/requirements.md) | 完整产品功能与边界 |
 | [产品待办](docs/product-backlog.md) / [Sprint 计划](docs/sprint-plan.md) | 21 条故事、分期与实际进度 |
+| [Sprint 1 收尾入口](docs/sprint-1/README.md) | 首轮交付清单、验收汇总、缺陷、证据与团队待补事项 |
 | [技术架构](docs/technical-architecture.md) / [数据库](docs/database-design.md) / [接口](docs/api-contract.md) | 目标设计；当前仅落地其中一部分 |
 | [课件流程](docs/material-pipeline.md) / [技术验证计划](docs/technical-validation.md) | 提取、映射与失败恢复方案 |
 | [质量与验收](docs/quality-and-acceptance.md) | 35 条验收用例及实际执行状态 |
