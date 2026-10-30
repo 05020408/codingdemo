@@ -58,9 +58,9 @@ onBeforeUnmount(() => { disposed = true; generation++; });
       </header>
       <p v-if="notice" class="notice" role="status"><AppIcon name="check" :size="17" />{{ notice }}</p>
       <nav class="course-tabs" aria-label="课程功能">
-        <RouterLink :to="{ query: { tab: 'materials' } }" :class="{ active: tab === 'materials' }" :aria-current="tab === 'materials' ? 'page' : undefined"><AppIcon name="file" :size="18" />课程课件</RouterLink>
-        <RouterLink :to="{ query: { tab: 'focus' } }" :class="{ active: tab === 'focus' }" :aria-current="tab === 'focus' ? 'page' : undefined"><span class="tab-glyph" aria-hidden="true">重</span>复习重点</RouterLink>
-        <RouterLink :to="{ query: { tab: 'chat' } }" :class="{ active: tab === 'chat' }" :aria-current="tab === 'chat' ? 'page' : undefined"><span class="tab-glyph" aria-hidden="true">问</span>答疑记录</RouterLink>
+        <RouterLink :to="{ query: { ...route.query, tab: 'materials' } }" :class="{ active: tab === 'materials' }" :aria-current="tab === 'materials' ? 'page' : undefined"><AppIcon name="file" :size="18" />课程课件</RouterLink>
+        <RouterLink :to="{ query: { ...route.query, tab: 'focus' } }" :class="{ active: tab === 'focus' }" :aria-current="tab === 'focus' ? 'page' : undefined"><span class="tab-glyph" aria-hidden="true">重</span>复习重点</RouterLink>
+        <RouterLink :to="{ query: { ...route.query, tab: 'chat' } }" :class="{ active: tab === 'chat' }" :aria-current="tab === 'chat' ? 'page' : undefined"><span class="tab-glyph" aria-hidden="true">问</span>答疑记录</RouterLink>
       </nav>
       <FocusPanel v-if="tab === 'focus'" :key="course.id" :course-id="course.id" />
       <ChatHistory v-else-if="tab === 'chat'" :course-id="course.id" />

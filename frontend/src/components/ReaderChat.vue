@@ -11,15 +11,18 @@ import { onBeforeRouteLeave } from "vue-router";
 import { ApiError, message, request } from "../api";
 import type { Slide } from "../api";
 import { useAuth } from "../stores/auth";
+import AppIcon from "./AppIcon.vue";
 const auth = useAuth();
 const props = defineProps<{
   courseId: string;
   materialId?: string;
+  materialName?: string;
   slide?: Slide;
   sessionId?: string;
   readonly?: boolean;
+  collapsible?: boolean;
 }>();
-const emit = defineEmits<{ navigate: [page: number] }>();
+const emit = defineEmits<{ navigate: [page: number]; close: []; sessionChange: [id: string] }>();
 interface Session {
   id: string;
   title: string;
@@ -74,6 +77,11 @@ const question = ref(""),
   error = ref(""),
   copied = ref("");
 const historyEl = ref<HTMLElement>();
+const pendingPage = ref<number | null>(null);
+const turnLabels: Record<string, string> = { QUEUED: "等待生成", RUNNING: "正在回答", SUCCEEDED: "回答完成", FAILED: "生成失败", CANCELLED: "已停止", UNKNOWN: "结果待确认" };
+function sourceLocation(source: Source) {
+  return { path: `/materials/${source.materialId}/read`, query: { page: source.pageNo, chat: selected.value || undefined, ...(props.readonly ? { from: "history" } : {}) } };
+}
 const active = computed(() =>
   turns.value.some((t) => ["QUEUED", "RUNNING"].includes(t.status)),
 );
@@ -152,16 +160,18 @@ function schedule() {
 }
 async function choose(id: string) {
   if (busy.value || uncertain.value) return;
-  generation++;
+  const epoch = ++generation;
   selected.value = id;
   error.value = "";
   turns.value = [];
   clearTimeout(poll);
   try {
     await refresh(true);
+    if (disposed || epoch !== generation || selected.value !== id) return;
     schedule();
+    emit("sessionChange", id);
   } catch (cause) {
-    error.value = message(cause);
+    if (!disposed && epoch === generation) error.value = message(cause);
   }
 }
 async function init() {
@@ -182,7 +192,7 @@ async function init() {
   }
 }
 async function send() {
-  if (busy.value || active.value || props.readonly || !props.slide) return;
+  if (busy.value || active.value || loading.value || props.readonly || !props.slide || !caps.value?.aiAvailable || (!uncertain.value && caps.value.remainingToday <= 0)) return;
   if (!attempt) {
     if (!question.value.trim() || [...question.value.trim()].length > 2000)
       return;
@@ -197,6 +207,7 @@ async function send() {
         continuePrevious: follow.value,
       },
     };
+    pendingPage.value = props.slide.pageNo;
   }
   busy.value = true;
   error.value = "";
@@ -219,7 +230,9 @@ async function send() {
     );
     question.value = "";
     attempt = null;
+    pendingPage.value = null;
     uncertain.value = false;
+    emit("sessionChange", selected.value);
     await refresh(true);
     schedule();
     await list();
@@ -227,13 +240,13 @@ async function send() {
     error.value = message(cause);
     // A lost response may already have queued the turn. Replay the same key and payload.
     uncertain.value = !(cause instanceof ApiError);
-    if (!uncertain.value) attempt = null;
+    if (!uncertain.value) { attempt = null; pendingPage.value = null; }
   } finally {
     busy.value = false;
   }
 }
 async function retry(turn: Turn) {
-  if (busy.value || active.value) return;
+  if (busy.value || active.value || props.readonly || !caps.value?.aiAvailable || caps.value.remainingToday <= 0) return;
   busy.value = true;
   error.value = "";
   if (!retryAttempt || retryAttempt.id !== turn.id)
@@ -308,7 +321,7 @@ watch(
 );
 watch(
   () => props.sessionId,
-  () => void choose(props.sessionId || ""),
+  () => { if ((props.sessionId || "") !== selected.value && !loading.value) void choose(props.sessionId || ""); },
 );
 onMounted(() => {
   void init();
@@ -350,7 +363,7 @@ onBeforeUnmount(() => {
         <span class="eyebrow">知笺 · 阅读助教</span>
         <h2>边读边问</h2>
       </div>
-      <span class="chat-model">DeepSeek</span>
+      <div class="chat-heading-actions"><span class="chat-model">DeepSeek</span><button v-if="collapsible" type="button" class="icon-button" aria-label="收起 AI 答疑" @click="emit('close')"><AppIcon name="close" :size="17" /></button></div>
     </header>
     <div class="chat-session-bar">
       <label class="sr-only" for="chat-session">选择对话</label>
@@ -392,24 +405,29 @@ onBeforeUnmount(() => {
         </p>
       </div>
       <article v-for="turn in turns" :key="turn.id" class="chat-turn">
+        <div class="chat-turn-status"><span>第 {{ String(turn.sequence).padStart(2, '0') }} 问</span><span :class="['turn-status', turn.status.toLowerCase()]">{{ turnLabels[turn.status] || turn.status }}</span></div>
         <div class="chat-question">
-          <span>你 · 第 {{ turn.sequence }} 问</span>
+          <span>你的问题</span>
           <p>{{ turn.question }}</p>
         </div>
         <div class="chat-sources">
+          <span class="chat-source-label">本轮使用的页面</span>
           <template v-for="source in turn.sources" :key="source.slideId"
             ><button
               v-if="source.available && source.materialId === materialId"
               class="chat-page-tag"
+              :class="{ 'is-current': source.pageNo === slide?.pageNo }"
+              :title="`${source.materialName} · 第 ${source.pageNo} 页`"
               @click="emit('navigate', source.pageNo)"
             >
               第 {{ source.pageNo }} 页{{
                 source.imageAttached ? " · 已附图" : " · 文字"
-              }}{{ source.changed ? " · 已更新" : "" }}</button
-            ><RouterLink
+              }}{{ source.changed ? " · 已更新" : "" }}{{ source.pageNo === slide?.pageNo ? " · 当前阅读页" : "" }}
+            </button><RouterLink
               v-else-if="source.available"
               class="chat-page-tag"
-              :to="`/materials/${source.materialId}/read?page=${source.pageNo}`"
+              :to="sourceLocation(source)"
+              :title="source.materialName"
               >第 {{ source.pageNo }} 页{{
                 source.imageAttached ? " · 已附图" : ""
               }}</RouterLink
@@ -457,7 +475,7 @@ onBeforeUnmount(() => {
             <RouterLink
               v-else-if="cite(turn, ref.slideId)?.available"
               class="chat-cite-link"
-              :to="`/materials/${cite(turn, ref.slideId)?.materialId}/read?page=${cite(turn, ref.slideId)?.pageNo}`"
+              :to="sourceLocation(cite(turn, ref.slideId)!)"
               >{{ ref.kind === "IMAGE" ? "页面图像依据" : "课件原文" }} · 第
               {{ cite(turn, ref.slideId)?.pageNo }} 页 ↗</RouterLink
             >
@@ -483,6 +501,7 @@ onBeforeUnmount(() => {
           </button>
         </template>
         <div v-else class="chat-failed">
+          <strong>{{ turn.status === 'CANCELLED' ? '本轮已停止' : turn.status === 'UNKNOWN' ? '本轮结果待确认' : '本轮未完成' }}</strong>
           <p>{{ turn.errorMessage || "本次没有生成回答。" }}</p>
           <button
             v-if="
@@ -491,7 +510,7 @@ onBeforeUnmount(() => {
               turn.sources.every((s) => s.available && !s.changed)
             "
             class="text-button"
-            :disabled="busy || active || !caps?.aiAvailable"
+            :disabled="busy || active || !caps?.aiAvailable || caps.remainingToday <= 0"
             @click="retry(turn)"
           >
             重试本轮（会重新调用 AI）</button
@@ -518,7 +537,7 @@ onBeforeUnmount(() => {
       @submit.prevent="send"
     >
       <div class="chat-context">
-        <strong>本次提问 · 第 {{ slide.pageNo }} 页</strong
+        <div><span class="chat-context-caption">{{ uncertain ? "待确认的提问来源" : "下一条问题的页面" }}</span><strong>{{ materialName || "当前课件" }}</strong><span class="chat-current-page">原始第 {{ uncertain ? pendingPage : slide.pageNo }} 页{{ slide.isHidden && !uncertain ? ' · 隐藏页' : '' }}</span></div
         ><span v-if="caps?.aiAvailable"
           >今日剩余 {{ caps.remainingToday }} 次</span
         >
@@ -553,19 +572,20 @@ onBeforeUnmount(() => {
         placeholder="例如：这两个概念有什么区别？"
         @keydown.ctrl.enter.prevent="send"
       ></textarea>
+      <details class="chat-options-panel"><summary>提问设置<span>{{ image ? '附带本页图片' : '本页文字' }}{{ follow ? ' · 联系最近对话' : '' }}</span></summary>
       <div class="chat-options">
         <label
           ><input
             v-model="follow"
             type="checkbox"
             :disabled="busy || uncertain"
-          />延续最近对话与页面</label
+          />联系最近对话<span>最近 4 轮成功对话，至多 3 页文字</span></label
         ><label
           ><input
             v-model="image"
             type="checkbox"
             :disabled="busy || uncertain || !caps?.imageAvailable"
-          />附带本页图片</label
+          />附带本页图片<span>{{ caps?.imageAvailable ? '图表或公式看不懂时可选' : '当前未开启图片答疑' }}</span></label
         >
       </div>
       <p class="chat-hint">
@@ -574,6 +594,7 @@ onBeforeUnmount(() => {
         }}{{ follow ? "；同时提供最近 4 轮成功对话及至多 3 页文字" : "" }}，交由
         DeepSeek 处理。AI 回答请结合课件核对。
       </p>
+      </details>
       <p v-if="caps && !caps.aiAvailable" class="chat-hint">
         AI 答疑尚未启用，请联系管理员配置。历史记录仍可查看。
       </p>
@@ -581,13 +602,14 @@ onBeforeUnmount(() => {
         正在回答第
         {{ current?.sources[0]?.pageNo }} 页的问题，翻页不会改变该问题的来源。
       </p>
+      <p v-if="uncertain" class="chat-hint chat-pending" role="status">发送结果尚未确认。再次操作会核对同一条问题，不会改用翻页后的页面。</p>
       <div class="chat-send-row">
         <span>{{ [...question.trim()].length }}/2000 · Ctrl + Enter</span
         ><button
           class="button primary"
           :disabled="
             busy ||
-            active ||
+            active || loading ||
             !caps?.aiAvailable ||
             !question.trim() ||
             [...question.trim()].length > 2000 ||

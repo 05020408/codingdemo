@@ -8,6 +8,7 @@ import AppIcon from "./components/AppIcon.vue";
 const auth = useAuth();
 const router = useRouter();
 const route = useRoute();
+const reading = computed(() => route.path.startsWith('/materials/'));
 const locationLabel = computed(() => route.path.startsWith('/materials/') ? '课件阅读' : route.path.startsWith('/courses/') ? '课程空间' : '我的课程');
 const logoutError = ref("");
 const leaving = ref(false);
@@ -25,15 +26,15 @@ async function logout() {
 }
 </script>
 <template>
-  <div v-if="auth.user" class="workspace">
+  <div v-if="auth.user" class="workspace" :class="{ 'reading-workspace': reading }">
     <aside class="sidebar">
-      <RouterLink to="/" class="brand"
+      <RouterLink to="/" class="brand" aria-label="知笺首页" title="知笺首页"
         ><span class="brand-mark">知</span
         ><span>知笺<small>期末复习工作台</small></span></RouterLink
       >
       <p class="nav-caption">我的学习空间</p>
-      <RouterLink to="/" class="nav-item"
-        ><AppIcon name="courses" /> 我的课程</RouterLink
+      <RouterLink to="/" class="nav-item" aria-label="我的课程" title="我的课程"
+        ><AppIcon name="courses" /><span class="nav-item-text">我的课程</span></RouterLink
       >
       <div class="sidebar-note">
         <span class="small-label">你的复习路径</span>
@@ -60,7 +61,7 @@ async function logout() {
           <AppIcon name="chevron" :size="13" />
           <span aria-current="page">{{ locationLabel }}</span>
         </nav>
-        <span class="version-label">知笺 · 0.4.1</span>
+        <span class="version-label">知笺 · 0.4.2</span>
       </header>
       <CleanupStatus />
       <RouterView :key="$route.path" />

@@ -14,6 +14,11 @@ const paths = {
   close: "M6 6l12 12 M18 6L6 18",
   refresh: "M20 7v5h-5 M4 17v-5h5 M6 6a8 8 0 0 1 14 6 M18 18a8 8 0 0 1-14-6",
   clock: "M12 8v5l3 2 M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0",
+  previous: "M15 5l-7 7 7 7",
+  outline: "M4 4h16v16H4z M9 4v16 M12 8h5 M12 12h5 M12 16h5",
+  chat: "M4 4h16v13H9l-5 4V4 M8 8h8 M8 12h5",
+  download: "M12 3v13 M7 11l5 5 5-5 M4 17v4h16v-4",
+  zoom: "M21 21l-5-5 M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0 M10 6v8 M6 10h8",
 };
 withDefaults(defineProps<{ name: keyof typeof paths; size?: number }>(), {
   size: 20,

@@ -1,0 +1,238 @@
+{
+  "version": "0.4.2",
+  "date": "2026-10-30",
+  "timezone": "Asia/Shanghai",
+  "executor": "Codex",
+  "backend": {
+    "command": "./backend/mvnw.cmd -B -ntp -f backend/pom.xml verify (project test environment loaded)",
+    "totals": {
+      "tests": 47,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "suites": [
+      {
+        "name": "cn.review.AccountCourseIntegrationTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.chat.ReaderChatIntegrationTest",
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.focus.FocusIntegrationTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.MaterialIntegrationTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.MaterialValidationTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.PptTextExtractorTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.PreviewConverterTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.search.DeepSeekRerankerTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.search.PageIndexTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.StorageReconcilerTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "nativeConverterExecuted": true,
+    "logSha256": "1d816d116654d740f016650350ade489e48dd3f01fb793d4a025c1f26b0cdd2b",
+    "selectedResult": "Tests run: 47, Failures: 0, Errors: 0, Skipped: 0; BUILD SUCCESS"
+  },
+  "frontend": {
+    "command": "npm.cmd run build",
+    "result": "Vue TypeScript check and Vite production build passed",
+    "dependenciesChanged": false,
+    "npmCiRerun": false,
+    "logSha256": "50a69fcfa6b9e4c33484cea9231bd8364337fa7c96c6dc24d9d074719b7a9eb8"
+  },
+  "sourceSnapshot": {
+    "scope": "Changed backend/frontend files, including new study-workspace.css; documentation excluded",
+    "normalization": "UTF-8 text, CRLF converted to LF before SHA-256",
+    "sha256": {
+      "backend/pom.xml": "2f9cb8a8ead023e03486e5c7dcbc20ed07b59f1163a7e6d8f21f1d9624c1e8a6",
+      "backend/src/main/java/cn/review/common/HealthController.java": "c167f10656a00a9c7853702351a6be7d0122dbf42674eb1179f951e350d928d0",
+      "frontend/package-lock.json": "9cbe1922b034b49a1878ac8247a590a557a5b6db5c6c6bd34eb1ca42b342a41c",
+      "frontend/package.json": "265f442c931258b9493c104967330caad8abff15daab06a19b786804d478f356",
+      "frontend/src/App.vue": "e2f0bf184b25df4867ca9aa4f30180593a04914ed7e4989b3f9ed4ab58754034",
+      "frontend/src/components/AppIcon.vue": "2748e81c991b53218dafa5ffad518da1dec42386c41825ed6ac2c4c34403822e",
+      "frontend/src/components/ChatHistory.vue": "7329b4b491c3012c19aa6c3dad0cf9b920ea3798c26236d8c52d9eafd62ae063",
+      "frontend/src/components/FocusPanel.vue": "7971ba8f985b7a742325ddeba3a2dbfb71a8355560c30cc9e7b4be5dfcfc956f",
+      "frontend/src/components/ReaderChat.vue": "0a56b131a82d118a85a76c2b6f89758f36d11180f83ed93b3db9df832b472f85",
+      "frontend/src/main.ts": "d0daceec5ea14b3280eb6722654f2c4e7c5da7ec4fa53d81f036220f02c4dda5",
+      "frontend/src/study-workspace.css": "56c140a0311898eb035e3429a85ffdb0f2ada1037e2a53c5463114ff91d32278",
+      "frontend/src/style.css": "45e3678e10ed4a45ce2a54780772a6f9dd66fe0e9fe201af79a9bbc488b35c0e",
+      "frontend/src/views/CourseDetail.vue": "3394f6b22a4e36365739e61eb4505d927df14d37ac0345042f1c866c2aa2e158",
+      "frontend/src/views/MaterialReader.vue": "7ac4a553c8e2979bd8a5f9edf623c965ffd96e72807f7e8e712af6506a6e10d6"
+    }
+  },
+  "browser": {
+    "desktopViewport": "1280x900",
+    "mobileViewports": [
+      "390x844",
+      "320x800"
+    ],
+    "mobileDocumentWidths": {
+      "390": {
+        "clientWidth": 375,
+        "scrollWidth": 375
+      },
+      "320": {
+        "clientWidth": 305,
+        "scrollWidth": 305
+      }
+    },
+    "queuedStopVerified": true,
+    "inFlightStopVerified": false,
+    "batchResponseRegressionFixedAndRetested": true,
+    "consoleNote": "One earlier editing-time Vite HMR reload error retained; no later warn/error observed",
+    "screenshots": {
+      "chat-mobile.png": {
+        "sha256": "57e7a2f91c927b13bcaa51b121019f8aa026d6adbac0dc580440376ec48f5b33",
+        "bytes": 33786
+      },
+      "focus-desktop.png": {
+        "sha256": "fd7db4800c108a0474b07a0adc468ede03eb130e523cf5205152ef439b3c1388",
+        "bytes": 131496
+      },
+      "focus-mobile.png": {
+        "sha256": "30d89156ddf59e08a017b10f1861f39952847869d95fdec5648be582e7a7d93b",
+        "bytes": 98142
+      },
+      "history-desktop.png": {
+        "sha256": "7ccd65eb91dd63f9ea8874d6aaf0cae4ee6c8393c6540da42c85d4f51fc786bd",
+        "bytes": 71313
+      },
+      "reader-desktop.png": {
+        "sha256": "c60a6697dfdbc9135bbd68ba786f501ca7ad14681e83dc27d4749248ea3aec1d",
+        "bytes": 83314
+      },
+      "reader-mobile.png": {
+        "sha256": "641e9130ba31efd535607cd9593ed09f72b967a74283a07b77222b576a6b8998",
+        "bytes": 30285
+      }
+    }
+  },
+  "localAiDouble": {
+    "realDeepSeekRequests": 0,
+    "httpRequests": 6,
+    "successes": 5,
+    "simulatedHttp503": 1,
+    "imageRequests": 0,
+    "queuedCancellationProviderRequests": 0,
+    "realTokenUsage": null,
+    "calls": [
+      {
+        "sequence": 1,
+        "pageNos": [
+          2
+        ],
+        "historyCount": 0,
+        "imageAttached": false,
+        "httpStatus": 200
+      },
+      {
+        "sequence": 2,
+        "pageNos": [
+          1
+        ],
+        "historyCount": 0,
+        "imageAttached": false,
+        "httpStatus": 503
+      },
+      {
+        "sequence": 3,
+        "pageNos": [
+          1
+        ],
+        "historyCount": 0,
+        "imageAttached": false,
+        "httpStatus": 200
+      },
+      {
+        "sequence": 4,
+        "pageNos": [
+          1
+        ],
+        "historyCount": 1,
+        "imageAttached": false,
+        "httpStatus": 200
+      },
+      {
+        "sequence": 5,
+        "pageNos": [
+          1
+        ],
+        "historyCount": 0,
+        "imageAttached": false,
+        "httpStatus": 200
+      },
+      {
+        "sequence": 6,
+        "pageNos": [
+          1
+        ],
+        "historyCount": 1,
+        "imageAttached": false,
+        "httpStatus": 200
+      }
+    ],
+    "stoppedAfterVerification": true,
+    "finalRuntimeAiEnabled": false
+  },
+  "limitations": [
+    "Agent self-check is not team review",
+    "No real model evaluation in this iteration",
+    "No multi-browser or complete accessibility audit",
+    "In-flight stop browser attempt did not complete; request succeeded",
+    "Remote CI status not asserted"
+  ]
+}
