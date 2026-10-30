@@ -6,10 +6,11 @@ import org.apache.ibatis.annotations.*;
 @Mapper
 public interface CourseMapper {
     String COLUMNS="id,owner_id,name,remark,status,lifecycle_version,row_version,created_at,updated_at";
-    @Select("SELECT "+COLUMNS+" FROM courses WHERE owner_id=#{owner} AND status='ACTIVE' ORDER BY updated_at DESC,id DESC LIMIT #{size} OFFSET #{offset}")
-    List<CourseRow> list(@Param("owner")String owner,@Param("offset")int offset,@Param("size")int size);
-    @Select("SELECT COUNT(*) FROM courses WHERE owner_id=#{owner} AND status='ACTIVE'")
-    long count(String owner);
+    String SEARCH="owner_id=#{owner} AND status='ACTIVE' AND (#{q}='' OR LOCATE(#{q},name)>0 OR LOCATE(#{q},COALESCE(remark,''))>0)";
+    @Select("SELECT "+COLUMNS+" FROM courses WHERE "+SEARCH+" ORDER BY updated_at DESC,id DESC LIMIT #{size} OFFSET #{offset}")
+    List<CourseRow> list(@Param("owner")String owner,@Param("offset")int offset,@Param("size")int size,@Param("q")String q);
+    @Select("SELECT COUNT(*) FROM courses WHERE "+SEARCH)
+    long count(@Param("owner")String owner,@Param("q")String q);
     @Select("SELECT "+COLUMNS+" FROM courses WHERE id=#{id} AND owner_id=#{owner}")
     CourseRow byOwner(@Param("id")String id,@Param("owner")String owner);
     @Select("SELECT "+COLUMNS+" FROM courses WHERE id=#{id} AND owner_id=#{owner} FOR UPDATE")

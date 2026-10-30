@@ -1,6 +1,6 @@
 # 首轮接口契约
 
-设计基线日期：2026 年 10 月 27 日；实现进度更新于 10 月 28 日。以下 31 个编号端点在 v0.3.0 已落地，另提供健康、清理及重点能力查询。API24 当前采用规则拆分预览，尚未调用 AI 拆分。实际响应及边界见[重点定位记录](records/focus-location-20261028.md)。
+设计基线日期：2026 年 10 月 27 日；实现进度更新于 10 月 30 日。以下 31 个编号端点在 v0.3.0 已落地，另提供健康、清理及重点能力查询。API24 当前采用规则拆分预览，尚未调用 AI 拆分。实际响应及边界见[重点定位记录](records/focus-location-20261028.md)；v0.4.1 的 API06 搜索扩展见[界面优化记录](records/ui-round1-20261030.md)。
 
 本轮增加 `GET /api/cleanup-jobs`，返回本人尚未完成或失败的清理任务（最多 20 条），以及 `POST /api/jobs/{id}/retries`，携带 Idempotency-Key，以 202 重试本人失败的 COURSE_PURGE/MATERIAL_PURGE。普通处理重试仍走 API15。
 
@@ -60,7 +60,7 @@ v0.3.0 增加 `GET /api/courses/{id}/focus-capabilities`，返回 aiAvailable、
 | API03 | POST `/api/auth/login` | username、password | 200，用户摘要并建立会话 |
 | API04 | POST `/api/auth/logout` | 退出当前会话 | 204 |
 | API05 | GET `/api/auth/me` | 当前登录身份 | 200，用户摘要；匿名 401 |
-| API06 | GET `/api/courses` | page、size | 200，课程分页列表 |
+| API06 | GET `/api/courses` | page、size、可选 q（0–100 字符） | 200，按名称或备注匹配后的本人有效课程分页列表，total 为匹配总数 |
 | API07 | POST `/api/courses` | name、可选 remark；幂等键 | 201，CourseDTO |
 | API08 | GET `/api/courses/{courseId}` | 本人课程详情和当前已支持的计数 | 200，CourseDTO 与 counts |
 | API09 | PATCH `/api/courses/{courseId}` | name 或 remark、expectedVersion | 200，最新 CourseDTO |

@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { computed, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useAuth } from "./stores/auth";
 import { message } from "./api";
 import CleanupStatus from "./components/CleanupStatus.vue";
+import AppIcon from "./components/AppIcon.vue";
 const auth = useAuth();
 const router = useRouter();
+const route = useRoute();
+const locationLabel = computed(() => route.path.startsWith('/materials/') ? '课件阅读' : route.path.startsWith('/courses/') ? '课程空间' : '我的课程');
 const logoutError = ref("");
 const leaving = ref(false);
 async function logout() {
@@ -30,12 +33,12 @@ async function logout() {
       >
       <p class="nav-caption">我的学习空间</p>
       <RouterLink to="/" class="nav-item"
-        ><span aria-hidden="true">▦</span> 我的课程</RouterLink
+        ><AppIcon name="courses" /> 我的课程</RouterLink
       >
       <div class="sidebar-note">
-        <span class="small-label">从一门课开始</span>
-        <p>把课程整理好，<br />让复习有迹可循。</p>
-        <span class="notebook-lines" aria-hidden="true"></span>
+        <span class="small-label">你的复习路径</span>
+        <p>整理课件<br />找到重点<br />边读边问</p>
+        <span class="sidebar-note-foot">学习资料，按课程有序归档。</span>
       </div>
       <div class="account">
         <span class="avatar">{{ auth.user.displayName.slice(0, 1) }}</span>
@@ -51,8 +54,13 @@ async function logout() {
     </aside>
     <main class="main">
       <header class="topbar">
-        <span>学习空间 <span class="breadcrumb">/</span> 课程</span
-        ><span class="version-label">阅读答疑 · 0.4</span>
+        <nav aria-label="当前位置" class="workspace-breadcrumb">
+          <RouterLink v-if="route.path !== '/'" to="/">我的课程</RouterLink>
+          <span v-else>学习空间</span>
+          <AppIcon name="chevron" :size="13" />
+          <span aria-current="page">{{ locationLabel }}</span>
+        </nav>
+        <span class="version-label">知笺 · 0.4.1</span>
       </header>
       <CleanupStatus />
       <RouterView :key="$route.path" />

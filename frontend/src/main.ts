@@ -8,6 +8,7 @@ import CourseDetail from "./views/CourseDetail.vue";
 import MaterialReader from "./views/MaterialReader.vue";
 import { useAuth } from "./stores/auth";
 import "./style.css";
+import "./course-workspace.css";
 
 const app = createApp(App);
 app.use(createPinia());

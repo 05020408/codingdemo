@@ -1,0 +1,133 @@
+{
+  "version": "0.4.1",
+  "date": "2026-10-30",
+  "timezone": "Asia/Shanghai",
+  "executor": "Codex",
+  "backend": {
+    "command": "./backend/mvnw.cmd -B -ntp -f backend/pom.xml verify (project test environment loaded)",
+    "totals": {
+      "tests": 47,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "suites": [
+      {
+        "name": "cn.review.AccountCourseIntegrationTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.chat.ReaderChatIntegrationTest",
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.focus.FocusIntegrationTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.MaterialIntegrationTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.MaterialValidationTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.PptTextExtractorTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.PreviewConverterTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.search.DeepSeekRerankerTest",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.search.PageIndexTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.StorageReconcilerTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "logs": [
+      {
+        "localIgnoredPath": ".runtime/verify-ui-round1-initial.log",
+        "sha256": "12d78d1397658cc0b845fa7cf3b932fcea8c76bb4a0ce42e1271c78529424707",
+        "selectedSummaryLines": [
+          "[ERROR] Tests run: 47, Failures: 1, Errors: 0, Skipped: 0",
+          "[INFO] BUILD FAILURE"
+        ]
+      },
+      {
+        "localIgnoredPath": ".runtime/verify-ui-round1.log",
+        "sha256": "10cb4dd3c0c7440fbb6b547df563ed1903d4cdef45cffbb75b6248670c4ff1b5",
+        "selectedSummaryLines": [
+          "[INFO] Tests run: 47, Failures: 0, Errors: 0, Skipped: 0",
+          "[INFO] BUILD SUCCESS"
+        ]
+      }
+    ]
+  },
+  "frontend": {
+    "command": "npm.cmd run build (cwd: frontend)",
+    "result": "passed: vue-tsc -b and vite build",
+    "cleanInstallThisRound": false
+  },
+  "sourceSha256": {
+    "backend/pom.xml": "0523d18d54a827a40fe26588f6bd3ab1d67aeea2f16ff7292a28b85fadcd1fdd",
+    "backend/src/main/java/cn/review/course/CourseMapper.java": "9dbaabbbe0cc26cd2fdf24f7f8af6292d952513dae4aeb3489b5b0007b742bb4",
+    "backend/src/main/java/cn/review/course/CourseService.java": "dc42e6bebec00c17b0e95719713d84950bfdcec04c4fdefff6f47ff9e2565d90",
+    "backend/src/test/java/cn/review/AccountCourseIntegrationTest.java": "2aafceec5855efdf625501081dd9ff1b7bdd6b82294e6234d2c5c185e465f3a4",
+    "frontend/package.json": "af7325fd50f1e51ad81ac07ab2142cc7aadeee1e81d8318aef7668afd23502b7",
+    "frontend/src/App.vue": "1111fa63ea10a59965f87a0918b013ae75e3291459758a7ee55873588a7884f0",
+    "frontend/src/views/Courses.vue": "8320f339d0d48920e4e7ae230cc70c5382588d2c879456c9608774123b977663",
+    "frontend/src/views/CourseDetail.vue": "d4560bef444146429bad2f53f7debf5b8508e1e2f0f5ff46a46a8ff456ecde6c",
+    "frontend/src/components/MaterialList.vue": "2b8b72d41e5360fa12eb6c94fe136feb476c528176aefe92b950f029209ab1a5",
+    "frontend/src/components/CourseActions.vue": "de64c44277ff106a2505f349433dcdb992fb7f2ecbd18013646fa0cc0c2c926d",
+    "frontend/src/components/AppIcon.vue": "4b607fd009a0fe1efe668f67bb4ede8ec23862c7bf9a5211ae43f23976fdb65f",
+    "frontend/src/course-workspace.css": "e4efa36fb90e36975283343213645cffae407cb80fe10d828a3d1bb343a39d87",
+    "frontend/src/coursePresentation.ts": "c2f98b307c6d50d7b25cec430b7b56633e16f032149f3ef061ca3b260074258e",
+    "frontend/src/style.css": "1499f5a1462bc59a458348c9250ab741127716e882cfefde4f7913c3cd4d2ee9"
+  },
+  "limits": [
+    "No real DeepSeek call this round",
+    "Synthetic account and self-made PPTX only",
+    "Browser upload verified by file chooser; drag gesture not directly tested",
+    "Local verification does not attest remote CI or human review"
+  ],
+  "sourceHashNormalization": "SHA-256 of source bytes after CRLF-to-LF normalization; log hashes retain original bytes"
+}

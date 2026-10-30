@@ -85,6 +85,29 @@ class AccountCourseIntegrationTest {
         mvc.perform(get("/api/courses/"+id).session(fresh.session())).andExpect(status().isOk()).andExpect(jsonPath("$.data.name").value("软件工程复习"));
         assertThat(db.queryForObject("SELECT name FROM courses WHERE id=?",String.class,id)).isEqualTo("软件工程复习");
     }
+    @Test void courseSearchCoversAllPagesAndKeepsLiteralQueriesPrivate() throws Exception {
+        Client owner=registerAndLogin(), other=registerAndLogin();
+        for(int i=0;i<14;i++) create(owner,"检索课程"+i,unique());
+        var special=create(owner,"期末 100%_复习",unique());
+        create(other,"期末 100%_复习",unique());
+        mvc.perform(get("/api/courses").session(owner.session()).param("q","检索课程").param("size","12").param("page","2"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.data.total").value(14)).andExpect(jsonPath("$.data.items.length()").value(2));
+        mvc.perform(get("/api/courses").session(owner.session()).param("q","  100%_  "))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.data.total").value(1)).andExpect(jsonPath("$.data.items[0].id").value(special.get("id").asText()));
+        mvc.perform(get("/api/courses").session(owner.session()).param("q","复习计划"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.data.total").value(15));
+        mvc.perform(get("/api/courses").session(owner.session()).param("q","' OR 1=1 --"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.data.total").value(0));
+        mvc.perform(get("/api/courses").session(owner.session()).param("q","x".repeat(101))).andExpect(status().isBadRequest());
+        String purgeJob=data(mvc.perform(as(owner,delete("/api/courses/"+special.get("id").asText()).param("expectedVersion","1").header("Idempotency-Key",unique())))
+            .andExpect(status().isAccepted()).andReturn()).get("id").asText();
+        mvc.perform(get("/api/courses").session(owner.session()).param("q","100%_"))
+            .andExpect(status().isOk()).andExpect(jsonPath("$.data.total").value(0));
+        // Drain this fixture's deletion before another test asserts processNext on its own job.
+        for(int attempt=0; attempt<100 && !"SUCCEEDED".equals(db.queryForObject("SELECT status FROM async_jobs WHERE id=?",String.class,purgeJob)); attempt++)
+            assertThat(jobs.processNext()).isTrue();
+        assertThat(db.queryForObject("SELECT status FROM async_jobs WHERE id=?",String.class,purgeJob)).isEqualTo("SUCCEEDED");
+    }
     @Test void duplicateCreationAndDeletionAreIdempotentAndScrubPersonalText() throws Exception {
         Client c=registerAndLogin(); String key=unique();
         var course=create(c,"待删除课程",key); String id=course.get("id").asText();

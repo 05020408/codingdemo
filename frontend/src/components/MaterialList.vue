@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { ApiError, message, request } from "../api";
 import type { Material, Page } from "../api";
+import { formatDate } from "../coursePresentation";
+import AppIcon from "./AppIcon.vue";
 const props = defineProps<{ courseId: string }>();
 const materials = ref<Material[]>([]),
   total = ref(0),
@@ -20,6 +22,9 @@ const removing = ref<Material | null>(null),
   deleting = ref(false),
   deleteError = ref("");
 const retrying = ref("");
+const dragging = ref(false);
+const stages = ["TEXT", "PREVIEW", "INDEX"] as const;
+const validFile = computed(() => !!file.value && file.value.name.toLowerCase().endsWith(".pptx") && file.value.size <= 20 * 1024 * 1024);
 let timer: ReturnType<typeof setTimeout> | undefined,
   disposed = false,
   generation = 0,
@@ -42,10 +47,28 @@ function label(status: string) {
         CANCELLED: "已取消",
         NOT_APPLICABLE: "等待文字提取",
       } as Record<string, string>
-    )[status] ?? status
+    )[status] ?? "尚未就绪"
   );
 }
+function stageName(stage: string) {
+  return stage === "TEXT" ? "文字提取" : stage === "INDEX" ? "重点定位" : "页面预览";
+}
+function availability(item: Material) {
+  if (item.capabilities.canReadPreview) {
+    if (item.stages.PREVIEW?.status === "FAILED") return { text: "可以阅读上次预览", tone: "warning" };
+    if (!item.capabilities.canLocate) return { text: item.stages.INDEX?.status === "FAILED" ? "可以阅读，定位暂不可用" : "可以阅读，重点定位准备中", tone: "partial" };
+    return { text: processing(item) ? "可以阅读，内容正在更新" : "阅读与定位已就绪", tone: "ready" };
+  }
+  if (item.stages.PREVIEW?.status === "FAILED") return { text: "页面预览生成失败", tone: "failed" };
+  if (item.stages.PREVIEW?.status === "CANCELLED") return { text: "页面预览已取消", tone: "warning" };
+  return { text: item.stages.PREVIEW?.status === "RUNNING" ? "正在生成页面预览" : "等待生成页面预览", tone: "processing" };
+}
+function hasStageError(item: Material) {
+  return stages.some(stage => !!item.stages[stage]?.error);
+}
 function size(bytes: number) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KiB";
   return (bytes / 1024 / 1024).toFixed(1) + " MiB";
 }
 async function load(target = page.value, quiet = false) {
@@ -81,13 +104,36 @@ async function load(target = page.value, quiet = false) {
   }
 }
 function select(event: Event) {
-  file.value = (event.target as HTMLInputElement).files?.[0] ?? null;
+  chooseFile((event.target as HTMLInputElement).files?.[0] ?? null);
+}
+function chooseFile(selected: File | null) {
+  file.value = selected;
   uploadKey.value = crypto.randomUUID();
   uploadError.value = "";
   if (file.value && !file.value.name.toLowerCase().endsWith(".pptx"))
     uploadError.value = "请选择 .pptx 文件；旧版 .ppt 需先转换。";
   else if (file.value && file.value.size > 20 * 1024 * 1024)
     uploadError.value = "课件不能超过 20 MiB。";
+}
+function drop(event: DragEvent) {
+  dragging.value = false;
+  if (uploading.value) return;
+  const files = event.dataTransfer?.files;
+  if (!files?.length) return;
+  if (files.length !== 1) {
+    clearFile();
+    uploadError.value = "每次请上传一份 PPTX 课件。";
+    return;
+  }
+  if (fileInput.value) fileInput.value.value = "";
+  chooseFile(files[0] ?? null);
+}
+function leaveDrop(event: DragEvent) {
+  if (!(event.relatedTarget instanceof Node) || !(event.currentTarget as HTMLElement).contains(event.relatedTarget)) dragging.value = false;
+}
+function clearFile() {
+  chooseFile(null);
+  if (fileInput.value) fileInput.value.value = "";
 }
 async function upload() {
   if (!file.value) return;
@@ -198,84 +244,95 @@ onBeforeUnmount(() => {
 </script>
 <template>
   <section class="materials-section" aria-labelledby="materials-title">
-    <div class="section-line">
-      <h2 id="materials-title">
-        课程课件 <span class="count">{{ total }}</span>
-      </h2>
-      <span>PPTX · 原始页码</span>
-    </div>
-    <form class="upload-panel" @submit.prevent="upload">
-      <div>
-        <span class="small-label">把课件放进这门课</span>
-        <p>上传后自动生成可阅读页面，保留隐藏页和原始页码。</p>
-        <small class="muted"
-          >支持 .pptx，单份最大 20 MiB、300
-          页。动画与视频请下载原件查看。</small
-        >
+    <form :class="['upload-panel', { 'is-dragging': dragging && !uploading }]" @submit.prevent="upload"
+      @dragover.prevent @dragenter.prevent="dragging = true" @dragleave="leaveDrop" @drop.prevent="drop">
+      <div class="upload-introduction">
+        <span class="upload-symbol" aria-hidden="true"><AppIcon name="upload" :size="23" /></span>
+        <div><h2>把课件放进这门课</h2>
+          <p>选择或拖入一份 PPTX，自动整理成可阅读、可定位的页面。</p>
+          <small>每份最大 20 MiB · 最多 300 页 · 保留原始页码</small>
+        </div>
       </div>
       <div class="upload-controls">
-        <label class="file-label" for="ppt-file">选择课件</label
-        ><input
+        <input
           id="ppt-file"
           ref="fileInput"
+          class="sr-only"
           type="file"
+          tabindex="-1"
+          aria-label="选择 PPTX 课件"
           accept=".pptx"
           :disabled="uploading"
           @change="select"
-        /><button
+        />
+        <button type="button" class="button secondary" :disabled="uploading" @click="fileInput?.click()">
+          <AppIcon name="add" :size="18" />{{ file ? "重新选择" : "选择课件" }}
+        </button>
+        <button
           class="button primary"
-          :disabled="!file || uploading"
+          :disabled="!validFile || uploading"
           type="submit"
         >
+          <AppIcon v-if="!uploading" name="upload" :size="17" /><span v-else class="status-spinner" aria-hidden="true"></span>
           {{ uploading ? "正在上传…" : "上传课件" }}
         </button>
       </div>
       <p v-if="file" class="selected-file">
-        已选择：{{ file.name }} · {{ size(file.size) }}
+        <AppIcon name="file" :size="17" /><span>{{ file.name }}<small>{{ size(file.size) }}</small></span>
+        <button type="button" class="text-button" :disabled="uploading" @click="clearFile">移除</button>
       </p>
       <p v-if="uploading" role="status" class="muted">
         正在校验并上传，请保持当前页面打开…
       </p>
       <p v-if="uploadError" class="error" role="alert">{{ uploadError }}</p>
     </form>
-    <p v-if="notice" class="notice" role="status">{{ notice }}</p>
+    <p v-if="notice" class="notice" role="status"><AppIcon name="check" :size="17" />{{ notice }}</p>
+    <div class="material-list-heading">
+      <h2 id="materials-title">课程课件<span v-if="!loading && !error" class="count">{{ total }} 份</span></h2>
+      <span>按上传时间排序</span>
+    </div>
     <p v-if="error" class="error" role="alert">
       {{ error }} <button class="text-button" @click="load()">重新加载</button>
     </p>
-    <div v-if="loading" class="state-panel" role="status">
-      正在读取课件目录…
+    <div v-if="loading" class="material-skeletons" role="status" aria-label="正在加载课件">
+      <span class="sr-only">正在读取课件目录…</span>
+      <div v-for="n in 2" :key="n" class="material-skeleton" aria-hidden="true"><i></i><div><i></i><i></i></div></div>
     </div>
     <div v-else-if="total === 0 && !error" class="material-empty">
-      <span aria-hidden="true">▤</span>
+      <span class="empty-symbol" aria-hidden="true"><AppIcon name="file" :size="29" /></span>
       <h3>这门课还没有课件</h3>
-      <p>选择一份 PPTX，开始整理课程内容。</p>
+      <p>在上方选择课件，上传后就能在这里打开阅读。</p>
     </div>
-    <div v-else class="material-list">
+    <div v-else-if="materials.length" class="material-list">
       <article v-for="item in materials" :key="item.id" class="material-row">
         <div class="material-file-icon" aria-hidden="true">
-          PPT<span>{{ item.slideCount }} 页</span>
+          <AppIcon name="file" :size="27" /><span>PPTX</span>
         </div>
         <div class="material-info">
           <h3>{{ item.displayName }}</h3>
           <p class="material-meta">
-            {{ size(item.sizeBytes) }} · {{ item.slideCount }} 页
+            {{ size(item.sizeBytes) }} · {{ item.slideCount ? item.slideCount + " 页" : "页数待解析" }} · {{ formatDate(item.createdAt) }} 上传
           </p>
+          <p :class="['material-availability', availability(item).tone]" role="status"><span aria-hidden="true" class="availability-dot"></span>{{ availability(item).text }}</p>
+          <details class="material-processing" :open="hasStageError(item)">
+            <summary>处理详情</summary>
           <div class="stage-row">
             <span
-              v-for="stage in ['TEXT', 'PREVIEW', 'INDEX']"
+              v-for="stage in stages"
               :key="stage"
               class="stage-badge"
               :class="item.stages[stage]?.status.toLowerCase()"
               >{{
-                stage === "TEXT" ? "文字" : stage === "INDEX" ? "检索" : "预览"
+                stageName(stage)
               }}
               · {{ label(item.stages[stage]?.status ?? "") }}</span
             >
           </div>
-          <template v-for="stage in ['TEXT', 'PREVIEW', 'INDEX']" :key="stage"
+          <template v-for="stage in stages" :key="stage"
             ><p v-if="item.stages[stage]?.error" class="stage-error">
               {{ item.stages[stage]!.error!.message }}
               <button
+                v-if="item.stages[stage]?.error?.retryable"
                 class="text-button"
                 :disabled="!!retrying"
                 @click="retry(item, stage)"
@@ -283,12 +340,7 @@ onBeforeUnmount(() => {
                 {{
                   retrying === item.id + stage
                     ? "提交中…"
-                    : "重试" +
-                      (stage === "TEXT"
-                        ? "文字提取"
-                        : stage === "INDEX"
-                          ? "索引"
-                          : "预览")
+                    : "重试" + stageName(stage)
                 }}
               </button>
             </p></template
@@ -302,21 +354,23 @@ onBeforeUnmount(() => {
           >
             上次成功的预览仍可阅读。
           </p>
+          </details>
         </div>
         <div class="material-actions">
           <RouterLink
             v-if="item.capabilities.canReadPreview"
             class="button primary"
             :to="`/materials/${item.id}/read`"
-            >阅读课件 →</RouterLink
+            >打开课件<AppIcon name="arrow" :size="17" /></RouterLink
           ><span v-else-if="processing(item)" class="muted" role="status"
             >预览准备中…</span
           ><a
+            v-if="item.capabilities.canDownload"
             class="text-button"
             :href="item.originalDownloadUrl + '?disposition=attachment'"
             >下载原件</a
-          ><button class="text-button delete-link" @click="askDelete(item)">
-            删除
+          ><button class="text-button delete-link" :aria-label="`删除课件：${item.displayName}`" @click="askDelete(item)">
+            删除课件
           </button>
         </div>
       </article>

@@ -14,7 +14,7 @@ public class CourseController {
     private final CourseService courses;
     public CourseController(CourseService courses) { this.courses=courses; }
     @GetMapping
-    Api<CourseService.Page> list(@AuthenticationPrincipal StudentPrincipal user,@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int size,HttpServletRequest request) { return Api.ok(courses.list(user.id(),page,size),request); }
+    Api<CourseService.Page> list(@AuthenticationPrincipal StudentPrincipal user,@RequestParam(defaultValue="1")int page,@RequestParam(defaultValue="20")int size,@RequestParam(defaultValue="")String q,HttpServletRequest request) { return Api.ok(courses.list(user.id(),page,size,q),request); }
     @PostMapping
     ResponseEntity<Api<CourseRow.CourseView>> create(@AuthenticationPrincipal StudentPrincipal user,@RequestHeader("Idempotency-Key")String key,@RequestBody CourseService.Create body,HttpServletRequest request) { return ResponseEntity.status(201).body(Api.ok(courses.create(user.id(),key,body),request)); }
     @GetMapping("/{id}")

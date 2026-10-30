@@ -16,8 +16,12 @@ public class CourseService {
     private final JobService jobs;
     public CourseService(CourseMapper courses,IdempotencyService idempotency,JobService jobs) { this.courses=courses; this.idempotency=idempotency; this.jobs=jobs; }
     public Page list(String owner,int page,int size) {
+        return list(owner,page,size,"");
+    }
+    public Page list(String owner,int page,int size,String query) {
         if(page<1 || size<1 || size>100 || page>1000000) throw new ApiException(400,"VALIDATION_FAILED","分页参数不正确");
-        return new Page(courses.list(owner,(page-1)*size,size).stream().map(CourseRow::view).toList(),page,size,courses.count(owner));
+        String q=ApiException.text(query,"搜索内容",0,100);
+        return new Page(courses.list(owner,(page-1)*size,size,q).stream().map(CourseRow::view).toList(),page,size,courses.count(owner,q));
     }
     public CourseRow.CourseView get(String owner,String id) {
         CourseRow row=courses.byOwner(id,owner);
