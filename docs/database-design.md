@@ -4,6 +4,8 @@
 
 实际精简差异：file_assets 通过 material_id 获取归属，status 使用 READY/RETIRED/DELETED；课件以 original_asset_id/pdf_asset_id 引用资产。material_stages 主键为 `(material_id,stage)`；reading_progress 主键为 `(owner_id,material_id)`，owner_id 指向 app_users。slides 的 source_slide_id 为 PPT 内部数字标识，另以 UUID id 对外引用。重点引用页面保留最小来源壳；答疑通过 JSON 来源快照保留历史，不新增页面外键。准确列、索引和约束以 V1–V5 迁移为准；笔记与习题仍须补充删除一致性。
 
+2026年11月3日范围同步：V5阅读文字/图片答疑与历史归入Sprint 1，功能基线v0.4.0、实际业务表15张；笔记与题库归Sprint 2。见[范围调整记录](records/sprint1-scope-adjustment-20261103.md)，不改变原迁移或执行日期。
+
 ### V5 阅读答疑的实际结构
 
 - `chat_sessions`：id、course_id、material_id、title、created_at、updated_at，外键引用课程与课件，按课程/课件与更新时间索引。归属通过课程检查，不接受客户端指定 owner。
@@ -282,4 +284,4 @@ v0.3.0 已实现用户、课程、课件、资产、页面、阶段、阅读位�
 
 删除立即拒绝访问并取消处理，清理原件/预览/索引/阅读位置与页面正文。被重点引用的页面保留最小墓碑；课件来源摘要保留在关联中。课程清理删除重点与关联；AI 用量审计仅保留技术标识和实际用量，不因删除课程返还额度。幂等结果中的重点只存 ID，不能重放出已删正文。笔记及题库尚未实现。迁移只前进，已合并迁移使用新迁移修正，不能假定规划中的全部约束已经执行。
 
-Sprint 2 再设计 notes 与来源关联、questions 与不可变版本、练习及作答快照、错题与收藏、对话及消息引用。它们复用课程和稳定 slideId，题目来源不是分建三个题库；历史作答必须保存当时版本，不能只指向可变题干。
+Sprint 1已含V5的chat_sessions、chat_turns与JSON来源快照，其实际结构及删除规则见本文开头。Sprint 2再设计notes与来源关联、questions与不可变版本、练习及作答快照、错题与收藏。它们复用课程和稳定slideId，三种题源共用题库；历史作答保存当时版本，不能只指向可变题干。

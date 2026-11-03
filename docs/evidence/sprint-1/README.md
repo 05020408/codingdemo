@@ -2,12 +2,14 @@
 
 归档日期：2026 年 10 月 30 日。证据应分别标明采集日期、功能版本和可支持的结论。整理日不作为历史测试日期；截图不替代测试或团队验收签署。
 
+2026 年 11 月 3 日范围调整：Sprint 1 功能基线改为 `v0.4.0`，含阅读文字/图片答疑和历史。S1-E02 的原文件名、内容与哈希保持不变；其中“后续”是相对原 v0.3.0 范围的历史称呼，现可支持扩展后基线的46项结果。详见[范围调整记录](../../records/sprint1-scope-adjustment-20261103.md)。
+
 ## 已归档材料
 
 | 标识 | 文件与来源 | 日期及范围 | 可以支持的结论 |
 | --- | --- | --- | --- |
-| S1-E01 | [课程首页截图](course-home-v010.png)，原 `.runtime/screenshots/zhijian-desktop.png` | 10月27日初始增量记录；画面明确0.1，合成预览账号 | 当时首页、课程卡片的界面；不能证明v0.3.0全部功能或评审已发生 |
-| S1-E02 | [后续回归统计](later-regression-summary.json)，本地Surefire XML和最终日志的统计摘录 | 原执行10月28日v0.4.0；10月30日归档 | 保留后续46项回归的非敏感统计，其中13项为答疑；不是v0.3.0原始报告，也不是本日新执行 |
+| S1-E01 | [课程首页截图](course-home-v010.png)，原 `.runtime/screenshots/zhijian-desktop.png` | 10月27日初始增量记录；画面明确0.1，合成预览账号 | 当时首页、课程卡片的界面；不能证明v0.4.0全部功能或评审已发生 |
+| S1-E02 | [v0.4.0回归统计（原文件名保留）](later-regression-summary.json)，本地Surefire XML和最终日志的统计摘录 | 原执行10月28日v0.4.0；10月30日归档 | 扩展后Sprint 1基线46项，其中13项为答疑；不是v0.3.0原始报告，也不是本日新执行 |
 
 S1-E01已经视觉检查，包含合成课程和预览账号，不含密码、密钥或教师课件。S1-E02只保留测试类、数量、状态、来源文件哈希和选定汇总，不复制XML中的环境属性、数据库凭据或原始响应。哈希用于识别原件，不单独证明执行真实性。
 
@@ -16,8 +18,9 @@ S1-E01已经视觉检查，包含合成课程和预览账号，不含密码、�
 - [初始记录](../../records/initial-increment-20261027.md)：账号/课程、7项自检、环境问题及真实修正。
 - [课件阅读记录](../../records/material-reader-20261027.md)：19项自检、5/8/145页正式上传及映射、阅读和删除。
 - [重点定位记录](../../records/focus-location-20261028.md)：首轮33项历史测试、关键词/AI定位与人工校正、重启持久化和限制。
+- [阅读答疑记录](../../records/reader-ai-20261028.md)：文字答疑、追问、当前页图片、历史、取消及删除一致性；真实调用和有限样本边界。
 - [测试验收汇总](../../sprint-1/acceptance-report.md)：来源之间的范围与证据强度说明。
-- [AI-05 至 AI-08 过程材料](../../sprint-1/ai-05-08-evidence.md)：将已有设计、代码、测试与三个缺陷案例对应到 AI 使用记录；整理于10月30日，原活动日期不变，人工核验待确认。
+- [AI-05 至 AI-08 过程材料](../../sprint-1/ai-05-08-evidence.md)：已有设计、四个编码增量、测试与缺陷案例；10月30日初整，11月3日按新范围补入答疑，原活动日期不变，人工核验待确认。
 
 ## 仅本机保留的材料
 
@@ -25,11 +28,14 @@ S1-E01已经视觉检查，包含合成课程和预览账号，不含密码、�
 | --- | --- |
 | `.runtime/screenshots/zhijian-reader-desktop.png`、`zhijian-reader-narrow.png` | 阅读证据，可能显示教师页内容，未随本轮提交 |
 | `.runtime/screenshots/zhijian-focus-desktop.png`、`zhijian-focus-mobile.png` | 定位证据，可能含教师正文，未随本轮提交 |
+| `.runtime/screenshots/zhijian-chat-desktop.png`、`zhijian-chat-image.png`、`zhijian-chat-mobile.png` | 原答疑记录中的文字、真实图片及窄屏截图；本次未重新检查或归档，不当作团队验收截图 |
 | `.runtime/material-http-results.json`、`focus-http-results.json` | 原执行的正式HTTP结果；未复制运行标识与原始数据 |
 | `.runtime/verify-v030.log`、`verify-v030-final.log`、`package-v030.log` | 历史日志；最终文件有打包失败，package文件当前为空，不认作完整成功日志 |
-| `.runtime/verify-v040-final.log`、`backend/target/surefire-reports/` | 后续0.4.0回归，不能冒充首轮0.3.0原件；target会被后续构建覆盖 |
+| `.runtime/verify-v040-final.log`、`backend/target/surefire-reports/` | 0.4.0基线回归，不能冒充0.3.0原件；target会被后续构建覆盖，当前报告须核对版本 |
 
 上述路径相对 `code/`，均被Git忽略，换机不会自动取得。需要报告附件时选用可分享的合成样本，保留版本和真实执行日期，必要时另行脱敏核验。
+
+v0.4.1/v0.4.2 的界面证据只支持后续界面优化及其回归，不替代 v0.4.0 的原始功能或真实模型验证记录。答疑截图具体路径沿用上述答疑执行记录；本次未采集或归档新截图。
 
 ## 尚需采集的证据
 
