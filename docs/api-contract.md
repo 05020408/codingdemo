@@ -254,3 +254,11 @@ sources 仅返回来源摘要 `{slideId,materialId,materialName,pageNo,imageAtta
 同课程最多一个 QUEUED/RUNNING 答疑；其他课程数据隔离。取消轮询上游连接、阻止发布迟到结果，不承诺服务商停止计费。每次任务最多一次调用，未知/失败不会自动重发；重试保留轮次、创建新任务并可能再次计费。关闭浏览器不等于取消，重新打开可继续观察任务。当前使用整段结果，未实现流式 token 接口。
 
 新增错误码：AI_DISABLED、VISION_DISABLED、AI_QUOTA_EXCEEDED、CHAT_BUSY、CHAT_FULL、CHAT_NOT_RETRYABLE、CHAT_RETRY_ORDER、CHAT_CANCELLED、PAGE_HAS_NO_TEXT、IMAGE_NOT_READY、IMAGE_UNAVAILABLE、SOURCE_CHANGED、SOURCE_UNAVAILABLE、AI_HTTP_ERROR、AI_INVALID_RESPONSE、AI_RESULT_UNKNOWN、WORKER_INTERRUPTED。失败信息保留在轮次，轮询 GET 正常返回200；错误码不暴露上游完整响应。
+
+## 课件核心摘要扩展（v0.4.3）
+
+八个摘要接口和预算见[摘要契约](material-summary.md#接口)，均使用 `/api` 前缀，写操作检查 CSRF，生成/重试/编辑/采用要求 Idempotency-Key。编辑输入 `{baseVersionId,expectedVersion,markdown}`，采用输入 `{versionId,expectedVersion}`；冲突409且前端保留草稿。State 返回课件信息、并发版本、当前版本、最近50版、预计调用次数、剩余额度和阻止原因；Version 包含 id、number、origin、status、markdown、stale、totalPages、emptyPages、completedSteps、totalSteps、errorCode/errorMessage。下载仅接受成功版本，返回 UTF-8 `text/markdown` 附件。
+
+POST turns 增加可选 `summaryVersionId`；缺省不发送摘要，跨课件/跨账号/未成功版本拒绝。Turn 增加可空 `summary:{versionId,number,origin,stale,unavailable}`，正文快照不透传。来源已变化时允许明确选择旧摘要为背景并标记；全文与页面/历史合计超过60000个UTF-16单元返回 CONTEXT_TOO_LARGE，不静默截断摘要。通用 GET jobs 可查询本人有效课件的摘要步骤任务。
+
+摘要错误含 SUMMARY_TEXT_NOT_READY、SUMMARY_NO_TEXT、SUMMARY_TOO_LARGE、SUMMARY_NOT_READY、SUMMARY_NOT_RETRYABLE、SUMMARY_BUSY、SUMMARY_CANCELLED、SUMMARY_INCOMPLETE、SOURCE_CHANGED、VERSION_CONFLICT 及共享 AI 错误；具体码以源码与测试为准。关闭页面不取消后台任务；主动停止不承诺上游停止计费。

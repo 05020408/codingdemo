@@ -147,6 +147,7 @@ public class ChatWorker {
             row.sources(),
             row.history(),
             image,
+            row.summary(),
             () -> cancelled(claim));
     service.tx.executeWithoutResult(
         s -> {

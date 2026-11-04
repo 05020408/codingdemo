@@ -9,7 +9,7 @@ const auth = useAuth();
 const router = useRouter();
 const route = useRoute();
 const reading = computed(() => route.path.startsWith('/materials/'));
-const locationLabel = computed(() => route.path.startsWith('/materials/') ? '课件阅读' : route.path.startsWith('/courses/') ? '课程空间' : '我的课程');
+const locationLabel = computed(() => route.path.endsWith('/summary') ? '课件核心摘要' : route.path.startsWith('/materials/') ? '课件阅读' : route.path.startsWith('/courses/') ? '课程空间' : '我的课程');
 const logoutError = ref("");
 const leaving = ref(false);
 async function logout() {
@@ -61,7 +61,7 @@ async function logout() {
           <AppIcon name="chevron" :size="13" />
           <span aria-current="page">{{ locationLabel }}</span>
         </nav>
-        <span class="version-label">知笺 · 0.4.2</span>
+        <span class="version-label">知笺 · 0.4.3</span>
       </header>
       <CleanupStatus />
       <RouterView :key="$route.path" />

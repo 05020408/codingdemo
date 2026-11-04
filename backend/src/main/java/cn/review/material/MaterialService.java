@@ -308,6 +308,40 @@ public class MaterialService {
 
   void cancel(String id) {
     db.update(
+        "UPDATE job_attempts a JOIN async_jobs j ON j.id=a.job_id JOIN material_summary_parts p ON"
+            + " p.last_job_id=j.id JOIN material_summary_versions v ON v.id=p.version_id SET"
+            + " a.outcome='CANCELLED',a.finished_at=CURRENT_TIMESTAMP(3) WHERE v.material_id=? AND"
+            + " a.outcome='RUNNING'",
+        id);
+    db.update(
+        "UPDATE ai_calls a JOIN async_jobs j ON j.id=a.job_id JOIN material_summary_parts p ON"
+            + " p.last_job_id=j.id JOIN material_summary_versions v ON v.id=p.version_id SET"
+            + " a.status='UNKNOWN',a.error_code='SOURCE_UNAVAILABLE' WHERE v.material_id=? AND"
+            + " a.status='SENDING'",
+        id);
+    db.update(
+        "UPDATE async_jobs j JOIN material_summary_parts p ON p.last_job_id=j.id JOIN"
+            + " material_summary_versions v ON v.id=p.version_id SET"
+            + " j.status='CANCELLED',j.finished_at=CURRENT_TIMESTAMP(3),j.lease_until=NULL WHERE"
+            + " v.material_id=? AND j.status IN ('QUEUED','RUNNING')",
+        id);
+    db.update(
+        "UPDATE material_summary_parts p JOIN material_summary_versions v ON v.id=p.version_id SET"
+            + " p.status='CANCELLED' WHERE v.material_id=? AND p.status IN"
+            + " ('QUEUED','RUNNING','WAITING')",
+        id);
+    db.update(
+        "UPDATE material_summary_versions SET"
+            + " status='CANCELLED',error_code='SOURCE_UNAVAILABLE',error_message='来源课件已删除' WHERE"
+            + " material_id=? AND status IN ('QUEUED','RUNNING')",
+        id);
+    db.update(
+        "UPDATE chat_turns t JOIN chat_sessions s ON s.id=t.session_id SET"
+            + " t.summary_snapshot=JSON_SET(t.summary_snapshot,'$.markdown','') WHERE"
+            + " s.material_id=? AND t.summary_snapshot IS NOT NULL",
+        id);
+
+    db.update(
         "UPDATE async_jobs j JOIN chat_turns t ON t.last_job_id=j.id JOIN chat_sessions s ON"
             + " s.id=t.session_id SET j.status='CANCELLED',j.finished_at=CURRENT_TIMESTAMP(3) WHERE"
             + " s.material_id=? AND j.type='READER_CHAT' AND j.status IN ('QUEUED','RUNNING')",

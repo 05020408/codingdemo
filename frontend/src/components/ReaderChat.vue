@@ -10,6 +10,7 @@ import {
 import { onBeforeRouteLeave } from "vue-router";
 import { ApiError, message, request } from "../api";
 import type { Slide } from "../api";
+import type { SummaryState } from "../summary";
 import { useAuth } from "../stores/auth";
 import AppIcon from "./AppIcon.vue";
 const auth = useAuth();
@@ -55,6 +56,7 @@ interface Turn {
   sources: Source[];
   errorCode: string | null;
   errorMessage: string | null;
+  summary?: {versionId:string;number:number;origin:string;stale:boolean;unavailable:boolean} | null;
 }
 interface Conversation {
   session: Session;
@@ -76,6 +78,11 @@ const question = ref(""),
   loading = ref(true),
   error = ref(""),
   copied = ref("");
+const summary=ref<SummaryState|null>(null), attachSummary=ref(false), summaryError=ref("");
+async function loadSummary(){
+  if(!props.materialId || props.readonly)return;
+  try { summary.value=await request<SummaryState>(`/api/materials/${props.materialId}/summary`);summaryError.value="";if(!summary.value.current)attachSummary.value=false;}catch { summaryError.value="暂时无法读取摘要，可刷新后再选"; }
+}
 const historyEl = ref<HTMLElement>();
 const pendingPage = ref<number | null>(null);
 const turnLabels: Record<string, string> = { QUEUED: "等待生成", RUNNING: "正在回答", SUCCEEDED: "回答完成", FAILED: "生成失败", CANCELLED: "已停止", UNKNOWN: "结果待确认" };
@@ -100,6 +107,7 @@ let attempt: {
     slideId: string;
     useImage: boolean;
     continuePrevious: boolean;
+    summaryVersionId?: string;
   };
 } | null = null;
 let retryAttempt: { id: string; key: string } | null = null;
@@ -180,6 +188,7 @@ async function init() {
   try {
     await list();
     await capabilities();
+    await loadSummary();
     await choose(
       sessions.value.some((s) => s.id === props.sessionId)
         ? props.sessionId!
@@ -205,6 +214,7 @@ async function send() {
         slideId: props.slide.id,
         useImage: image.value,
         continuePrevious: follow.value,
+        summaryVersionId: attachSummary.value ? summary.value?.current?.id : undefined,
       },
     };
     pendingPage.value = props.slide.pageNo;
@@ -410,6 +420,7 @@ onBeforeUnmount(() => {
           <span>你的问题</span>
           <p>{{ turn.question }}</p>
         </div>
+        <p v-if="turn.summary" class="chat-hint">本轮附带核心摘要 v{{ turn.summary.number }} · {{ turn.summary.origin==='USER'?'人工编辑':'AI 整理' }}{{ turn.summary.stale?' · 发送时来源已变化':'' }}{{ turn.summary.unavailable?' · 来源已删除':'' }}</p>
         <div class="chat-sources">
           <span class="chat-source-label">本轮使用的页面</span>
           <template v-for="source in turn.sources" :key="source.slideId"
@@ -574,6 +585,8 @@ onBeforeUnmount(() => {
       ></textarea>
       <details class="chat-options-panel"><summary>提问设置<span>{{ image ? '附带本页图片' : '本页文字' }}{{ follow ? ' · 联系最近对话' : '' }}</span></summary>
       <div class="chat-options">
+        <label><input v-model="attachSummary" type="checkbox" :disabled="busy || uncertain || !summary?.current" />附带本课件核心摘要<span v-if="summary?.current">v{{ summary.current.number }} · {{ summary.current.origin==='USER'?'人工编辑':'AI 整理' }}{{ summary.current.stale?' · 可能过期':'' }}</span><span v-else>{{ summaryError || '尚未生成摘要' }}</span></label>
+        <div><RouterLink v-if="materialId" class="text-button" :to="`/materials/${materialId}/summary`">{{ summary?.current?'查看摘要':'生成摘要' }}</RouterLink><button type="button" class="text-button" :disabled="busy || uncertain" @click="loadSummary">刷新摘要版本</button></div>
         <label
           ><input
             v-model="follow"
@@ -588,10 +601,11 @@ onBeforeUnmount(() => {
           />附带本页图片<span>{{ caps?.imageAvailable ? '图表或公式看不懂时可选' : '当前未开启图片答疑' }}</span></label
         >
       </div>
+      <p v-if="attachSummary && summary?.current?.stale" class="notice">此摘要来源已变化，本次仍将使用所示旧版作为背景；请按需先重新生成。</p>
       <p class="chat-hint">
         {{
           image ? "本次包含本页图片和文字" : "本次仅包含本页文字，不含页面图片"
-        }}{{ follow ? "；同时提供最近 4 轮成功对话及至多 3 页文字" : "" }}，交由
+        }}{{ follow ? "；同时提供最近 4 轮成功对话及至多 3 页文字" : "" }}{{ attachSummary ? "；附带所选整份课件核心摘要" : "" }}，交由
         DeepSeek 处理。AI 回答请结合课件核对。
       </p>
       </details>

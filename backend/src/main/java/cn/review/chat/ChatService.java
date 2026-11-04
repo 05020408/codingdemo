@@ -2,6 +2,7 @@ package cn.review.chat;
 
 import cn.review.common.*;
 import cn.review.material.MaterialService;
+import cn.review.summary.SummaryService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Files;
@@ -17,6 +18,7 @@ public class ChatService {
   final ObjectMapper json;
   final ReaderAiClient ai;
   final MaterialService materials;
+  final SummaryService summaries;
   private final IdempotencyService idem;
 
   public ChatService(
@@ -25,13 +27,15 @@ public class ChatService {
       ObjectMapper json,
       ReaderAiClient ai,
       MaterialService materials,
-      IdempotencyService idem) {
+      IdempotencyService idem,
+      SummaryService summaries) {
     this.db = db;
     this.tx = tx;
     this.json = json;
     this.ai = ai;
     this.materials = materials;
     this.idem = idem;
+    this.summaries = summaries;
   }
 
   public Capabilities capabilities(String owner, String material) {
@@ -145,7 +149,12 @@ public class ChatService {
                     ? null
                     : decode(rs.getString("answer"), new TypeReference<ReaderAiClient.Answer>() {}),
                 rs.getString("error_code"),
-                rs.getString("error_message")),
+                rs.getString("error_message"),
+                rs.getString("summary_snapshot") == null
+                    ? null
+                    : decode(
+                        rs.getString("summary_snapshot"),
+                        new TypeReference<SummaryService.Context>() {})),
         id);
   }
 
@@ -187,7 +196,15 @@ public class ChatService {
                 })
             .toList(),
         row.errorCode(),
-        row.errorMessage());
+        row.errorMessage(),
+        row.summary() == null
+            ? null
+            : new SummaryView(
+                row.summary().versionId(),
+                row.summary().number(),
+                row.summary().origin(),
+                !row.session().materialAvailable(),
+                row.summary().stale()));
   }
 
   public Turn send(String owner, String id, Send input, String key) {
@@ -200,7 +217,12 @@ public class ChatService {
             "SEND_CHAT",
             id,
             key,
-            new Send(question, input.slideId(), input.useImage(), input.continuePrevious()),
+            new Send(
+                question,
+                input.slideId(),
+                input.useImage(),
+                input.continuePrevious(),
+                input.summaryVersionId()),
             202,
             Ack.class,
             () -> {
@@ -253,18 +275,32 @@ public class ChatService {
                     }
                 }
               }
+              SummaryService.Context summary =
+                  input.summaryVersionId() == null
+                      ? null
+                      : summaries.context(owner, session.materialId(), input.summaryVersionId());
+              int contextSize =
+                  question.length()
+                      + sources.stream().mapToInt(x -> x.text().length()).sum()
+                      + history.stream()
+                          .mapToInt(x -> x.question().length() + x.answer().length())
+                          .sum()
+                      + (summary == null ? 0 : summary.markdown().length());
+              if (contextSize > 60000)
+                throw new ApiException(400, "CONTEXT_TOO_LARGE", "本次上下文过长，请取消联系最近对话后重试；摘要未被截断");
               String turn = UUID.randomUUID().toString(), job = UUID.randomUUID().toString();
               db.update(
                   "INSERT INTO"
-                      + " chat_turns(id,session_id,sequence_no,question,context_snapshot,history_snapshot,last_job_id)"
-                      + " VALUES(?,?,?,?,?,?,?)",
+                      + " chat_turns(id,session_id,sequence_no,question,context_snapshot,history_snapshot,last_job_id,summary_snapshot)"
+                      + " VALUES(?,?,?,?,?,?,?,?)",
                   turn,
                   id,
                   sequence,
                   question,
                   encode(sources),
                   encode(history),
-                  job);
+                  job,
+                  summary == null ? null : encode(summary));
               queue(owner, session, turn, job);
               db.update(
                   "UPDATE chat_sessions SET title=IF(?=1,?,title),updated_at=CURRENT_TIMESTAMP(3)"
@@ -476,9 +512,22 @@ public class ChatService {
       ReaderAiClient.Answer answer,
       List<SourceView> sources,
       String errorCode,
-      String errorMessage) {}
+      String errorMessage,
+      SummaryView summary) {}
 
-  public record Send(String question, String slideId, boolean useImage, boolean continuePrevious) {}
+  public record SummaryView(
+      String versionId, int number, String origin, boolean unavailable, boolean stale) {}
+
+  public record Send(
+      String question,
+      String slideId,
+      boolean useImage,
+      boolean continuePrevious,
+      String summaryVersionId) {
+    public Send(String question, String slideId, boolean useImage, boolean continuePrevious) {
+      this(question, slideId, useImage, continuePrevious, null);
+    }
+  }
 
   public record Capabilities(
       boolean aiAvailable,
@@ -498,7 +547,8 @@ public class ChatService {
       String job,
       ReaderAiClient.Answer answer,
       String errorCode,
-      String errorMessage) {}
+      String errorMessage,
+      SummaryService.Context summary) {}
 
   record Ack(String id) {}
 }

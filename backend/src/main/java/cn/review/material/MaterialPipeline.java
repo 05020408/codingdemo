@@ -481,6 +481,12 @@ public class MaterialPipeline {
           for (String id : ids) {
             db.queryForList("SELECT id FROM materials WHERE id=? FOR UPDATE", id);
             materials.cancel(id);
+            db.update(
+                "DELETE p FROM material_summary_parts p JOIN material_summary_versions v ON"
+                    + " v.id=p.version_id WHERE v.material_id=?",
+                id);
+            db.update("DELETE FROM material_summary_versions WHERE material_id=?", id);
+            db.update("DELETE FROM material_summaries WHERE material_id=?", id);
             db.update("DELETE FROM reading_progress WHERE material_id=?", id);
             db.update(
                 "DELETE s FROM slides s LEFT JOIN focus_slide_links l ON l.slide_id=s.id WHERE"

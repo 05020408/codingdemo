@@ -6,6 +6,7 @@ import Login from "./views/Login.vue";
 import Courses from "./views/Courses.vue";
 import CourseDetail from "./views/CourseDetail.vue";
 import MaterialReader from "./views/MaterialReader.vue";
+import MaterialSummary from "./views/MaterialSummary.vue";
 import { useAuth } from "./stores/auth";
 import "./style.css";
 import "./course-workspace.css";
@@ -25,6 +26,7 @@ const router = createRouter({
     { path: "/", component: Courses },
     { path: "/courses/:id", component: CourseDetail },
     { path: "/materials/:id/read", component: MaterialReader },
+    { path: "/materials/:id/summary", component: MaterialSummary },
     { path: "/:pathMatch(.*)*", redirect: "/" },
   ],
 });

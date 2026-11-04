@@ -102,7 +102,15 @@ class ReaderChatIntegrationTest {
         });
     server.start();
     ai = client(10, true);
-    chat = new ChatService(db, tx, json, ai, materials, idem);
+    chat =
+        new ChatService(
+            db,
+            tx,
+            json,
+            ai,
+            materials,
+            idem,
+            new cn.review.summary.SummaryService(db, tx, json, ai, idem));
     worker = new ChatWorker(chat, ai);
     session = chat.create(owner, material, id()).id();
   }
@@ -293,7 +301,15 @@ class ReaderChatIntegrationTest {
   @Test
   void sharedQuotaCountsAttemptsAcrossScenesAndDisabledHasNoHttp() {
     var one = client(1, true);
-    var service = new ChatService(db, tx, json, one, materials, idem);
+    var service =
+        new ChatService(
+            db,
+            tx,
+            json,
+            one,
+            materials,
+            idem,
+            new cn.review.summary.SummaryService(db, tx, json, one, idem));
     var task = new ChatWorker(service, one);
     db.update(
         "INSERT INTO"
@@ -312,7 +328,15 @@ class ReaderChatIntegrationTest {
     task.runOne();
     assertThat(service.turn(owner, turn.id()).errorCode()).isEqualTo("AI_QUOTA_EXCEEDED");
     assertThat(calls).hasValue(0);
-    var disabled = new ChatService(db, tx, json, client(10, false), materials, idem);
+    var disabled =
+        new ChatService(
+            db,
+            tx,
+            json,
+            client(10, false),
+            materials,
+            idem,
+            new cn.review.summary.SummaryService(db, tx, json, client(10, false), idem));
     assertThatThrownBy(
             () ->
                 disabled.send(

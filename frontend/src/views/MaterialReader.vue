@@ -166,6 +166,7 @@ onBeforeUnmount(() => { disposed = true; generation++; window.removeEventListene
           <h1>{{ material.displayName }}</h1><p>{{ material.slideCount }} 页课件 · 保留原始页码<span class="reader-key-hint"> · ← → 翻页</span></p>
         </div>
         <div class="reader-view-actions">
+          <RouterLink class="button secondary" :to="`/materials/${id}/summary`">核心摘要</RouterLink>
           <button class="button secondary" :aria-expanded="outlineOpen" aria-controls="page-directory" @click="outlineOpen = !outlineOpen"><AppIcon name="outline" :size="18" />页面目录</button>
           <button class="button" :class="chatOpen ? 'primary' : 'secondary'" :aria-expanded="chatOpen" aria-controls="reader-answer-panel" @click="toggleChat"><AppIcon name="chat" :size="18" />{{ chatOpen ? "收起答疑" : "打开答疑" }}</button>
           <a v-if="material.capabilities.canDownload" class="icon-button reader-download" :href="material.originalDownloadUrl + '?disposition=attachment'" aria-label="下载课件原件" title="下载原件"><AppIcon name="download" /></a>

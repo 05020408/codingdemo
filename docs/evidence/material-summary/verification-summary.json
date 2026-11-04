@@ -1,0 +1,34 @@
+{
+  "date": "2026-11-04",
+  "applicationVersion": "0.4.3",
+  "backend": {"command": "Maven Wrapper verify", "tests": 66, "failures": 0, "errors": 0, "skipped": 0, "newSummaryIntegrationTests": 16, "newSummaryContentTests": 3},
+  "frontend": {"typeCheck": "passed", "productionBuild": "passed", "newRuntimeDependencies": 0},
+  "realAi": {
+    "sample": "synthetic chat-fixture.pptx, 2 pages, 1 page with no extracted text",
+    "teacherMaterialSent": false,
+    "model": "deepseek-flash",
+    "calls": [
+      {"scene": "SUMMARY_FINAL", "promptVersion": "summary-v1", "status": "SUCCEEDED", "inputTokens": 317, "outputTokens": 327, "durationMs": 2913},
+      {"scene": "READER_CHAT", "promptVersion": "reader-v2", "status": "SUCCEEDED", "inputTokens": 925, "outputTokens": 320, "durationMs": 2417}
+    ],
+    "totalTokens": 1889,
+    "automaticRetries": 0,
+    "markdownCharacters": 646,
+    "downloadExactUtf8": true
+  },
+  "browser": {
+    "courseAndReaderEntry": "passed",
+    "editV2PreservesV1": "passed",
+    "unsavedLeaveDialog": "passed",
+    "unsafeHtmlScriptNodes": 0,
+    "unsafeJavascriptLinks": 0,
+    "sourcePageNavigation": "passed",
+    "summaryAttachmentDefault": false,
+    "optionalV2WhileOldTurnKeepsV1": "passed",
+    "responsiveWidths": [390, 320],
+    "documentWidths": [375, 305],
+    "chat390DocumentWidth": 375,
+    "viewportOverrideReset": true
+  },
+  "limitations": ["no real long-deck semantic evaluation", "no OCR", "no multi-browser or full accessibility audit", "no actual provider network-unknown injection", "local verification is not team acceptance or remote CI"]
+}

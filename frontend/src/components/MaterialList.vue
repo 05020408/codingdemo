@@ -357,6 +357,7 @@ onBeforeUnmount(() => {
           </details>
         </div>
         <div class="material-actions">
+          <RouterLink class="button secondary" :to="`/materials/${item.id}/summary`">核心摘要</RouterLink>
           <RouterLink
             v-if="item.capabilities.canReadPreview"
             class="button primary"
