@@ -61,7 +61,7 @@ async function logout() {
           <AppIcon name="chevron" :size="13" />
           <span aria-current="page">{{ locationLabel }}</span>
         </nav>
-        <span class="version-label">知笺 · 0.4.3</span>
+        <span class="version-label">知笺 · 0.4.4</span>
       </header>
       <CleanupStatus />
       <RouterView :key="$route.path" />

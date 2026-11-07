@@ -1,0 +1,491 @@
+{
+  "date": "2026-11-07",
+  "timezone": "Asia/Shanghai",
+  "baseline": "71ffbda5f812200a4325a0d0c01a297113b1d66f",
+  "initialApplicationVersion": "0.4.3",
+  "finalApplicationVersion": "0.4.4",
+  "model": "deepseek-flash",
+  "automaticTests": {
+    "initial": {
+      "tests": 66,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "afterFix": {
+      "tests": 68,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "suites": [
+      {
+        "name": "cn.review.AccountCourseIntegrationTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.chat.ReaderChatIntegrationTest",
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.focus.FocusIntegrationTest",
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.MaterialIntegrationTest",
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.MaterialValidationTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.PptTextExtractorTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.PreviewConverterTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.search.DeepSeekRerankerTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.search.PageIndexTest",
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.StorageReconcilerTest",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.summary.SummaryContentTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.summary.SummaryIntegrationTest",
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "note": "68项verify在逻辑与新增测试修正后执行；随后仅更新focus-v2审计标识和0.4.4版本，package与前端构建通过，真实focus-v2复测成功。"
+  },
+  "frontend": {
+    "cleanInstall": "PASS",
+    "typecheckAndBuildInitial": "PASS",
+    "typecheckAndBuild044": "PASS",
+    "modules": 69
+  },
+  "liveHttp": {
+    "groups": 24,
+    "initialPassed": 22,
+    "initialFailed": 2,
+    "retestedGroups": 2,
+    "finalPassed": 24,
+    "finalFailed": 0,
+    "cases": [
+      {
+        "id": "R01",
+        "name": "register",
+        "label": "注册",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R02",
+        "name": "duplicate-account",
+        "label": "重复账号拒绝",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R03",
+        "name": "wrong-password",
+        "label": "错误密码拒绝",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R04",
+        "name": "session-me",
+        "label": "会话读取",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R05",
+        "name": "csrf-rejection",
+        "label": "CSRF 拒绝",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R06",
+        "name": "course-create-edit-search-idempotency",
+        "label": "课程新增/修改/搜索/幂等",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R07",
+        "name": "cross-account-course",
+        "label": "跨账号课程拒绝",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R08",
+        "name": "invalid-pptx-rejection",
+        "label": "伪 PPTX 拒绝",
+        "initial": "FAIL",
+        "retest": "PASS",
+        "final": "PASS"
+      },
+      {
+        "id": "R09",
+        "name": "short-pptx-upload-text-preview-index",
+        "label": "短课件上传/文字/预览/索引",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R10",
+        "name": "read-download-thumbnails-progress",
+        "label": "原件/PDF/页面/缩略图/阅读进度",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R11",
+        "name": "cross-account-material-and-asset",
+        "label": "跨账号课件/页面拒绝",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R12",
+        "name": "focus-split-and-batch",
+        "label": "重点拆分预览与批量添加",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R13",
+        "name": "keyword-location",
+        "label": "关键词定位",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R14",
+        "name": "flash-focus-relevance",
+        "label": "Flash 辅助定位",
+        "initial": "FAIL",
+        "retest": "PASS",
+        "final": "PASS"
+      },
+      {
+        "id": "R15",
+        "name": "manual-confirm-and-mastery-filter",
+        "label": "人工确认/掌握筛选",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R16",
+        "name": "flash-short-summary-and-md-download",
+        "label": "Flash 短摘要与 UTF-8 下载",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R17",
+        "name": "summary-edit-conflict-adopt",
+        "label": "摘要编辑/409 冲突/采用旧版",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R18",
+        "name": "flash-text-question-no-summary",
+        "label": "Flash 文字答疑默认不附摘要",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R19",
+        "name": "flash-image-only-question",
+        "label": "Flash 纯图片答疑",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R20",
+        "name": "flash-followup-with-summary",
+        "label": "Flash 附带冻结摘要追问",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R21",
+        "name": "long-pptx-upload-processing",
+        "label": "36 页长课件上传处理",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R22",
+        "name": "flash-long-summary-parts-then-final",
+        "label": "Flash 两段 PART 后 FINAL 汇总",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R23",
+        "name": "delete-course-material-and-preserve-chat-history",
+        "label": "自建测试资源删除/清理与历史保留",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      },
+      {
+        "id": "R24",
+        "name": "logout-and-relogin",
+        "label": "退出后拒绝与重新登录",
+        "initial": "PASS",
+        "retest": null,
+        "final": "PASS"
+      }
+    ]
+  },
+  "realAi": {
+    "applicationAttempts": 9,
+    "applicationSucceeded": 8,
+    "applicationFailed": 1,
+    "explicitDiagnosticOutsideApplication": 1,
+    "totalRealRequests": 10,
+    "automaticPaidRetries": 0,
+    "knownApplicationSuccessTokens": 16132,
+    "knownDiagnosticTokens": 324,
+    "failedRequestTokens": null,
+    "billingTotalKnown": false,
+    "applicationAudit": [
+      {
+        "scene": "FOCUS_LOCATE",
+        "model": "deepseek-flash",
+        "prompt_version": "focus-v1",
+        "status": "FAILED",
+        "input_tokens": null,
+        "output_tokens": null,
+        "duration_ms": 1301
+      },
+      {
+        "scene": "SUMMARY_FINAL",
+        "model": "deepseek-flash",
+        "prompt_version": "summary-v1",
+        "status": "SUCCEEDED",
+        "input_tokens": 314,
+        "output_tokens": 377,
+        "duration_ms": 3278
+      },
+      {
+        "scene": "READER_CHAT",
+        "model": "deepseek-flash",
+        "prompt_version": "reader-v2",
+        "status": "SUCCEEDED",
+        "input_tokens": 474,
+        "output_tokens": 273,
+        "duration_ms": 2174
+      },
+      {
+        "scene": "READER_CHAT",
+        "model": "deepseek-flash",
+        "prompt_version": "reader-v2",
+        "status": "SUCCEEDED",
+        "input_tokens": 1302,
+        "output_tokens": 121,
+        "duration_ms": 1843
+      },
+      {
+        "scene": "READER_CHAT",
+        "model": "deepseek-flash",
+        "prompt_version": "reader-v2",
+        "status": "SUCCEEDED",
+        "input_tokens": 1250,
+        "output_tokens": 315,
+        "duration_ms": 2415
+      },
+      {
+        "scene": "SUMMARY_PART",
+        "model": "deepseek-flash",
+        "prompt_version": "summary-v1",
+        "status": "SUCCEEDED",
+        "input_tokens": 2946,
+        "output_tokens": 1175,
+        "duration_ms": 7096
+      },
+      {
+        "scene": "SUMMARY_PART",
+        "model": "deepseek-flash",
+        "prompt_version": "summary-v1",
+        "status": "SUCCEEDED",
+        "input_tokens": 2344,
+        "output_tokens": 977,
+        "duration_ms": 5900
+      },
+      {
+        "scene": "SUMMARY_FINAL",
+        "model": "deepseek-flash",
+        "prompt_version": "summary-v1",
+        "status": "SUCCEEDED",
+        "input_tokens": 2376,
+        "output_tokens": 1595,
+        "duration_ms": 7135
+      },
+      {
+        "scene": "FOCUS_LOCATE",
+        "model": "deepseek-flash",
+        "prompt_version": "focus-v2",
+        "status": "SUCCEEDED",
+        "input_tokens": 226,
+        "output_tokens": 67,
+        "duration_ms": 1474
+      }
+    ]
+  },
+  "browser": {
+    "desktop": [
+      "课程搜索/空结果",
+      "课件处理能力",
+      "重点确认/原页跳转/返回选择",
+      "翻页/150%缩放/刷新页码恢复",
+      "三轮真实问答历史/图片依据/摘要版本/已删来源",
+      "36页摘要/编辑预览/离开提醒/取消保留v1/MD下载/第21页来源跳转"
+    ],
+    "responsive": [
+      {
+        "width": 390,
+        "height": 844,
+        "page": "summary",
+        "scrollWidth": 375
+      },
+      {
+        "width": 320,
+        "height": 740,
+        "page": "summary",
+        "scrollWidth": 305
+      },
+      {
+        "width": 320,
+        "height": 740,
+        "page": "reader",
+        "scrollWidth": 305
+      },
+      {
+        "width": 320,
+        "height": 740,
+        "page": "chat",
+        "scrollWidth": 305
+      }
+    ],
+    "draftSurvivedPanelSwitch": true,
+    "summaryDefaultOff": true,
+    "summaryCanBeSelected": true,
+    "browserAdditionalAiRequests": 0,
+    "viewportReset": true
+  },
+  "fixtures": [
+    {
+      "name": "chat-fixture.pptx",
+      "bytes": 59978,
+      "sha256": "2afe62427600e43b8616ab6b6a824b13a96cf25513d5c3673a4e407e1983b060"
+    },
+    {
+      "name": "regression-long-20261107.pptx",
+      "bytes": 70354,
+      "sha256": "db1f80132f035e69bda40c2274e1ac6dcc9dc1986bf1bea77d56ea3f849d5bbe"
+    }
+  ],
+  "openQualityIssues": [
+    {
+      "id": "REG-02",
+      "severity": "一般",
+      "state": "OPEN",
+      "description": "长摘要称第21页文字不完整且未纳入结论，同时需求主题仍引用第21页；原始合成页有完整488字符。分段边界影响是待验证推测，未据此宣布根因。"
+    },
+    {
+      "id": "REG-03",
+      "severity": "轻微",
+      "state": "OPEN",
+      "description": "附摘要追问补充段说材料仅一页，但课件有两页，其中一页无文字；可提取文字覆盖范围和物理页数表述仍可能混淆。"
+    }
+  ],
+  "limits": [
+    "笔记、三种习题来源、练习/错题尚未实现，不纳入通过范围",
+    "真实AI只使用自制2页和重复性36页样本，复杂图表/公式及检索准确率未验收",
+    "取消/超时/恢复/并发/恶意来源等主要由本地HTTP替身与集成测试验证，不能当成真实网络故障或进程强杀实测",
+    "远程CI、正式团队评审与验收尚无本轮通过证据",
+    "功能链路通过不代表AI文本无事实错误，REG-02/03保持公开待改进"
+  ],
+  "downloadEvidence": {
+    "originalSha256": "eab76d829e5a2a0288636911481418625c6828a751692612d358195e3d3ec785",
+    "archivedSha256": "193a7459a5851f764e0cd2a6c58470fecfffaa7dce602ea1e87ae6eeca5bc620",
+    "normalization": "Only strip trailing whitespace and normalize line endings; semantic content unchanged"
+  }
+}

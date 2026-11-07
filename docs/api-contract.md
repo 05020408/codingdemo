@@ -10,6 +10,8 @@ v0.3.0 增加 `GET /api/courses/{id}/focus-capabilities`，返回 aiAvailable、
 
 ## 1 通用协议
 
+v0.4.4 调整 AI 候选校验：每个返回项均须通过候选标识、连续原文及理由校验，同页多个合法项合并保留第一条；重复项含伪造引文仍整体拒绝。JSON接口不变，成功方法仍为 `AI_RERANK`，审计提示词版本 `focus-v2`，不自动重发。见[真实回归](records/full-regression-20261107.md)。
+
 - 路径统一以 `/api` 开头；普通请求和响应为 UTF-8 JSON，上传为 multipart，文件内容使用对应媒体类型。
 - ID 为 UUID 字符串，时间为 UTC ISO 8601；页面号从 1 开始。示例 ID 只是协议样例，不是实际数据。
 - 列表使用 page、size，默认 1、20，size 最大 100；响应包含 items、page、size、total。排序字段由服务端白名单限定。

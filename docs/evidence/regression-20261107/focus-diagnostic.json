@@ -1,0 +1,36 @@
+{
+  "scene": "direct synthetic diagnostic (not app quota audit)",
+  "model": "deepseek-flash",
+  "finishReason": "stop",
+  "content": "{\"matches\":[{\"slideId\":\"55db729a-821d-4784-871f-a26efb1bb7fb\",\"quote\":\"边界值测试：优先测试输入有效范围的边界及其两侧。\",\"reason\":\"直接定义边界值测试的核心策略\"},{\"slideId\":\"55db729a-821d-4784-871f-a26efb1bb7fb\",\"quote\":\"例如有效年龄范围为 18 至 60，应考虑 17、18、19、59、60、61。\",\"reason\":\"给出边界值测试的具体示例\"}]}",
+  "usage": {
+    "prompt_tokens": 204,
+    "completion_tokens": 120,
+    "total_tokens": 324,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 204
+  },
+  "validation": [
+    {
+      "knownSlide": true,
+      "exactQuote": true,
+      "quote": "边界值测试：优先测试输入有效范围的边界及其两侧。",
+      "reason": "直接定义边界值测试的核心策略"
+    },
+    {
+      "knownSlide": true,
+      "exactQuote": true,
+      "quote": "例如有效年龄范围为 18 至 60，应考虑 17、18、19、59、60、61。",
+      "reason": "给出边界值测试的具体示例"
+    }
+  ],
+  "candidates": [
+    {
+      "slideId": "55db729a-821d-4784-871f-a26efb1bb7fb",
+      "text": "知笺 · 合成答疑课件\n\n边界值测试：优先测试输入有效范围的边界及其两侧。\n例如有效年龄范围为 18 至 60，应考虑 17、18、19、59、60、61。\n等价类划分：把输入分成预期行为相同的类别，再从每类选择代表值。"
+    }
+  ]
+}

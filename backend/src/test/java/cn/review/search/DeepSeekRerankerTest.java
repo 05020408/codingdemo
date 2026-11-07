@@ -143,6 +143,31 @@ class DeepSeekRerankerTest {
   }
 
   @Test
+  void multipleValidQuotesForOnePageKeepOneVerifiedMatch() throws Exception {
+    reply.set(
+        response(
+            "{\"matches\":[{\"slideId\":\"slide-1\",\"quote\":\"敏捷开发\",\"reason\":\"定义主题\"},{\"slideId\":\"slide-1\",\"quote\":\"个体和互动\",\"reason\":\"说明价值观\"}]}"));
+    var result = ai.rank(owner, course, id(), "敏捷", pages);
+    assertThat(result.warning()).isNull();
+    assertThat(result.matches()).hasSize(1);
+    assertThat(result.matches().get(0).quote()).isEqualTo("敏捷开发");
+    assertThat(calls).hasValue(1);
+    assertThat(json.readTree(request.get()).at("/messages/0/content").asText())
+        .contains("每个slideId最多出现一次");
+  }
+
+  @Test
+  void forgedQuoteInDuplicatePageIsStillRejected() throws Exception {
+    reply.set(
+        response(
+            "{\"matches\":[{\"slideId\":\"slide-1\",\"quote\":\"敏捷开发\",\"reason\":\"相关\"},{\"slideId\":\"slide-1\",\"quote\":\"伪造的原文\",\"reason\":\"相关\"}]}"));
+    var result = ai.rank(owner, course, id(), "敏捷", pages);
+    assertThat(result.warning()).isEqualTo("AI_INVALID_RESPONSE");
+    assertThat(result.matches()).isEmpty();
+    assertThat(calls).hasValue(1);
+  }
+
+  @Test
   void malformedOrTruncatedResponseIsRejectedWithoutPaidRetry() throws Exception {
     reply.set("{\"choices\":[{\"finish_reason\":\"length\",\"message\":{\"content\":\"{}\"}}]}");
     var result = ai.rank(owner, course, id(), "敏捷", pages);
