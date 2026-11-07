@@ -107,6 +107,7 @@ docs/       需求、设计、Scrum 计划、AI 日志及实际执行记录
 | [第二轮界面优化记录](docs/records/ui-round2-20261030.md) | v0.4.2 阅读布局、重点核对、答疑历史恢复、47 项回归与本地替身验证 |
 | [课件核心摘要记录](docs/records/material-summary-20261104.md) | v0.4.3 摘要版本、可选答疑背景、66 项回归与真实合成样本 |
 | [Flash 全功能回归](docs/records/full-regression-20261107.md) | v0.4.4 定位校验修复、68 项回归、24 组功能检查及开放语义问题 |
+| [AI 专项可用性复核](docs/records/ai-usability-20261107.md) | 同日新一轮8次真实Flash调用全成功、38项专项测试及摘要语义限制 |
 | [实验过程材料](docs/process-evidence.md) / [AI 使用日志](docs/ai-usage-log.md) | 报告证据、真实活动与人工审阅待办 |
 | [开发与版本管理](docs/development-workflow.md) / [变更记录](CHANGELOG.md) | 提交、推送、版本和配置规则 |
 

@@ -1,0 +1,391 @@
+{
+  "date": "2026-11-07",
+  "run": "787e9a4",
+  "purpose": "fresh AI usability check",
+  "cases": [
+    {
+      "name": "synthetic-short-material-ready",
+      "status": "PASS",
+      "seconds": 18.27,
+      "result": "6fbb2735-2d38-472b-99c8-798d8a1bc58b"
+    },
+    {
+      "name": "ai-and-image-capabilities",
+      "status": "PASS",
+      "seconds": 0.01,
+      "result": {
+        "focus": {
+          "aiAvailable": true,
+          "readyMaterials": 1,
+          "totalMaterials": 1,
+          "maxBatchSize": 50
+        },
+        "chat": {
+          "aiAvailable": true,
+          "imageAvailable": true,
+          "remainingToday": 10,
+          "maxQuestionLength": 2000,
+          "maxTurns": 100
+        },
+        "summary": {
+          "estimatedRequests": 1,
+          "remainingToday": 10,
+          "aiAvailable": true,
+          "blockedReason": ""
+        }
+      }
+    },
+    {
+      "name": "flash-focus-relevance",
+      "status": "PASS",
+      "seconds": 2.05,
+      "result": {
+        "method": "AI_RERANK",
+        "warnings": [],
+        "matches": [
+          {
+            "linkId": "974d2a2a-72b6-434c-9ed5-f21bb8f993f5",
+            "slideId": "2b2218b2-3ac5-4988-9321-4416c6bfab4b",
+            "materialId": "6fbb2735-2d38-472b-99c8-798d8a1bc58b",
+            "materialName": "chat-fixture.pptx",
+            "pageNo": 1,
+            "title": null,
+            "origin": "AUTO",
+            "decision": "CANDIDATE",
+            "needsReview": false,
+            "sourceAvailable": true,
+            "previewAvailable": true,
+            "evidenceText": "边界值测试：优先测试输入有效范围的边界及其两侧。\n例如有效年龄范围为 18 至 60，应考虑 17、18、19、59、60、61。",
+            "reason": "直接定义边界值测试并给出边界及两侧取值示例，与复习重点高度相关。",
+            "version": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "flash-short-summary-and-markdown",
+      "status": "PASS",
+      "seconds": 4.06,
+      "result": {
+        "versionId": "55fae728-cdef-4022-9fb3-01fa06a19e43",
+        "status": "SUCCEEDED",
+        "pages": 2,
+        "emptyPages": 1,
+        "steps": 1,
+        "idempotentReplay": true,
+        "markdown": "# 边界值测试与等价类划分\n\n## 整体概述\n\n本课件介绍两种常用的测试用例设计方法：边界值测试与等价类划分。边界值测试关注输入有效范围的边界及其两侧取值；等价类划分将输入按预期行为划分为若干类别，并从每类中选取代表值。两者都用于在有限用例中提高测试的针对性。\n\n## 边界值测试与等价类划分\n\n边界值测试的核心是优先测试输入有效范围的边界及其两侧。例如，当有效年龄范围为18至60时，应考虑17、18、19、59、60、61这些取值，即覆盖下边界、上边界以及各自相邻的一侧。等价类划分则是把输入分成预期行为相同的类别，再从每一类中选择代表值进行测试。两种方法都围绕输入取值空间来设计用例：边界值测试聚焦范围边缘，等价类划分聚焦行为一致的输入类别。\n\n参考原页：[第 1 页](/materials/6fbb2735-2d38-472b-99c8-798d8a1bc58b/read?page=1) \n\n## 复习清单\n\n- 理解边界值测试优先测试有效范围的边界及其两侧\n- 能根据有效范围（如18至60）列出应测试的边界及相邻取值\n- 理解等价类划分是按预期行为相同的类别划分输入并选取代表值\n\n## 内容与识别限制\n\n材料仅包含一页内容，未给出两种方法的完整定义、适用条件、步骤或更多示例，也未说明二者结合使用的具体规则。\n\n基于课件提取文字整理；包含隐藏页，1 页无可提取文字。图片、复杂图表和公式可能未被覆盖；请对照原课件核验。\n"
+      }
+    },
+    {
+      "name": "flash-text-answer-default-no-summary",
+      "status": "PASS",
+      "seconds": 3.05,
+      "result": {
+        "turnId": "9860d67d-5124-4f17-8ddd-d844edb50f9a",
+        "status": "SUCCEEDED",
+        "idempotentReplay": true,
+        "question": "根据本页说明边界值测试的含义，并列出年龄18至60的六个边界测试输入。",
+        "summary": null,
+        "sources": [
+          {
+            "slideId": "2b2218b2-3ac5-4988-9321-4416c6bfab4b",
+            "materialId": "6fbb2735-2d38-472b-99c8-798d8a1bc58b",
+            "materialName": "chat-fixture.pptx",
+            "pageNo": 1,
+            "imageAttached": false,
+            "truncated": false,
+            "available": true,
+            "changed": false
+          }
+        ],
+        "answer": {
+          "explanation": "本页把边界值测试定义为：优先测试输入有效范围的边界及其两侧。对有效年龄范围 18 至 60，页面给出的六个测试输入是 17、18、19、59、60、61。",
+          "supplement": "可以理解为既覆盖边界本身（18、60），也覆盖边界外侧的无效值（17、61）和边界内侧的相邻有效值（19、59）。",
+          "limitations": "本页只给出定义和示例，未进一步说明边界值测试的完整设计步骤或与其他方法的关系。",
+          "citations": [
+            {
+              "slideId": "2b2218b2-3ac5-4988-9321-4416c6bfab4b",
+              "kind": "TEXT",
+              "quote": "边界值测试：优先测试输入有效范围的边界及其两侧。"
+            },
+            {
+              "slideId": "2b2218b2-3ac5-4988-9321-4416c6bfab4b",
+              "kind": "TEXT",
+              "quote": "例如有效年龄范围为 18 至 60，应考虑 17、18、19、59、60、61。"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "flash-image-only-answer",
+      "status": "PASS",
+      "seconds": 3.06,
+      "result": {
+        "turnId": "f0e612a1-32f7-4b6a-b6fc-f55c10d15b59",
+        "status": "SUCCEEDED",
+        "idempotentReplay": true,
+        "question": "只依据附图，依次读出三个流程框中的文字和箭头方向。不要把图片判断称作提取文字。",
+        "summary": null,
+        "sources": [
+          {
+            "slideId": "38b6affa-b8fd-4b7f-8b04-37d7e26dcc7a",
+            "materialId": "6fbb2735-2d38-472b-99c8-798d8a1bc58b",
+            "materialName": "chat-fixture.pptx",
+            "pageNo": 2,
+            "imageAttached": true,
+            "truncated": false,
+            "available": true,
+            "changed": false
+          }
+        ],
+        "answer": {
+          "explanation": "依据附图，页面标题为“课件定位的处理流程”。图中三个流程框从左到右依次为“输入课件”“提取文字”“建立索引”；箭头方向均为从左指向右，即“输入课件”指向“提取文字”，“提取文字”指向“建立索引”。",
+          "supplement": "",
+          "limitations": "该页没有可提取的文本，以上内容均来自对附图的图像判断，并非文字提取。",
+          "citations": [
+            {
+              "slideId": "38b6affa-b8fd-4b7f-8b04-37d7e26dcc7a",
+              "kind": "IMAGE",
+              "quote": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "flash-followup-with-summary",
+      "status": "PASS",
+      "seconds": 4.08,
+      "result": {
+        "turnId": "e78aeba1-f212-4ea2-ad37-7fd6a1e7ebb2",
+        "status": "SUCCEEDED",
+        "idempotentReplay": true,
+        "question": "结合上文和所附摘要比较边界值测试与等价类划分，区分原文依据与摘要背景，并说明图像未被文字摘要覆盖。",
+        "summary": {
+          "versionId": "55fae728-cdef-4022-9fb3-01fa06a19e43",
+          "number": 1,
+          "origin": "AI",
+          "unavailable": false,
+          "stale": false
+        },
+        "sources": [
+          {
+            "slideId": "2b2218b2-3ac5-4988-9321-4416c6bfab4b",
+            "materialId": "6fbb2735-2d38-472b-99c8-798d8a1bc58b",
+            "materialName": "chat-fixture.pptx",
+            "pageNo": 1,
+            "imageAttached": false,
+            "truncated": false,
+            "available": true,
+            "changed": false
+          }
+        ],
+        "answer": {
+          "explanation": "本页文字直接给出两种方法的核心：边界值测试是“优先测试输入有效范围的边界及其两侧”，并以有效年龄范围 18 至 60 为例列出 17、18、19、59、60、61；等价类划分是“把输入分成预期行为相同的类别，再从每类选择代表值”。据此，原文层面的区别在于：边界值测试聚焦有效范围的边缘及相邻取值，等价类划分聚焦预期行为一致的输入类别并取代表值。",
+          "supplement": "结合所附摘要（仅为背景，不是原文证据）：两种方法都围绕输入取值空间设计用例，边界值测试关注范围边缘，等价类划分关注行为一致的类别，目的都是在有限用例中提高针对性。摘要还提到材料未给出两种方法的完整定义、适用条件、步骤或结合使用规则。",
+          "limitations": "本页只有一页文字，未说明两种方法的完整步骤、适用条件或如何结合使用；摘要中关于“提高测试针对性”等概括属于背景总结，不能作为原文依据。本次未附任何图片，因此不能判断图表内容，也不能对图像作任何图像判断；摘要中提到的隐藏页、无可提取文字页及图片/图表覆盖情况无法由本次页面核实。",
+          "citations": [
+            {
+              "slideId": "2b2218b2-3ac5-4988-9321-4416c6bfab4b",
+              "kind": "TEXT",
+              "quote": "边界值测试：优先测试输入有效范围的边界及其两侧。"
+            },
+            {
+              "slideId": "2b2218b2-3ac5-4988-9321-4416c6bfab4b",
+              "kind": "TEXT",
+              "quote": "等价类划分：把输入分成预期行为相同的类别，再从每类选择代表值。"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "summary-snapshot-survives-later-edit",
+      "status": "PASS",
+      "seconds": 0.03,
+      "result": {
+        "currentVersion": "7dcfb4d6-e05f-41bb-b90b-f41cd7eaf5b2",
+        "historyStillUses": "55fae728-cdef-4022-9fb3-01fa06a19e43"
+      }
+    },
+    {
+      "name": "synthetic-long-material-ready",
+      "status": "PASS",
+      "seconds": 17.19,
+      "result": "c3ac09de-40a4-43c3-a211-eeba1854221f"
+    },
+    {
+      "name": "flash-long-summary-two-parts-final",
+      "status": "PASS",
+      "seconds": 23.2,
+      "result": {
+        "versionId": "95fb1957-5095-47a3-9aad-0a1cf5a6bba0",
+        "status": "SUCCEEDED",
+        "pages": 36,
+        "emptyPages": 0,
+        "steps": 3,
+        "idempotentReplay": true,
+        "markdown": "# 软件测试与交付的核心实践\n\n## 整体概述\n\n材料围绕需求、测试设计、集成测试与持续交付四个环节展开，强调从可观察行为与验收标准出发，用边界值与等价类设计用例，在集成层验证契约、持久化与事务边界，并通过持续集成保留可追溯证据。各页案例统一要求独立检查正常输入、无效输入、重复输入与保存状态，并记录预期与实际结果。\n\n## 需求的可验证性与追溯\n\n需求应描述可观察行为、有效输入、约束与验收标准；对含糊术语需与利益相关方复核，并让每个测试追溯到一条已陈述的明确规则。无效输入必须产生清晰错误，且不得改变已有记录。案例要求独立检查正常输入、无效输入、重复输入与保存状态，记录预期与实际结果，并能解释规则、给出一个反例并标明其来源。\n\n参考原页：[第 1 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=1) [第 5 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=5) [第 9 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=9) [第 13 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=13) [第 17 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=17) [第 21 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=21) [第 25 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=25) [第 29 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=29) [第 33 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=33) \n\n## 测试设计：边界值与等价类\n\n边界值分析选取上下限及其邻近值；等价类划分把预期行为相同的输入归为一类，并同时使用有效类和无效类。预期结果须明确写出，不能把单个示例当作完整覆盖。该设计与需求规则相衔接：每个用例都应能对应到一条已声明的规则，并通过反例检验规则边界。案例同样检查正常、无效、重复输入与保存状态，记录预期与实际结果，并要求解释规则、给出反例及来源。\n\n参考原页：[第 2 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=2) [第 6 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=6) [第 10 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=10) [第 14 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=14) [第 18 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=18) [第 22 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=22) [第 26 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=26) [第 30 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=30) [第 34 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=34) \n\n## 集成测试：契约、持久化与事务边界\n\n集成测试验证组件契约、数据库持久化和事务边界，并检查重复提交、归属与并发。成功的HTTP响应必须对应已提交的记录；外部超时需要显式的未知状态。这些检查把需求中“不改变已有记录”等约束延伸到跨组件与持久化层面。案例检查正常输入、无效输入、重复输入和保存状态，记录预期与实际结果，复核时解释规则、给出反例并标明来源。\n\n参考原页：[第 3 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=3) [第 7 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=7) [第 11 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=11) [第 15 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=15) [第 19 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=19) [第 23 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=23) [第 27 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=27) [第 31 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=31) [第 35 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=35) \n\n## 交付与持续集成\n\n持续集成为每次变更运行可重复检查，测试样本应保持合成数据。发布前复核失败项，保留版本化证据、限制和回滚信息。自动化检查支持评审，但不替代人工验收。该环节承接前述测试设计与集成验证，使结果可追溯、可回滚。案例要求独立检查正常输入、无效输入、重复输入与保存状态，记录预期和实际结果，并解释规则、给出反例及来源。\n\n参考原页：[第 4 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=4) [第 8 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=8) [第 12 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=12) [第 16 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=16) [第 20 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=20) [第 24 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=24) [第 28 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=28) [第 32 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=32) [第 36 页](/materials/c3ac09de-40a4-43c3-a211-eeba1854221f/read?page=36) \n\n## 复习清单\n\n- 能说明需求应包含可观察行为、有效输入、约束与验收标准\n- 能对含糊术语与利益相关方复核并建立测试到规则的追溯\n- 能说明无效输入须清晰报错且不改变已有记录\n- 能应用边界值分析选取上下限及邻近值\n- 能用等价类划分区分有效类与无效类并明确预期结果\n- 能说明集成测试需验证契约、持久化、事务边界、重复提交、归属与并发\n- 能说明成功HTTP响应须对应已提交记录，外部超时需显式未知状态\n- 能说明持续集成、合成样本、版本化证据、限制与回滚信息的作用\n- 能通过解释规则、给出反例并标明来源完成复核\n\n## 内容与识别限制\n\n材料为重复的合成教学页，仅给出原则性要点与统一案例框架，未提供具体系统、数据、工具或判定阈值；案例中的预期与实际结果需自行记录，材料未给出结论，不能据此推断必考内容。\n\n基于课件提取文字整理；包含隐藏页，0 页无可提取文字。图片、复杂图表和公式可能未被覆盖；请对照原课件核验。\n"
+      }
+    }
+  ],
+  "ids": {
+    "ownerId": "9bda6dc7-2ad3-401d-876b-531d1370a0cd",
+    "courseId": "7d055f52-b677-432a-898c-5ad888642e01",
+    "materialId": "6fbb2735-2d38-472b-99c8-798d8a1bc58b",
+    "focusId": "a901f7de-88ff-4b48-83a8-ca1610af57c2",
+    "summaryVersionId": "55fae728-cdef-4022-9fb3-01fa06a19e43",
+    "sessionId": "e9ac7d79-dea0-4e3e-a3f9-56ccd3813999",
+    "longMaterialId": "c3ac09de-40a4-43c3-a211-eeba1854221f"
+  },
+  "health": {
+    "status": "UP",
+    "database": "UP",
+    "version": "0.4.4"
+  },
+  "endCapabilities": {
+    "aiAvailable": true,
+    "imageAvailable": true,
+    "remainingToday": 2,
+    "maxQuestionLength": 2000,
+    "maxTurns": 100
+  },
+  "passed": 10,
+  "failed": 0,
+  "applicationVersion": "0.4.4",
+  "codeBaseline": "7d6aaff6db32d1d5dd689389918d7df048453aff",
+  "verificationMethod": "Fresh authenticated HTTP calls through the running application, plus local provider-double automated tests; no browser interaction this run",
+  "realAi": {
+    "calls": [
+      {
+        "scene": "FOCUS_LOCATE",
+        "model": "deepseek-flash",
+        "prompt_version": "focus-v2",
+        "status": "SUCCEEDED",
+        "input_tokens": 226,
+        "output_tokens": 99,
+        "duration_ms": 1155
+      },
+      {
+        "scene": "SUMMARY_FINAL",
+        "model": "deepseek-flash",
+        "prompt_version": "summary-v1",
+        "status": "SUCCEEDED",
+        "input_tokens": 318,
+        "output_tokens": 314,
+        "duration_ms": 2711
+      },
+      {
+        "scene": "READER_CHAT",
+        "model": "deepseek-flash",
+        "prompt_version": "reader-v2",
+        "status": "SUCCEEDED",
+        "input_tokens": 484,
+        "output_tokens": 235,
+        "duration_ms": 1913
+      },
+      {
+        "scene": "READER_CHAT",
+        "model": "deepseek-flash",
+        "prompt_version": "reader-v2",
+        "status": "SUCCEEDED",
+        "input_tokens": 1299,
+        "output_tokens": 135,
+        "duration_ms": 1328
+      },
+      {
+        "scene": "READER_CHAT",
+        "model": "deepseek-flash",
+        "prompt_version": "reader-v2",
+        "status": "SUCCEEDED",
+        "input_tokens": 1161,
+        "output_tokens": 372,
+        "duration_ms": 2904
+      },
+      {
+        "scene": "SUMMARY_PART",
+        "model": "deepseek-flash",
+        "prompt_version": "summary-v1",
+        "status": "SUCCEEDED",
+        "input_tokens": 2943,
+        "output_tokens": 1242,
+        "duration_ms": 6799
+      },
+      {
+        "scene": "SUMMARY_PART",
+        "model": "deepseek-flash",
+        "prompt_version": "summary-v1",
+        "status": "SUCCEEDED",
+        "input_tokens": 2337,
+        "output_tokens": 1014,
+        "duration_ms": 6320
+      },
+      {
+        "scene": "SUMMARY_FINAL",
+        "model": "deepseek-flash",
+        "prompt_version": "summary-v1",
+        "status": "SUCCEEDED",
+        "input_tokens": 2480,
+        "output_tokens": 1615,
+        "duration_ms": 6648
+      }
+    ],
+    "attempts": 8,
+    "succeeded": 8,
+    "failed": 0,
+    "automaticPaidRetries": 0,
+    "tokens": 16274
+  },
+  "automaticTests": {
+    "totals": {
+      "tests": 38,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "suites": [
+      {
+        "name": "cn.review.search.DeepSeekRerankerTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.chat.ReaderChatIntegrationTest",
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.summary.SummaryIntegrationTest",
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "cn.review.summary.SummaryContentTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "qualityReview": {
+    "textAnswer": "Six boundary inputs match source text: 17,18,19,59,60,61",
+    "imageAnswer": "Correctly read input material -> extract text -> build index, arrows left to right, image citation, text layer empty",
+    "longSummary": "Four topic sections and valid source links; prior REG-02 claim about incomplete page 21 did not recur in this one sample; issue remains open",
+    "REG-03": "REPRODUCED: short summary says material has only one page although physical PPTX has 2 pages and only 1 text-bearing page. App metadata and coverage footer remain correct",
+    "acceptance": "Availability checks pass; semantic accuracy is not fully accepted"
+  },
+  "limits": [
+    "Only synthetic 2-page and repetitive 36-page samples were sent to DeepSeek",
+    "Timeout/cancel/retry/quota/lease/concurrency/security cases use local automated doubles; no real network outage or forced process termination",
+    "No UI retest or remote CI verification this run; prior browser evidence belongs to the earlier full regression",
+    "Notes, question generation/import, practice and wrong answers are not implemented and not included"
+  ]
+}
