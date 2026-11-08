@@ -30,17 +30,11 @@ async function logout() {
     <aside class="sidebar">
       <RouterLink to="/" class="brand" aria-label="知笺首页" title="知笺首页"
         ><span class="brand-mark">知</span
-        ><span>知笺<small>期末复习工作台</small></span></RouterLink
+        ><span>知笺</span></RouterLink
       >
-      <p class="nav-caption">我的学习空间</p>
       <RouterLink to="/" class="nav-item" aria-label="我的课程" title="我的课程"
         ><AppIcon name="courses" /><span class="nav-item-text">我的课程</span></RouterLink
       >
-      <div class="sidebar-note">
-        <span class="small-label">你的复习路径</span>
-        <p>整理课件<br />找到重点<br />边读边问</p>
-        <span class="sidebar-note-foot">学习资料，按课程有序归档。</span>
-      </div>
       <div class="account">
         <span class="avatar">{{ auth.user.displayName.slice(0, 1) }}</span>
         <div>
@@ -57,8 +51,7 @@ async function logout() {
       <header class="topbar">
         <nav aria-label="当前位置" class="workspace-breadcrumb">
           <RouterLink v-if="route.path !== '/'" to="/">我的课程</RouterLink>
-          <span v-else>学习空间</span>
-          <AppIcon name="chevron" :size="13" />
+          <AppIcon v-if="route.path !== '/'" name="chevron" :size="13" />
           <span aria-current="page">{{ locationLabel }}</span>
         </nav>
         <span class="version-label">知笺 · 0.4.4</span>

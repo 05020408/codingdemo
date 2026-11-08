@@ -1,0 +1,28 @@
+/* Keep the workspace focused on course content and the next action. */
+.sidebar > .nav-item { margin-top: 38px; }
+.sidebar > .account { margin-top: auto; }
+.collection-heading { margin-bottom: 24px; }
+.collection-heading h1 { margin-bottom: 0; }
+.collection-caption h2 { font-size: 14px; color: var(--muted); }
+.course-card-link { display: flex; flex-direction: column; min-height: 215px; }
+.course-card-link .card-footer { margin-top: auto; padding-top: 22px; }
+.course-overview h1 { margin-top: 0; }
+.upload-panel { padding: 20px 24px; }
+.upload-introduction { align-items: center; }
+.focus-create { margin-top: 16px; }
+.chat-heading { padding: 14px 18px; }
+.chat-heading h2 { margin: 0; font-size: 17px; }
+.chat-empty { padding: 22px 12px; }
+.chat-context > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; }
+.answer-disclosure { margin: 12px 0; font-size: 12px; }
+.answer-disclosure > summary, .compact-help > summary { cursor: pointer; color: var(--accent); padding: 6px 0; }
+.answer-disclosure[open] > summary { margin-bottom: 8px; }
+.answer-disclosure > summary:focus-visible, .compact-help > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+.compact-help { font-size: 12px; }
+.compact-help p { margin-top: 6px; line-height: 1.8; }
+@media (max-width: 750px) {
+  .sidebar > .nav-item { margin-top: 0; }
+  .sidebar > .account { margin-top: 0; }
+  .upload-panel { padding: 18px; }
+  .course-card-link { min-height: 190px; }
+}

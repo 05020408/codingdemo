@@ -179,7 +179,7 @@ onBeforeUnmount(() => {
           >
           <p class="summary-eyebrow">课件核心摘要</p>
           <h1>{{ state.materialName }}</h1>
-          <p class="muted">按知识主题组织整份课件，保留回到原页的线索。</p>
+          <p class="muted">核心内容与复习清单</p>
         </div>
         <RouterLink class="button secondary" :to="`/materials/${id}/read`"
           >阅读课件 →</RouterLink
@@ -208,7 +208,7 @@ onBeforeUnmount(() => {
           }}
           步</strong
         >
-        <p>先理解各部分，再统一撰写；当前已保存的摘要仍可查看。</p>
+        <p>正在整理，已有摘要仍可查看。</p>
         <progress
           :max="active.totalSteps || 1"
           :value="active.completedSteps"
@@ -246,7 +246,7 @@ onBeforeUnmount(() => {
               预计 {{ state.estimatedRequests }} 次请求 · 今日剩余
               {{ state.remainingToday }} 次
             </p>
-            <p class="muted">与阅读答疑、重点定位共用额度。</p>
+            <details class="compact-help"><summary>生成说明</summary><p>将课件提取文字交由 DeepSeek 整理，与答疑、定位共用每日额度。图片、图表和公式可能未覆盖，请核对原课件。</p></details>
             <button
               class="button primary"
               :disabled="
@@ -399,18 +399,15 @@ onBeforeUnmount(() => {
                 "
                 @click="mutate(`/api/summary-generations/${version.id}/retry`)"
               >
-                恢复未完成部分（可能调用 AI）
+                继续生成（消耗额度）
               </button>
             </div>
           </template>
           <div v-else class="summary-empty">
-            <p class="summary-eyebrow">从整份课件开始</p>
-            <h2>先理清结构，再回到细节</h2>
+            <h2>还没有摘要</h2>
             <p>
-              生成一篇包含整体概述、核心主题和复习清单的摘要。阅读某页时，你可以选择将它附带给
-              AI。
+              生成核心内容与复习清单，阅读时可附带提问。
             </p>
-            <p class="muted">生成由你主动发起，查看和翻页不会触发 AI 请求。</p>
           </div>
         </main>
       </div>

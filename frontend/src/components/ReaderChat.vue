@@ -370,7 +370,6 @@ onBeforeUnmount(() => {
     </dialog>
     <header class="chat-heading">
       <div>
-        <span class="eyebrow">知笺 · 阅读助教</span>
         <h2>边读边问</h2>
       </div>
       <div class="chat-heading-actions"><span class="chat-model">DeepSeek</span><button v-if="collapsible" type="button" class="icon-button" aria-label="收起 AI 答疑" @click="emit('close')"><AppIcon name="close" :size="17" /></button></div>
@@ -408,10 +407,9 @@ onBeforeUnmount(() => {
     <p v-if="loading" class="chat-hint" role="status">正在读取对话…</p>
     <div v-else ref="historyEl" class="chat-history" :aria-busy="active">
       <div v-if="!turns.length" class="chat-empty">
-        <span class="chat-empty-mark">问</span>
-        <h3>{{ readonly ? "暂无对话内容" : "把不懂的地方留在这一页" }}</h3>
+        <h3>{{ readonly ? "暂无对话内容" : "有什么不懂的？" }}</h3>
         <p>
-          解释概念、补充例子，或继续追问。回答会保留本次使用的页面，方便回看原文。
+          针对当前页提问，或选择下方快捷问题。
         </p>
       </div>
       <article v-for="turn in turns" :key="turn.id" class="chat-turn">
@@ -467,6 +465,8 @@ onBeforeUnmount(() => {
             <h4>依据课件</h4>
             <p>{{ turn.answer.explanation }}</p>
           </section>
+          <details v-if="turn.answer.citations.length" class="answer-disclosure citation-disclosure">
+            <summary>课件依据 · {{ turn.answer.citations.length }} 处</summary>
           <div
             v-for="ref in turn.answer.citations"
             :key="ref.slideId + ref.kind + ref.quote"
@@ -497,16 +497,15 @@ onBeforeUnmount(() => {
             <blockquote v-if="ref.quote">{{ ref.quote }}</blockquote>
             <span v-else>基于本次附带的页面图片，请对照原图核对。</span>
           </div>
-          <section
-            v-if="turn.answer.supplement"
-            class="chat-answer chat-supplement"
-          >
-            <h4>补充解释与例子</h4>
+          </details>
+          <details v-if="turn.answer.supplement" class="chat-answer chat-supplement answer-disclosure">
+            <summary>补充解释与例子</summary>
             <p>{{ turn.answer.supplement }}</p>
-          </section>
-          <p v-if="turn.answer.limitations" class="chat-limitations">
-            {{ turn.answer.limitations }}
-          </p>
+          </details>
+          <details v-if="turn.answer.limitations" class="answer-disclosure">
+            <summary>回答限制</summary>
+            <p class="chat-limitations">{{ turn.answer.limitations }}</p>
+          </details>
           <button class="text-button chat-copy" @click="copy(turn)">
             {{ copied === turn.id ? "已复制" : "复制回答" }}
           </button>
@@ -524,14 +523,14 @@ onBeforeUnmount(() => {
             :disabled="busy || active || !caps?.aiAvailable || caps.remainingToday <= 0"
             @click="retry(turn)"
           >
-            重试本轮（会重新调用 AI）</button
+            重试（消耗额度）</button
           ><button
             v-if="!readonly"
             class="text-button"
             :disabled="uncertain"
             @click="question = turn.question"
           >
-            复制问题到输入框
+            编辑问题
           </button>
         </div>
       </article>
@@ -548,7 +547,7 @@ onBeforeUnmount(() => {
       @submit.prevent="send"
     >
       <div class="chat-context">
-        <div><span class="chat-context-caption">{{ uncertain ? "待确认的提问来源" : "下一条问题的页面" }}</span><strong>{{ materialName || "当前课件" }}</strong><span class="chat-current-page">原始第 {{ uncertain ? pendingPage : slide.pageNo }} 页{{ slide.isHidden && !uncertain ? ' · 隐藏页' : '' }}</span></div
+        <div><span class="chat-context-caption">{{ uncertain ? "待确认的提问来源" : "提问页" }}</span><span class="chat-current-page">第 {{ uncertain ? pendingPage : slide.pageNo }} 页{{ slide.isHidden && !uncertain ? ' · 隐藏页' : '' }}</span></div
         ><span v-if="caps?.aiAvailable"
           >今日剩余 {{ caps.remainingToday }} 次</span
         >
@@ -583,22 +582,22 @@ onBeforeUnmount(() => {
         placeholder="例如：这两个概念有什么区别？"
         @keydown.ctrl.enter.prevent="send"
       ></textarea>
-      <details class="chat-options-panel"><summary>提问设置<span>{{ image ? '附带本页图片' : '本页文字' }}{{ follow ? ' · 联系最近对话' : '' }}</span></summary>
+      <details class="chat-options-panel"><summary>提问设置<span>{{ image ? '文字 + 图片' : '本页文字' }}{{ attachSummary ? ' · 摘要' : '' }}{{ follow ? ' · 追问' : '' }}</span></summary>
       <div class="chat-options">
-        <label><input v-model="attachSummary" type="checkbox" :disabled="busy || uncertain || !summary?.current" />附带本课件核心摘要<span v-if="summary?.current">v{{ summary.current.number }} · {{ summary.current.origin==='USER'?'人工编辑':'AI 整理' }}{{ summary.current.stale?' · 可能过期':'' }}</span><span v-else>{{ summaryError || '尚未生成摘要' }}</span></label>
+        <label><input v-model="attachSummary" type="checkbox" :disabled="busy || uncertain || !summary?.current" />附带核心摘要<span v-if="summary?.current">v{{ summary.current.number }} · {{ summary.current.origin==='USER'?'人工编辑':'AI 整理' }}{{ summary.current.stale?' · 可能过期':'' }}</span><span v-else>{{ summaryError || '尚未生成摘要' }}</span></label>
         <div><RouterLink v-if="materialId" class="text-button" :to="`/materials/${materialId}/summary`">{{ summary?.current?'查看摘要':'生成摘要' }}</RouterLink><button type="button" class="text-button" :disabled="busy || uncertain" @click="loadSummary">刷新摘要版本</button></div>
         <label
           ><input
             v-model="follow"
             type="checkbox"
             :disabled="busy || uncertain"
-          />联系最近对话<span>最近 4 轮成功对话，至多 3 页文字</span></label
+          />联系最近对话<span>最近 4 轮 · 最多 3 页文字</span></label
         ><label
           ><input
             v-model="image"
             type="checkbox"
             :disabled="busy || uncertain || !caps?.imageAvailable"
-          />附带本页图片<span>{{ caps?.imageAvailable ? '图表或公式看不懂时可选' : '当前未开启图片答疑' }}</span></label
+          />附带本页图片<span>{{ caps?.imageAvailable ? '用于图表或公式' : '当前未开启图片答疑' }}</span></label
         >
       </div>
       <p v-if="attachSummary && summary?.current?.stale" class="notice">此摘要来源已变化，本次仍将使用所示旧版作为背景；请按需先重新生成。</p>

@@ -34,14 +34,14 @@ onBeforeUnmount(() => { disposed = true; });
 </script>
 <template>
   <section class="course-chat-history">
-    <div class="section-line"><h2>答疑记录<span v-if="!loading && !error" class="count">{{ items.length }} 段</span></h2><span>显示最近 50 段对话</span></div>
+    <div class="section-line"><h2>答疑记录<span v-if="!loading && !error" class="count">{{ items.length }} 段</span></h2><span>最近 50 段</span></div>
     <div v-if="loading" class="state-panel" role="status">正在加载答疑记录…</div>
     <p v-else-if="error" class="error" role="alert">{{ error }}<button class="text-button" @click="load">重新加载</button></p>
-    <div v-else-if="!items.length" class="history-empty"><span class="empty-symbol"><AppIcon name="chat" :size="28" /></span><h3>读课件时，把不懂的地方问清楚</h3><p>在课件阅读页打开 AI 答疑。提问和回答会保存在这里，随时回看来源。</p><RouterLink class="button secondary" :to="{ query: { tab: 'materials' } }">去查看课件<AppIcon name="arrow" :size="16" /></RouterLink></div>
+    <div v-else-if="!items.length" class="history-empty"><span class="empty-symbol"><AppIcon name="chat" :size="28" /></span><h3>暂无答疑记录</h3><p>在课件中提问，回答会保存在这里。</p><RouterLink class="button secondary" :to="{ query: { tab: 'materials' } }">去查看课件<AppIcon name="arrow" :size="16" /></RouterLink></div>
     <div v-else class="history-layout">
       <aside class="history-session-list" aria-label="历史对话"><h3>最近对话</h3><button v-for="item in items" :key="item.id" :class="{ selected: selected === item.id }" :aria-pressed="selected === item.id" @click="pick(item.id)"><strong>{{ item.title }}</strong><span>{{ formatDate(item.updatedAt) }}<span v-if="!item.materialAvailable"> · 来源已删除</span></span></button></aside>
       <div class="history-conversation">
-        <div class="history-resume"><p>回看问答与原页依据</p><RouterLink v-if="session?.materialAvailable" class="button secondary" :to="{ path: `/materials/${session.materialId}/read`, query: { chat: selected, panel: 'chat', from: 'history' } }">继续这段答疑<AppIcon name="arrow" :size="16" /></RouterLink><span v-else class="muted">来源课件已删除，仍可回看记录。</span></div>
+        <div class="history-resume"><RouterLink v-if="session?.materialAvailable" class="button secondary" :to="{ path: `/materials/${session.materialId}/read`, query: { chat: selected, panel: 'chat', from: 'history' } }">继续答疑<AppIcon name="arrow" :size="16" /></RouterLink><span v-else class="muted">来源课件已删除，仍可回看记录。</span></div>
         <ReaderChat :key="selected" :course-id="courseId" :session-id="selected" readonly />
       </div>
     </div>

@@ -435,12 +435,11 @@ onBeforeUnmount(() => {
         {{ caps.totalMaterials }} 份课件可检索</span
       >
     </div>
-    <ol class="focus-path" aria-label="重点复习步骤"><li><span>1</span>记下重点</li><li><span>2</span>定位课件原页</li><li><span>3</span>核对并确认</li></ol>
     <form
       class="focus-create"
       @submit.prevent="bulk && !preview.length ? split() : create()"
     >
-      <label for="focus-draft">记下老师划的重点，找到课件中的原文</label>
+      <label for="focus-draft">添加复习重点</label>
       <textarea
         id="focus-draft"
         v-model="draft"
@@ -484,7 +483,6 @@ onBeforeUnmount(() => {
       <p v-if="preview.length" class="muted">
         已按换行和编号拆分，可修改后确认添加。
       </p>
-      <p class="focus-create-help">先保存，再定位。关键词定位可独立使用；有候选页后，请对照原文确认。</p>
     </form>
     <p v-if="notice" class="notice" role="status">{{ notice }}</p>
     <div v-if="error" role="alert" class="error">
@@ -497,7 +495,7 @@ onBeforeUnmount(() => {
     <div v-else-if="!items.length && !selected && !mastery && !match && !error" class="state-panel">
       <h3>从一个重点开始复习</h3>
       <p>
-        保存重点后，知笺会从这门课的课件中寻找相关页面。你可以确认位置、手动补充，并记录掌握情况。
+        添加重点，定位到课件原页。
       </p>
     </div>
     <div v-else class="focus-layout">
@@ -551,7 +549,7 @@ onBeforeUnmount(() => {
       </aside>
       <div v-if="selected" id="focus-results" ref="detailPanel" class="focus-detail" :aria-busy="resultLoading">
         <div class="section-line">
-          <span class="eyebrow">当前复习重点</span>
+          <span class="eyebrow">当前重点</span>
           <button
             class="text-button danger-text"
             :disabled="busy"
@@ -584,7 +582,6 @@ onBeforeUnmount(() => {
         <div class="locate-panel">
           <div>
             <strong>在课件中定位</strong>
-            <p class="muted">先查看原文依据，再确认是否与重点相关。</p>
           </div>
           <button
             class="button primary"
@@ -605,15 +602,14 @@ onBeforeUnmount(() => {
               v-model="useAi"
               type="checkbox"
               :disabled="busy || selected.matchStatus === 'RUNNING'"
-            />使用 DeepSeek 辅助判断</label
+            />AI 辅助判断</label
           ><small v-if="useAi" class="muted"
-            >将发送当前重点与最多 20 个候选页的文字片段，会使用 AI
-            调用额度。</small
+            >将重点和候选页文字发送给 DeepSeek，消耗 1 次额度。</small
           ><small v-if="!caps.readyMaterials" class="muted"
             >请先上传课件，并等待文字提取和搜索索引完成。</small
           >
           <small v-if="editing !== selected.content" class="muted">请先保存或取消重点修改，再进行定位。</small>
-          <small v-if="!useAi && caps.readyMaterials" class="muted">使用关键词检索课件文字，不调用 AI。</small>
+          <small v-if="!useAi && caps.readyMaterials" class="muted">关键词定位 · 不调用 AI</small>
         </div>
         <p class="focus-result-status" role="status">
           {{ selectedLabel
@@ -638,7 +634,7 @@ onBeforeUnmount(() => {
         </p>
         <div class="section-line">
           <h3>
-            课件中的相关页面 <span class="count">{{ links.length }}</span>
+            相关页面 <span class="count">{{ links.length }}</span>
           </h3>
           <button class="text-button" :disabled="busy" @click="showManual">
             <AppIcon name="add" :size="15" />手动关联
@@ -656,7 +652,7 @@ onBeforeUnmount(() => {
           {{
             selected.matchStatus === "NO_MATCH"
               ? "没有找到相关页。可以换一种重点表述，或手动关联课件页。"
-              : selected.matchStatus === "RUNNING" ? "正在检索已就绪的课件，完成后自动显示结果。" : "定位后，候选页面会显示在这里。也可以手动关联已知页码。"
+              : selected.matchStatus === "RUNNING" ? "正在检索已就绪的课件，完成后自动显示结果。" : "点击定位，或手动关联页码。"
           }}
         </p>
         <article
@@ -676,7 +672,7 @@ onBeforeUnmount(() => {
             }}</span>
           </div>
           <p v-if="link.title" class="match-title">{{ link.title }}</p>
-          <span class="match-evidence-label">{{ link.origin === 'MANUAL' ? '手动关联的页面原文' : '匹配到的课件原文' }}</span>
+          <span class="match-evidence-label">{{ link.origin === 'MANUAL' ? '页面原文' : '原文依据' }}</span>
           <blockquote>
             {{ link.evidenceText || "此页尚无可提取文字，已保留手动关联。" }}
           </blockquote>

@@ -49,10 +49,9 @@ onBeforeUnmount(() => { disposed = true; generation++; });
       <header class="course-overview" :style="courseTheme(course.id)">
         <div class="course-cover-mark" aria-hidden="true">{{ course.name.slice(0, 1) }}</div>
         <div class="course-overview-content">
-          <span class="eyebrow">课程空间</span>
           <h1>{{ course.name }}</h1>
-          <p class="course-remark">{{ course.remark || "在这里上传课件、整理重点，开始这门课的复习。" }}</p>
-          <p class="course-dates"><span>创建于 {{ formatDate(course.createdAt) }}</span><span class="date-separator" aria-hidden="true">·</span><span>最近更新 {{ formatDate(course.updatedAt) }}</span></p>
+          <p v-if="course.remark" class="course-remark">{{ course.remark }}</p>
+          <p class="course-dates">更新于 {{ formatDate(course.updatedAt) }}</p>
         </div>
         <CourseActions :course="course" labelled @saved="saved" @deleted="router.replace('/')" />
       </header>

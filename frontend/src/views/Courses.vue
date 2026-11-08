@@ -55,7 +55,7 @@ async function clearSearch() {
 }
 async function added() {
   adding.value = false;
-  notice.value = "课程已添加，可以上传第一份课件了。";
+  notice.value = "课程已添加。";
   if (query.value || page.value !== 1) await navigate(1, false, "");
   else await load();
 }
@@ -78,9 +78,7 @@ onBeforeUnmount(() => { disposed = true; generation++; });
   <section class="page-content collection-page">
     <div class="page-heading collection-heading">
       <div>
-        <span class="eyebrow">我的学习空间</span>
         <h1>我的课程</h1>
-        <p class="muted">从课件到重点，把每一门课的复习整理在一起。</p>
       </div>
       <button class="button primary" @click="adding = true"><AppIcon name="add" />添加课程</button>
     </div>
@@ -96,36 +94,36 @@ onBeforeUnmount(() => { disposed = true; generation++; });
       <span class="collection-sort"><AppIcon name="clock" :size="15" />按最近更新排序</span>
     </div>
     <div class="collection-caption">
-      <h2>{{ query ? "搜索结果" : "课程目录" }}<span v-if="!loading && !error" class="count">{{ total }} 门</span></h2>
+      <h2>{{ query ? "搜索结果" : "全部课程" }}<span v-if="!loading && !error" class="count">{{ total }} 门</span></h2>
       <span v-if="query" class="muted">“{{ query }}”</span>
     </div>
     <div v-if="loading" class="course-grid skeleton-grid" role="status" aria-label="正在加载课程">
-      <span class="sr-only">正在加载课程目录…</span>
+      <span class="sr-only">正在加载全部课程…</span>
       <div v-for="n in 3" :key="n" class="course-skeleton" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     </div>
     <div v-else-if="error" class="state-panel">
-      <h2>课程目录暂时无法加载</h2>
+      <h2>全部课程暂时无法加载</h2>
       <p role="alert" class="error">{{ error }}</p>
       <button class="button secondary" @click="load"><AppIcon name="refresh" :size="17" />重新加载</button>
     </div>
     <div v-else-if="!total && query" class="empty-state search-empty">
       <span class="empty-symbol" aria-hidden="true"><AppIcon name="search" :size="28" /></span>
       <h2>没有找到相关课程</h2>
-      <p>试试更短的课程名称，或搜索课程备注中的关键词。</p>
+      <p>试试其他名称或备注。</p>
       <button class="button secondary" @click="clearSearch">查看全部课程</button>
     </div>
     <div v-else-if="!total" class="empty-state">
       <div class="empty-book" aria-hidden="true"><span>知笺</span><i></i><i></i><i></i></div>
       <h2>添加你的第一门课程</h2>
-      <p>为课程取个名字，再上传课件、整理重点。<br />下次回来，继续从这里开始。</p>
+      <p>添加课程后，即可上传课件。</p>
       <button class="button primary" @click="adding = true"><AppIcon name="add" />添加课程</button>
     </div>
     <div v-else class="course-grid">
       <article v-for="course in courses" :key="course.id" class="course-card" :style="courseTheme(course.id)">
         <RouterLink :to="`/courses/${course.id}`" class="course-card-link">
-          <div class="card-top"><span class="course-bookmark"><AppIcon name="file" :size="22" /></span><span class="course-kind">课程空间</span></div>
+          <div class="card-top"><span class="course-bookmark"><AppIcon name="file" :size="22" /></span></div>
           <h3>{{ course.name }}</h3>
-          <p class="course-card-remark">{{ course.remark || "上传课件，开始整理这门课的复习内容。" }}</p>
+          <p v-if="course.remark" class="course-card-remark">{{ course.remark }}</p>
           <div class="card-footer"><span>{{ formatDate(course.updatedAt) }} 更新</span><strong>进入课程<AppIcon name="arrow" :size="16" /></strong></div>
         </RouterLink>
         <CourseActions class="course-card-manage" :course="course" @saved="updated" @deleted="deleted" />

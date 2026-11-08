@@ -57,7 +57,7 @@ function availability(item: Material) {
   if (item.capabilities.canReadPreview) {
     if (item.stages.PREVIEW?.status === "FAILED") return { text: "可以阅读上次预览", tone: "warning" };
     if (!item.capabilities.canLocate) return { text: item.stages.INDEX?.status === "FAILED" ? "可以阅读，定位暂不可用" : "可以阅读，重点定位准备中", tone: "partial" };
-    return { text: processing(item) ? "可以阅读，内容正在更新" : "阅读与定位已就绪", tone: "ready" };
+    return { text: processing(item) ? "可以阅读，内容正在更新" : "可阅读 · 可定位", tone: "ready" };
   }
   if (item.stages.PREVIEW?.status === "FAILED") return { text: "页面预览生成失败", tone: "failed" };
   if (item.stages.PREVIEW?.status === "CANCELLED") return { text: "页面预览已取消", tone: "warning" };
@@ -248,9 +248,8 @@ onBeforeUnmount(() => {
       @dragover.prevent @dragenter.prevent="dragging = true" @dragleave="leaveDrop" @drop.prevent="drop">
       <div class="upload-introduction">
         <span class="upload-symbol" aria-hidden="true"><AppIcon name="upload" :size="23" /></span>
-        <div><h2>把课件放进这门课</h2>
-          <p>选择或拖入一份 PPTX，自动整理成可阅读、可定位的页面。</p>
-          <small>每份最大 20 MiB · 最多 300 页 · 保留原始页码</small>
+        <div><h2>上传课件</h2>
+          <small>PPTX · 最大 20 MiB · 300 页内，可拖入</small>
         </div>
       </div>
       <div class="upload-controls">
@@ -301,7 +300,7 @@ onBeforeUnmount(() => {
     <div v-else-if="total === 0 && !error" class="material-empty">
       <span class="empty-symbol" aria-hidden="true"><AppIcon name="file" :size="29" /></span>
       <h3>这门课还没有课件</h3>
-      <p>在上方选择课件，上传后就能在这里打开阅读。</p>
+      <p>上传一份 PPTX 开始阅读。</p>
     </div>
     <div v-else-if="materials.length" class="material-list">
       <article v-for="item in materials" :key="item.id" class="material-row">

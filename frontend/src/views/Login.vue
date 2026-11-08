@@ -52,18 +52,15 @@ async function submit() {
         ><span>知笺<small>期末复习工作台</small></span>
       </div>
       <div>
-        <span class="eyebrow">A LITTLE ORDER, EVERY DAY</span>
         <h1>把一门课，<br />慢慢读懂。</h1>
-        <p>从整理你的课程开始，<br />为接下来的复习留出一个专注的空间。</p>
+        <p>课件、重点与答疑，放在一起。</p>
       </div>
-      <span class="story-foot">整理 · 理解 · 巩固</span>
       <div class="paper-decoration" aria-hidden="true">
         <span>课程索引</span><i></i><i></i><i></i><b>01</b>
       </div>
     </section>
     <section class="login-panel">
       <form @submit.prevent="submit" class="login-form">
-        <span class="eyebrow">你的学习空间</span>
         <h2>{{ registering ? "创建账号" : "欢迎回来" }}</h2>
         <p class="muted">
           {{
@@ -130,7 +127,6 @@ async function submit() {
           </button>
         </p>
       </form>
-      <p class="login-footer">一点一点，拾起学过的知识。</p>
     </section>
   </main>
 </template>

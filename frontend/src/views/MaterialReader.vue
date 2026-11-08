@@ -163,7 +163,7 @@ onBeforeUnmount(() => { disposed = true; generation++; window.removeEventListene
       <header class="reader-heading">
         <div class="reader-title">
           <RouterLink class="back-link" :to="returnLocation">← {{ focusId ? "返回重点与定位结果" : route.query.from === 'history' ? "返回答疑记录" : courseName || "返回课程" }}</RouterLink>
-          <h1>{{ material.displayName }}</h1><p>{{ material.slideCount }} 页课件 · 保留原始页码<span class="reader-key-hint"> · ← → 翻页</span></p>
+          <h1>{{ material.displayName }}</h1><p>{{ material.slideCount }} 页<span class="reader-key-hint"> · ← → 翻页</span></p>
         </div>
         <div class="reader-view-actions">
           <RouterLink class="button secondary" :to="`/materials/${id}/summary`">核心摘要</RouterLink>
@@ -191,7 +191,7 @@ onBeforeUnmount(() => { disposed = true; generation++; window.removeEventListene
           <div ref="canvas" class="slide-viewport" tabindex="0" aria-label="课件页面，可使用左右方向键翻页"><div class="slide-paper" :style="{ width: zoom + '%' }" :aria-busy="imageLoading"><div v-if="imageError" class="image-error" role="alert"><AppIcon name="file" :size="28" /><p>页面图片加载失败，请检查网络后重试。</p><button class="button secondary" @click="imageError = false; imageLoading = true; imageRevision++">重新加载图片</button></div><template v-else><p v-if="imageLoading" class="image-loading" role="status">正在加载第 {{ page }} 页…</p><img :key="`${page}-${imageRevision}`" :src="selected?.previewUrl ? selected.previewUrl + '?v=' + imageRevision : undefined" :alt="`${material.displayName}，原始第 ${page} 页`" @load="imageLoading = false" @error="imageLoading = false; imageError = true" /></template></div></div>
           <div class="reading-status" role="status"><span class="original-page">原页 {{ String(page).padStart(3, '0') }}<span v-if="selected?.isHidden" class="stage-badge">隐藏页</span></span><span v-if="!saveError"><AppIcon v-if="savedPage === page" name="check" :size="14" />{{ savedPage === page ? "位置已保存" : savedPage === null ? "翻页后自动保存" : "正在保存位置…" }}</span></div>
           <p v-if="saveError" class="error" role="alert">{{ saveError }}<button class="text-button" @click="save(page)">重新保存</button></p>
-          <details class="slide-text"><summary>本页提取文字<span>用于检索与答疑</span></summary><pre>{{ selected?.text || "本页暂无可提取文字。图片、公式和图表请以课件页面为准。" }}</pre></details>
+          <details class="slide-text"><summary>本页文字</summary><pre>{{ selected?.text || "本页暂无可提取文字。图片、公式和图表请以课件页面为准。" }}</pre></details>
         </div>
         <ReaderChat v-show="chatOpen" id="reader-answer-panel" :course-id="material.courseId" :material-id="material.id" :material-name="material.displayName" :slide="selected" :session-id="typeof route.query.chat === 'string' ? route.query.chat : undefined" collapsible @close="toggleChat" @navigate="openSource" @session-change="sessionChanged" />
       </div>
