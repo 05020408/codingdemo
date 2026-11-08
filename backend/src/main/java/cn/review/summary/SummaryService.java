@@ -363,9 +363,7 @@ public class SummaryService {
   }
 
   public Version edit(String owner, String material, Edit input, String key) {
-    String markdown = ApiException.text(input.markdown(), "摘要", 1, SummaryContent.MARKDOWN_LIMIT);
-    if (markdown.length() > SummaryContent.MARKDOWN_LIMIT)
-      throw new ApiException(400, "VALIDATION_FAILED", "摘要最多12000字符");
+    String markdown = SummaryContent.editableMarkdown(input.markdown());
     material(owner, material, false);
     var ack =
         idem.execute(

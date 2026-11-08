@@ -1,13 +1,18 @@
 package cn.review.summary;
 
 import cn.review.common.ApiException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.*;
 
 /** Source boundaries survive splitting; generated prose never supplies trusted page numbers. */
 public final class SummaryContent {
-  public static final int PART_LIMIT = 10000, MARKDOWN_LIMIT = 12000, MAX_PARTS = 12;
+  public static final int PART_LIMIT = 10000, MAX_PARTS = 12;
+  // MEDIUMTEXT capacity in bytes, not an editorial length or AI output budget.
+  private static final int MARKDOWN_STORAGE_BYTES = 16_777_215;
 
   public record Page(String slideId, int pageNo, Long revision, boolean hidden, String text) {}
 
@@ -56,52 +61,62 @@ public final class SummaryContent {
     return parts;
   }
 
-  public static Document validate(ObjectMapper json, String text, Set<String> allowed, int max)
+  public static Document validate(ObjectMapper json, String text, Set<String> allowed)
       throws Exception {
-    var node = json.readTree(text);
-    String title = field(node, "title", 200),
-        overview = field(node, "overview", max),
-        limitations = field(node, "limitations", 2000);
-    if (title.isBlank()
-        || overview.isBlank()
-        || !node.path("sections").isArray()
-        || node.path("sections").isEmpty()
-        || node.path("sections").size() > 20) throw invalid();
+    com.fasterxml.jackson.databind.JsonNode node;
+    try {
+      node = json.reader().with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).readTree(text);
+    } catch (JsonProcessingException | IllegalArgumentException e) {
+      throw invalid("AI 返回的摘要不是完整有效的 JSON");
+    }
+    if (node == null || !node.isObject()) throw invalid("摘要应为 JSON 对象");
+    String title = field(node, "title", "标题"),
+        overview = field(node, "overview", "整体概述"),
+        limitations = field(node, "limitations", "内容限制");
+    if (title.isBlank() || overview.isBlank()) throw invalid("摘要标题或整体概述为空");
+    if (!node.path("sections").isArray() || node.path("sections").isEmpty())
+      throw invalid("摘要缺少有效的主题列表");
     var sections = new ArrayList<Section>();
     for (var item : node.path("sections")) {
-      String heading = field(item, "heading", 200), body = field(item, "body", max);
+      String label = "第 " + (sections.size() + 1) + " 个主题";
+      String heading = field(item, "heading", label + "标题"),
+          body = field(item, "body", label + "正文");
       var refs = item.path("slideIds");
-      if (heading.isBlank()
-          || body.isBlank()
-          || !refs.isArray()
-          || refs.isEmpty()
-          || refs.size() > 30) throw invalid();
+      if (heading.isBlank() || body.isBlank()) throw invalid(label + "标题或正文为空");
+      if (!refs.isArray() || refs.isEmpty()) throw invalid(label + "缺少来源页面列表");
       var ids = new LinkedHashSet<String>();
-      for (var ref : refs)
-        if (!ref.isTextual() || !allowed.contains(ref.asText()) || !ids.add(ref.asText()))
-          throw invalid();
+      for (var ref : refs) {
+        if (!ref.isTextual()) throw invalid(label + "的来源页面标识应为文本");
+        if (!allowed.contains(ref.asText())) throw invalid(label + "引用了本次未提供的页面");
+        // Every source is checked before harmless repeated identifiers are normalized.
+        ids.add(ref.asText());
+      }
       sections.add(new Section(heading, body, List.copyOf(ids)));
     }
     var checklist = node.path("reviewChecklist");
-    if (!checklist.isArray() || checklist.size() > 20) throw invalid();
+    if (!checklist.isArray()) throw invalid("复习清单应为列表");
     var items = new ArrayList<String>();
     for (var item : checklist) {
-      if (!item.isTextual() || item.asText().isBlank() || item.asText().length() > 1000)
-        throw invalid();
+      if (!item.isTextual() || item.asText().isBlank()) throw invalid("复习清单包含非文本或空白项目");
       items.add(item.asText());
     }
-    Document doc = new Document(title, overview, sections, items, limitations);
-    if (json.writeValueAsString(doc).length() > max) throw invalid();
-    return doc;
+    return new Document(title, overview, sections, items, limitations);
   }
 
-  private static String field(com.fasterxml.jackson.databind.JsonNode node, String key, int max) {
-    if (!node.path(key).isTextual() || node.path(key).asText().length() > max) throw invalid();
+  private static String field(com.fasterxml.jackson.databind.JsonNode node, String key, String label) {
+    if (!node.path(key).isTextual()) throw invalid(label + "字段缺失或不是文本");
     return node.path(key).asText().strip();
   }
 
-  private static ApiException invalid() {
-    return new ApiException(502, "AI_INVALID_RESPONSE", "摘要结构、长度或来源校验失败，请主动重试");
+  private static ApiException invalid(String reason) {
+    return new ApiException(502, "AI_INVALID_RESPONSE", reason + "，未发布摘要；请主动重试");
+  }
+
+  public static String editableMarkdown(String text) {
+    String markdown = ApiException.text(text, "摘要", 1, Integer.MAX_VALUE);
+    if (markdown.getBytes(StandardCharsets.UTF_8).length > MARKDOWN_STORAGE_BYTES)
+      throw new ApiException(400, "VALIDATION_FAILED", "摘要超过数据库存储容量，请拆分保存");
+    return markdown;
   }
 
   public static String fingerprint(ObjectMapper json, Object value) {
@@ -153,7 +168,6 @@ public final class SummaryContent {
         .append("\n\n基于课件提取文字整理；包含隐藏页，")
         .append(empty)
         .append(" 页无可提取文字。图片、复杂图表和公式可能未被覆盖；请对照原课件核验。\n");
-    if (md.length() > MARKDOWN_LIMIT) throw invalid();
     return md.toString();
   }
 

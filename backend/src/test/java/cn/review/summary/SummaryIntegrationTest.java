@@ -48,6 +48,7 @@ class SummaryIntegrationTest {
   List<JsonNode> requests = new CopyOnWriteArrayList<>();
   AtomicInteger completionTokens = new AtomicInteger(80);
   AtomicReference<String> finishReason = new AtomicReference<>("stop");
+  AtomicInteger proseRepeats = new AtomicInteger();
   CountDownLatch received;
 
   String id() {
@@ -143,7 +144,7 @@ class SummaryIntegrationTest {
                                 "heading",
                                 "协作与反馈的联系",
                                 "body",
-                                "先建立有效协作，再通过持续反馈逐步改进。",
+                                "先建立有效协作，再通过持续反馈逐步改进。" + "关键条件与过程。".repeat(proseRepeats.get()),
                                 "slideIds",
                                 List.of(invalid.get() ? "fabricated" : source))),
                         "reviewChecklist",
@@ -286,6 +287,35 @@ class SummaryIntegrationTest {
     assertThat(worker.runOne()).isTrue();
     assertThat(service.version(owner, v.id()).status()).isEqualTo("SUCCEEDED");
     assertThat(calls.get()).isEqualTo(2);
+  }
+
+  @Test
+  void longPartAndFinalProseSurvivesGenerationEditingAndDownload() throws Exception {
+    proseRepeats.set(1600);
+    db.update("UPDATE slides SET text_content=? WHERE id=?", "定义与条件".repeat(4500), first);
+    var v = generate();
+    assertThat(v.status()).isEqualTo("SUCCEEDED");
+    assertThat(v.completedSteps()).isEqualTo(4);
+    assertThat(calls.get()).isEqualTo(4);
+    assertThat(v.markdown().length()).isGreaterThan(12000);
+    assertThat(v.markdown()).contains("关键条件与过程。".repeat(1600));
+    assertThat(requests).allSatisfy(body -> {
+      assertThat(body.has("max_tokens")).isFalse();
+      assertThat(body.path("messages").path(0).path("content").asText())
+          .doesNotContain("不超过3000", "不超过9000");
+    });
+    assertThat(db.queryForList("SELECT DISTINCT prompt_version FROM ai_calls WHERE owner_id=?",
+        String.class, owner)).containsExactly("summary-v2");
+    String editedText = v.markdown() + "\n人工补充：" + "理解条件😀".repeat(1500);
+    var edited = service.edit(owner, material,
+        new SummaryService.Edit(v.id(), service.state(owner, material).version(), editedText), id());
+    assertThat(edited.markdown()).isEqualTo(editedText);
+    assertThat(service.version(owner, v.id()).markdown()).isEqualTo(v.markdown());
+    mvc.perform(get("/api/summary-versions/" + edited.id() + "/download").session(auth(owner)))
+        .andExpect(status().isOk())
+        .andExpect(content().bytes(editedText.getBytes(StandardCharsets.UTF_8)));
+    assertThat(service.context(owner, material, edited.id()).markdown()).isEqualTo(editedText);
+    assertThat(calls.get()).isEqualTo(4);
   }
 
   @Test

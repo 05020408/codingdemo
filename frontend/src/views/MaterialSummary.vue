@@ -117,7 +117,15 @@ async function mutate(
     uncertain.value = false;
     confirmGeneration.value = false;
     await load();
-    notice.value = "操作已保存。";
+    notice.value = operation.edit
+      ? "新版本已保存。"
+      : operation.path.endsWith("/summary-generations")
+        ? "摘要任务已提交。"
+        : operation.path.endsWith("/retry")
+          ? "已提交继续生成。"
+          : operation.path.endsWith("/cancel")
+            ? "已停止生成。"
+            : "已采用此版本。";
   } catch (cause) {
     error.value = message(cause);
     uncertain.value = !(cause instanceof ApiError);
@@ -191,7 +199,7 @@ onBeforeUnmount(() => {
           刷新状态
         </button>
       </p>
-      <p v-if="notice" class="notice" role="status">{{ notice }}</p>
+      <p v-if="notice && version?.status !== 'FAILED'" class="notice" role="status">{{ notice }}</p>
       <p v-if="uncertain" class="notice">
         上次请求结果尚未确认。请用同一请求确认结果，避免重复生成或保存。<button
           class="text-button"
@@ -296,7 +304,7 @@ onBeforeUnmount(() => {
             <div class="summary-paper-meta">
               <span
                 >v{{ version.number }} ·
-                {{ version.origin === "USER" ? "人工修订" : "AI 生成" }} · 覆盖
+                {{ version.origin === "USER" ? "人工修订" : "AI 生成" }} · 来源
                 {{ version.totalPages }} 页，其中
                 {{ version.emptyPages }} 页无文字</span
               ><span v-if="state.current?.id === version.id">当前采用</span>
@@ -339,11 +347,10 @@ onBeforeUnmount(() => {
                   id="summary-editor"
                   v-model="draft"
                   class="summary-editor"
-                  maxlength="12000"
                   :disabled="busy || uncertain"
                 />
                 <p class="muted">
-                  {{ draft.length }}/12000 字符 · 内容用于 AI
+                  {{ draft.length }} 字符 · 内容用于 AI
                   背景时会标为人工编辑。
                 </p>
                 <div class="summary-actions">

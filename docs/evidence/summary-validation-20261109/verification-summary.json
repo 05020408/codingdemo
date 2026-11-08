@@ -1,0 +1,75 @@
+{
+  "date": "2026-11-09",
+  "baseCommit": "300e587",
+  "applicationVersion": "0.4.4",
+  "scope": "Summary validation and misleading status copy",
+  "suites": [
+    {
+      "name": "cn.review.summary.SummaryIntegrationTest",
+      "tests": 19,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "cn.review.summary.SummaryContentTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "cn.review.chat.ReaderChatIntegrationTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "totals": {
+    "tests": 38,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "newRegressions": [
+    "longProseAndManyGenuineSourcesAreNotRejectedByEditorialLengthOrCount",
+    "repeatedValidSourcesAreNormalizedWithoutHidingAnInvalidSource",
+    "malformedJsonAndWrongFieldTypesExplainWhyTheyAreRejected",
+    "longPartAndFinalProseSurvivesGenerationEditingAndDownload"
+  ],
+  "frontendBuild": {
+    "result": "PASS",
+    "modules": 70
+  },
+  "runtimeHealth": {
+    "backend": "UP",
+    "database": "UP",
+    "frontendHttp": 200
+  },
+  "browser": {
+    "actualFailedPageReadOnly": true,
+    "sourcePageLabelVerified": true,
+    "generationOrRetryClicked": false,
+    "longEditorBrowserTested": false,
+    "screenshotsTracked": false
+  },
+  "observedFailure": {
+    "totalPages": 145,
+    "emptyPages": 0,
+    "version": 2,
+    "step": "first PART",
+    "completionTokens": 3364,
+    "code": "AI_INVALID_RESPONSE",
+    "rawResponseRetained": false,
+    "exactValidationReasonKnown": false
+  },
+  "realDeepSeekCalls": 0,
+  "userMaterialResubmitted": false,
+  "promptVersion": "summary-v2",
+  "limitations": [
+    "Provider, response-byte, input, database and chat-context budgets remain",
+    "Old failed versions were not rewritten or retried",
+    "No remote CI, real 145-page retry or semantic acceptance in this increment"
+  ]
+}

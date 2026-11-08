@@ -100,6 +100,8 @@ Sprint 2 计划关联 Sprint 1 改进项，第二轮回顾检查落实效果。�
 
 ## 8 报告持续更新
 
+2026-11-09 补充[摘要篇幅校验修复](records/summary-validation-20261109.md)、[38项验证摘要](evidence/summary-validation-20261109/verification-summary.json)和AI日志USE20261109-01/P-15：承接取消token要求移除残留字符规则，具体化来源/结构错误，修正提交提示与来源页数。未重发用户课件，无付费请求，不以替身测试声称原145页已成功。
+
 2026-11-08 按用户“不要限制token长度”新增[摘要请求预算调整记录](records/summary-token-default-20261108.md)与AI日志USE20261108-02/P-14。移除摘要max_tokens，保留来源/字符校验，新增截断及显式恢复回归；34项本地替身相关测试通过，无真实AI调用，不改历史验收和测试统计。
 
 2026-11-08 增加[界面精简记录](records/compact-ui-20261108.md)、[截图证据](evidence/compact-ui-20261108/README.md)和AI日志USE20261108-01/P-13，保留模板/样式修改、前端构建与浏览器自检范围。没有新增真实AI调用，不覆盖旧验收或测试统计，应用版本仍0.4.4。

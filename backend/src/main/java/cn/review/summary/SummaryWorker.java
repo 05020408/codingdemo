@@ -185,8 +185,8 @@ public class SummaryWorker {
     String prompt =
         SummaryContent.PROMPT
             + (fin
-                ? " 本次为整份课件最终摘要，统一成文，JSON总长度不超过9000字符。"
-                : " 本次为内部局部整理，压缩保留核心内容、来源及限制，JSON总长度不超过3000字符。");
+                ? " 本次为整份课件最终摘要，统一成文，篇幅按材料复杂度确定，完整返回合法 JSON。"
+                : " 本次为内部局部整理，合并重复，保留核心内容、来源及限制，完整返回合法 JSON。");
     var doc =
         s.ai.complete(
             c.owner(),
@@ -196,7 +196,7 @@ public class SummaryWorker {
             prompt,
             input,
             () -> cancelled(c),
-            text -> SummaryContent.validate(s.json, text, allowed, fin ? 9000 : 3000));
+            text -> SummaryContent.validate(s.json, text, allowed));
     String markdown =
         fin
             ? SummaryContent.markdown(
