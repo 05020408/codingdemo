@@ -251,7 +251,7 @@ onBeforeUnmount(() => {
           </button>
           <div class="summary-generate">
             <p>
-              预计 {{ state.estimatedRequests }} 次请求 · 今日剩余
+              {{ state.versions.length ? "重新生成" : "生成" }}预计 {{ state.estimatedRequests }} 次请求 · 今日剩余
               {{ state.remainingToday }} 次
             </p>
             <details class="compact-help"><summary>生成说明</summary><p>将课件提取文字交由 DeepSeek 整理，与答疑、定位共用每日额度。图片、图表和公式可能未覆盖，请核对原课件。</p></details>
@@ -392,6 +392,10 @@ onBeforeUnmount(() => {
                   version.errorMessage ||
                   "正在整理课件内容，完成后将显示连贯的核心摘要。"
                 }}
+              </p>
+              <p v-if="['FAILED', 'CANCELLED'].includes(version.status)" class="muted">
+                已完成 {{ version.completedSteps }}/{{ version.totalSteps }} 步，剩余 {{ version.totalSteps - version.completedSteps }} 步。
+                继续生成会复用已完成部分。
               </p>
               <button
                 v-if="['FAILED', 'CANCELLED'].includes(version.status)"

@@ -49,6 +49,7 @@ class SummaryIntegrationTest {
   AtomicInteger completionTokens = new AtomicInteger(80);
   AtomicReference<String> finishReason = new AtomicReference<>("stop");
   AtomicInteger proseRepeats = new AtomicInteger();
+  AtomicBoolean truncateFinal = new AtomicBoolean();
   CountDownLatch received;
 
   String id() {
@@ -151,6 +152,17 @@ class SummaryIntegrationTest {
                         List.of("理解协作与反馈的联系"),
                         "limitations",
                         "只依据提供文字整理。");
+            int reportedTokens = completionTokens.get();
+            String completionEnd = finishReason.get();
+            int requestedLimit = body.path("max_tokens").asInt(8192);
+            if (reportedTokens > requestedLimit) {
+              reportedTokens = requestedLimit;
+              completionEnd = "length";
+            }
+            if (truncateFinal.get() && input.has("parts")) {
+              reportedTokens = 8192;
+              completionEnd = "length";
+            }
             byte[] bytes =
                 json.writeValueAsBytes(
                     Map.of(
@@ -160,11 +172,11 @@ class SummaryIntegrationTest {
                         List.of(
                             Map.of(
                                 "finish_reason",
-                                finishReason.get(),
+                                completionEnd,
                                 "message",
                                 Map.of("content", json.writeValueAsString(result)))),
                         "usage",
-                        Map.of("prompt_tokens", 100, "completion_tokens", completionTokens.get())));
+                        Map.of("prompt_tokens", 100, "completion_tokens", reportedTokens)));
             e.getResponseHeaders().set("Content-Type", "application/json");
             e.sendResponseHeaders(200, bytes.length);
             e.getResponseBody().write(bytes);
@@ -252,18 +264,19 @@ class SummaryIntegrationTest {
   }
 
   @Test
-  void summaryRequestsOmitTokenLimitAndAcceptCompletionAboveOldPartLimit() {
-    completionTokens.set(2200);
+  void summaryRequestsUseProviderMaximumAndAcceptCompletionAboveDefaultBudget() {
+    completionTokens.set(12000);
     db.update("UPDATE slides SET text_content=? WHERE id=?", "定义与条件".repeat(2300), first);
     var v = generate();
     assertThat(v.status()).isEqualTo("SUCCEEDED");
-    assertThat(requests).hasSize(3).allSatisfy(body -> assertThat(body.has("max_tokens")).isFalse());
+    assertThat(requests).hasSize(3).allSatisfy(body ->
+        assertThat(body.path("max_tokens").asInt()).isEqualTo(393216));
     assertThat(
             db.queryForList(
                 "SELECT output_tokens FROM ai_calls WHERE owner_id=? ORDER BY created_at",
                 Long.class,
                 owner))
-        .containsExactly(2200L, 2200L, 2200L);
+        .containsExactly(12000L, 12000L, 12000L);
   }
 
   @Test
@@ -277,7 +290,7 @@ class SummaryIntegrationTest {
     assertThat(service.state(owner, material).current()).isNull();
     assertThat(worker.runOne()).isFalse();
     assertThat(calls.get()).isEqualTo(1);
-    assertThat(requests.get(0).has("max_tokens")).isFalse();
+    assertThat(requests.get(0).path("max_tokens").asInt()).isEqualTo(393216);
     assertThat(
             db.queryForObject(
                 "SELECT output_tokens FROM ai_calls WHERE owner_id=?", Long.class, owner))
@@ -300,7 +313,7 @@ class SummaryIntegrationTest {
     assertThat(v.markdown().length()).isGreaterThan(12000);
     assertThat(v.markdown()).contains("关键条件与过程。".repeat(1600));
     assertThat(requests).allSatisfy(body -> {
-      assertThat(body.has("max_tokens")).isFalse();
+      assertThat(body.path("max_tokens").asInt()).isEqualTo(393216);
       assertThat(body.path("messages").path(0).path("content").asText())
           .doesNotContain("不超过3000", "不超过9000");
     });
@@ -316,6 +329,56 @@ class SummaryIntegrationTest {
         .andExpect(content().bytes(editedText.getBytes(StandardCharsets.UTF_8)));
     assertThat(service.context(owner, material, edited.id()).markdown()).isEqualTo(editedText);
     assertThat(calls.get()).isEqualTo(4);
+  }
+
+  @Test
+  void finalTruncationRetryReusesThreeCompletedPartsAndOnlyCallsFinalOnce() {
+    db.update("UPDATE slides SET text_content=? WHERE id=?", "定义与条件".repeat(4500), first);
+    truncateFinal.set(true);
+    var v = generate();
+    assertThat(v.status()).isEqualTo("FAILED");
+    assertThat(v.errorCode()).isEqualTo("AI_OUTPUT_TRUNCATED");
+    assertThat(v.completedSteps()).isEqualTo(3);
+    assertThat(v.totalSteps()).isEqualTo(4);
+    assertThat(calls.get()).isEqualTo(4);
+    var savedParts = db.queryForList(
+        "SELECT result FROM material_summary_parts WHERE version_id=? AND kind='PART' ORDER BY position_no",
+        String.class, v.id());
+    assertThat(worker.runOne()).isFalse();
+    truncateFinal.set(false);
+    completionTokens.set(12000);
+    String key = id();
+    service.retry(owner, v.id(), key);
+    service.retry(owner, v.id(), key);
+    assertThat(calls.get()).isEqualTo(4);
+    assertThat(worker.runOne()).isTrue();
+    assertThat(worker.runOne()).isFalse();
+    assertThat(calls.get()).isEqualTo(5);
+    assertThat(inputs.get(4).path("parts")).hasSize(3);
+    assertThat(service.version(owner, v.id()).status()).isEqualTo("SUCCEEDED");
+    assertThat(db.queryForList(
+        "SELECT result FROM material_summary_parts WHERE version_id=? AND kind='PART' ORDER BY position_no",
+        String.class, v.id())).isEqualTo(savedParts);
+    assertThat(db.queryForObject(
+        "SELECT COUNT(*) FROM ai_calls WHERE owner_id=? AND scene='SUMMARY_PART'", Integer.class, owner))
+        .isEqualTo(3);
+    assertThat(db.queryForObject(
+        "SELECT COUNT(*) FROM ai_calls WHERE owner_id=? AND scene='SUMMARY_FINAL'", Integer.class, owner))
+        .isEqualTo(2);
+  }
+
+  @Test
+  void summaryResponseCanExceedOld256KiBReceiverWithoutLosingMarkdown() throws Exception {
+    proseRepeats.set(12000);
+    completionTokens.set(40000);
+    var v = generate();
+    assertThat(v.status()).isEqualTo("SUCCEEDED");
+    assertThat(v.markdown().getBytes(StandardCharsets.UTF_8).length).isGreaterThan(262144);
+    assertThat(v.markdown()).contains("关键条件与过程。".repeat(12000));
+    assertThat(calls.get()).isEqualTo(1);
+    mvc.perform(get("/api/summary-versions/" + v.id() + "/download").session(auth(owner)))
+        .andExpect(status().isOk())
+        .andExpect(content().bytes(v.markdown().getBytes(StandardCharsets.UTF_8)));
   }
 
   @Test

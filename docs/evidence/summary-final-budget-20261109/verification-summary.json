@@ -1,0 +1,83 @@
+{
+  "date": "2026-11-09",
+  "baseCommit": "ee6ca5f",
+  "applicationVersion": "0.4.4",
+  "scope": "Summary provider-default output budget and final-only recovery",
+  "suites": [
+    {
+      "name": "cn.review.summary.SummaryIntegrationTest",
+      "tests": 21,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "cn.review.summary.SummaryContentTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "cn.review.chat.ReaderChatIntegrationTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "totals": {
+    "tests": 40,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "newRegressions": [
+    "finalTruncationRetryReusesThreeCompletedPartsAndOnlyCallsFinalOnce",
+    "summaryResponseCanExceedOld256KiBReceiverWithoutLosingMarkdown"
+  ],
+  "updatedRegression": "summaryRequestsUseProviderMaximumAndAcceptCompletionAboveDefaultBudget",
+  "policy": {
+    "maxTokens": 393216,
+    "summaryTimeoutSeconds": 600,
+    "summaryResponseBytes": 8388608,
+    "readerTimeoutSeconds": 60,
+    "readerResponseBytes": 262144
+  },
+  "frontendBuild": {
+    "result": "PASS",
+    "modules": 70
+  },
+  "runtimeHealth": {
+    "backend": "UP",
+    "database": "UP",
+    "frontendHttp": 200
+  },
+  "browser": {
+    "readOnly": true,
+    "completedSteps": 3,
+    "totalSteps": 4,
+    "remainingSteps": 1,
+    "regenerateAndResumeCostsDistinguished": true,
+    "generationOrRetryClicked": false,
+    "screenshotsTracked": false
+  },
+  "priorUserTriggeredCalls": {
+    "partCompletions": [
+      3867,
+      3783,
+      1832
+    ],
+    "finalCompletion": 8192,
+    "finalError": "AI_OUTPUT_TRUNCATED",
+    "source": "Existing database audit; not new agent calls"
+  },
+  "newRealDeepSeekCalls": 0,
+  "userMaterialResubmitted": false,
+  "limitations": [
+    "Provider maximum remains finite",
+    "Stub token usage is simulated, not actual generated token counts",
+    "Long timeout and 8MiB threshold not load-tested against provider",
+    "No real final retry or remote CI in this increment"
+  ]
+}

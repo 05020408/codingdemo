@@ -111,6 +111,7 @@ docs/       需求、设计、Scrum 计划、AI 日志及实际执行记录
 | [界面文案精简](docs/records/compact-ui-20261108.md) | 11月8日减少重复说明、答疑按需展开、桌面与窄屏检查 |
 | [摘要输出预算调整](docs/records/summary-token-default-20261108.md) | 移除摘要请求token参数、明确截断错误、34项本地替身回归 |
 | [摘要篇幅校验修复](docs/records/summary-validation-20261109.md) | 撤销残留字符规则、细化错误和任务状态、38项相关回归 |
+| [最终汇总默认预算修复](docs/records/summary-final-budget-20261109.md) | 采用服务允许最大预算、保留3段仅恢复汇总、40项相关回归 |
 | [实验过程材料](docs/process-evidence.md) / [AI 使用日志](docs/ai-usage-log.md) | 报告证据、真实活动与人工审阅待办 |
 | [开发与版本管理](docs/development-workflow.md) / [变更记录](CHANGELOG.md) | 提交、推送、版本和配置规则 |
 

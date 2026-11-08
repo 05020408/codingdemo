@@ -20,6 +20,10 @@ import org.springframework.transaction.support.TransactionTemplate;
  */
 @Service
 public class ReaderAiClient {
+  // DeepSeek's documented maximum; omitting max_tokens would fall back to 8K.
+  public static final int SUMMARY_OUTPUT_TOKENS = 393216;
+  private static final Duration SUMMARY_TIMEOUT = Duration.ofMinutes(10);
+  private static final int SUMMARY_RESPONSE_BYTES = 8 * 1024 * 1024;
   private final JdbcTemplate db;
   private final TransactionTemplate tx;
   private final ObjectMapper json;
@@ -211,6 +215,8 @@ public class ReaderAiClient {
                   Map.of("type", "disabled"),
                   "temperature",
                   0.2,
+                  "max_tokens",
+                  SUMMARY_OUTPUT_TOKENS,
                   "response_format",
                   Map.of("type", "json_object"),
                   "messages",
@@ -234,6 +240,7 @@ public class ReaderAiClient {
       BooleanSupplier cancelled,
       Validator<T> validator) {
     String call = UUID.randomUUID().toString();
+    boolean summary = scene.startsWith("SUMMARY_");
     long started = System.nanoTime();
     CompletableFuture<HttpResponse<byte[]>> future = null;
     try {
@@ -272,12 +279,12 @@ public class ReaderAiClient {
       future =
           http.sendAsync(
               HttpRequest.newBuilder(endpoint)
-                  .timeout(Duration.ofSeconds(60))
+                  .timeout(summary ? SUMMARY_TIMEOUT : Duration.ofSeconds(60))
                   .header("Authorization", "Bearer " + key)
                   .header("Content-Type", "application/json")
                   .POST(HttpRequest.BodyPublishers.ofString(body))
                   .build(),
-              info -> new LimitedBody());
+              info -> new LimitedBody(summary ? SUMMARY_RESPONSE_BYTES : 262144));
       HttpResponse<byte[]> response;
       while (true) {
         if (cancelled.getAsBoolean()) throw new ApiException(409, "CHAT_CANCELLED", "本次回答已停止");
@@ -394,6 +401,11 @@ public class ReaderAiClient {
     final HttpResponse.BodySubscriber<byte[]> delegate = HttpResponse.BodySubscribers.ofByteArray();
     java.util.concurrent.Flow.Subscription subscription;
     long size;
+    final int limit;
+
+    LimitedBody(int limit) {
+      this.limit = limit;
+    }
 
     public CompletionStage<byte[]> getBody() {
       return delegate.getBody();
@@ -406,7 +418,7 @@ public class ReaderAiClient {
 
     public void onNext(List<java.nio.ByteBuffer> buffers) {
       for (var b : buffers) size += b.remaining();
-      if (size > 262144) {
+      if (size > limit) {
         subscription.cancel();
         delegate.onError(new IllegalArgumentException("AI response too large"));
       } else delegate.onNext(buffers);
