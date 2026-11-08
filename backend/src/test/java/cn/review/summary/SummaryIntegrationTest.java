@@ -50,6 +50,7 @@ class SummaryIntegrationTest {
   AtomicReference<String> finishReason = new AtomicReference<>("stop");
   AtomicInteger proseRepeats = new AtomicInteger();
   AtomicBoolean truncateFinal = new AtomicBoolean();
+  AtomicBoolean failSecondTopic = new AtomicBoolean();
   CountDownLatch received;
 
   String id() {
@@ -152,8 +153,19 @@ class SummaryIntegrationTest {
                         List.of("理解协作与反馈的联系"),
                         "limitations",
                         "只依据提供文字整理。");
+            if ("OUTLINE".equals(input.path("stage").asText())) {
+              result = new SummaryContent.Document("敏捷开发核心内容", "协作与反馈形成完整思路。",
+                  List.of(new SummaryContent.Section("主题1", "阐明协作", List.of(source)),
+                      new SummaryContent.Section("主题2", "解释反馈", List.of(source))),
+                  List.of("理解协作与反馈"), "仅依据提供文字");
+            } else if ("TOPIC".equals(input.path("stage").asText())) {
+              result = new SummaryContent.Section(input.path("topic").path("heading").asText(),
+                  "依据材料撰写的完整主题正文。", List.of(invalid.get() ? "fabricated" : input.path("topic").path("slideIds").path(0).asText()));
+            }
             int reportedTokens = completionTokens.get();
             String completionEnd = finishReason.get();
+            if (failSecondTopic.get() && "TOPIC".equals(input.path("stage").asText())
+                && "主题2".equals(input.path("topic").path("heading").asText())) completionEnd = "length";
             int requestedLimit = body.path("max_tokens").asInt(8192);
             if (reportedTokens > requestedLimit) {
               reportedTokens = requestedLimit;
@@ -187,7 +199,8 @@ class SummaryIntegrationTest {
         });
     server.start();
     ai = client(50);
-    service = new SummaryService(db, tx, json, ai, idem);
+    // Exercise pre-upgrade records with the legacy strategy; dedicated tests below use production defaults.
+    service = new SummaryService(db, tx, json, ai, idem, false);
     worker = new SummaryWorker(service);
   }
 
@@ -379,6 +392,119 @@ class SummaryIntegrationTest {
     mvc.perform(get("/api/summary-versions/" + v.id() + "/download").session(auth(owner)))
         .andExpect(status().isOk())
         .andExpect(content().bytes(v.markdown().getBytes(StandardCharsets.UTF_8)));
+  }
+
+  @Test
+  void thematicPipelinePlansThenWritesTopicsAndAssemblesWithoutFinalAiCall() {
+    service = new SummaryService(db, tx, json, ai, idem);
+    worker = new SummaryWorker(service);
+    db.update("UPDATE slides SET text_content=? WHERE id=?", "定义与条件".repeat(4500), first);
+    assertThat(service.state(owner, material).estimatedRequests()).isEqualTo(5);
+    assertThat(service.state(owner, material).estimatedRequestsLowerBound()).isTrue();
+    var v = generate();
+    assertThat(v.status()).isEqualTo("SUCCEEDED");
+    assertThat(v.totalSteps()).isEqualTo(7);
+    assertThat(v.completedSteps()).isEqualTo(7);
+    assertThat(calls.get()).isEqualTo(6);
+    assertThat(v.remainingRequests()).isZero();
+    assertThat(v.markdown()).contains("## 主题1", "## 主题2", "完整主题正文", "复习清单");
+    assertThat(v.markdown().indexOf("## 主题1")).isLessThan(v.markdown().indexOf("## 主题2"));
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM ai_calls WHERE owner_id=? AND scene='SUMMARY_FINAL'", Integer.class, owner)).isZero();
+    assertThat(inputs.stream().filter(n -> "TOPIC".equals(n.path("stage").asText())).count()).isEqualTo(2);
+  }
+
+  @Test
+  void topicFailureKeepsEarlierWritingAndRetryOnlyWritesMissingTopic() {
+    service = new SummaryService(db, tx, json, ai, idem);
+    worker = new SummaryWorker(service);
+    db.update("UPDATE slides SET text_content=? WHERE id=?", "定义与条件".repeat(2300), first);
+    failSecondTopic.set(true);
+    var v = generate();
+    assertThat(v.status()).isEqualTo("FAILED");
+    assertThat(v.phaseLabel()).isEqualTo("撰写主题");
+    assertThat(service.state(owner, material).current()).isNull();
+    int before = calls.get();
+    var saved = db.queryForList("SELECT result FROM material_summary_parts WHERE version_id=? AND status='SUCCEEDED' ORDER BY position_no", String.class, v.id());
+    failSecondTopic.set(false);
+    service.retry(owner, v.id(), id());
+    while (worker.runOne()) {}
+    assertThat(calls.get()).isEqualTo(before + 1);
+    assertThat(service.version(owner, v.id()).status()).isEqualTo("SUCCEEDED");
+    assertThat(db.queryForList("SELECT result FROM material_summary_parts WHERE version_id=? AND status='SUCCEEDED' ORDER BY position_no LIMIT " + saved.size(), String.class, v.id())).isEqualTo(saved);
+  }
+
+  @Test
+  void failedLegacyFinalUpgradesOnExplicitResumeAndReusesExistingParts() {
+    db.update("UPDATE slides SET text_content=? WHERE id=?", "定义与条件".repeat(4500), first);
+    truncateFinal.set(true);
+    var v = generate();
+    assertThat(v.status()).isEqualTo("FAILED");
+    assertThat(v.completedSteps()).isEqualTo(3);
+    service = new SummaryService(db, tx, json, ai, idem);
+    worker = new SummaryWorker(service);
+    assertThat(service.version(owner, v.id()).resumeWillPlan()).isTrue();
+    truncateFinal.set(false);
+    service.retry(owner, v.id(), id());
+    while (worker.runOne()) {}
+    assertThat(service.version(owner, v.id()).workflow()).isEqualTo("THEMATIC");
+    assertThat(service.version(owner, v.id()).status()).isEqualTo("SUCCEEDED");
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM ai_calls WHERE owner_id=? AND scene='SUMMARY_PART'", Integer.class, owner)).isEqualTo(3);
+    assertThat(calls.get()).isEqualTo(7);
+  }
+
+  @Test
+  void thematicQuotaCanRunOutAfterOutlineAndResumeWithoutRepeatingSuccessfulSteps() {
+    ai = client(5);
+    service = new SummaryService(db, tx, json, ai, idem);
+    worker = new SummaryWorker(service);
+    db.update("UPDATE slides SET text_content=? WHERE id=?", "定义与条件".repeat(4500), first);
+    var v = generate();
+    assertThat(v.status()).isEqualTo("FAILED");
+    assertThat(v.errorCode()).isEqualTo("AI_QUOTA_EXCEEDED");
+    assertThat(v.remainingRequests()).isEqualTo(1);
+    assertThat(calls.get()).isEqualTo(5);
+    ai = client(6);
+    service = new SummaryService(db, tx, json, ai, idem);
+    worker = new SummaryWorker(service);
+    service.retry(owner, v.id(), id());
+    while (worker.runOne()) {}
+    assertThat(ai.remaining(owner)).isZero();
+    assertThat(calls.get()).isEqualTo(6);
+    assertThat(service.version(owner, v.id()).status()).isEqualTo("SUCCEEDED");
+  }
+
+  @Test
+  void localAssemblyCanResumeWhenAiDisabledAndNoQuotaRemains() {
+    service = new SummaryService(db, tx, json, ai, idem);
+    worker = new SummaryWorker(service);
+    db.update("UPDATE slides SET text_content=? WHERE id=?", "定义与条件".repeat(2300), first);
+    var v = service.generate(owner, material, id());
+    while (!"合成文档".equals(service.version(owner, v.id()).phaseLabel())) assertThat(worker.runOne()).isTrue();
+    int before = calls.get();
+    service.cancel(owner, v.id());
+    ai = client(0);
+    service = new SummaryService(db, tx, json, ai, idem);
+    worker = new SummaryWorker(service);
+    assertThat(service.version(owner, v.id()).remainingRequests()).isZero();
+    service.retry(owner, v.id(), id());
+    assertThat(worker.runOne()).isTrue();
+    assertThat(service.version(owner, v.id()).status()).isEqualTo("SUCCEEDED");
+    assertThat(calls.get()).isEqualTo(before);
+  }
+
+  @Test
+  void forgedTopicSourceIsRejectedAndOutlineRemainsReusable() {
+    service = new SummaryService(db, tx, json, ai, idem);
+    worker = new SummaryWorker(service);
+    db.update("UPDATE slides SET text_content=? WHERE id=?", "定义与条件".repeat(2300), first);
+    var v = service.generate(owner, material, id());
+    while (!"撰写主题".equals(service.version(owner, v.id()).phaseLabel())) assertThat(worker.runOne()).isTrue();
+    invalid.set(true);
+    assertThat(worker.runOne()).isTrue();
+    assertThat(service.version(owner, v.id()).errorMessage()).contains("引用了本次未提供的页面");
+    assertThat(service.state(owner, material).current()).isNull();
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM material_summary_parts WHERE version_id=? AND phase='OUTLINE' AND status='SUCCEEDED'", Integer.class, v.id())).isEqualTo(1);
+    assertThat(worker.runOne()).isFalse();
   }
 
   @Test

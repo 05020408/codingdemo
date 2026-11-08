@@ -216,7 +216,7 @@ onBeforeUnmount(() => {
           }}
           步</strong
         >
-        <p>正在整理，已有摘要仍可查看。</p>
+        <p>{{ active.phaseLabel }}{{ active.planningPending ? ' · 提纲完成后更新总步骤' : '' }}，已有摘要仍可查看。</p>
         <progress
           :max="active.totalSteps || 1"
           :value="active.completedSteps"
@@ -251,9 +251,10 @@ onBeforeUnmount(() => {
           </button>
           <div class="summary-generate">
             <p>
-              {{ state.versions.length ? "重新生成" : "生成" }}预计 {{ state.estimatedRequests }} 次请求 · 今日剩余
+              {{ state.versions.length ? "重新生成" : "生成" }}{{ state.estimatedRequestsLowerBound ? '至少' : '预计' }} {{ state.estimatedRequests }} 次请求 · 今日剩余
               {{ state.remainingToday }} 次
             </p>
+            <p v-if="state.estimatedRequestsLowerBound" class="muted">主题数由提纲确定，额度不足时保留进度，可次日继续。</p>
             <details class="compact-help"><summary>生成说明</summary><p>将课件提取文字交由 DeepSeek 整理，与答疑、定位共用每日额度。图片、图表和公式可能未覆盖，请核对原课件。</p></details>
             <button
               class="button primary"
@@ -394,8 +395,8 @@ onBeforeUnmount(() => {
                 }}
               </p>
               <p v-if="['FAILED', 'CANCELLED'].includes(version.status)" class="muted">
-                已完成 {{ version.completedSteps }}/{{ version.totalSteps }} 步，剩余 {{ version.totalSteps - version.completedSteps }} 步。
-                继续生成会复用已完成部分。
+                已完成 {{ version.completedSteps }}/{{ version.totalSteps }} 步，继续将复用已完成部分。
+                {{ version.resumeWillPlan ? '将升级为提纲与主题撰写流程，至少还需 2 次请求。' : version.planningPending ? '提纲后确定主题数与剩余请求。' : `剩余 ${version.remainingRequests} 次 AI 请求${version.workflow === 'THEMATIC' ? '，最后由程序合成文档' : ''}。` }}
               </p>
               <button
                 v-if="['FAILED', 'CANCELLED'].includes(version.status)"
@@ -405,12 +406,11 @@ onBeforeUnmount(() => {
                   uncertain ||
                   !!active ||
                   version.stale ||
-                  !state.aiAvailable ||
-                  state.remainingToday < 1
+                  (version.remainingRequests > 0 && (!state.aiAvailable || state.remainingToday < 1))
                 "
                 @click="mutate(`/api/summary-generations/${version.id}/retry`)"
               >
-                继续生成（消耗额度）
+                {{ version.remainingRequests === 0 ? '合成文档（不消耗额度）' : '继续生成（消耗额度）' }}
               </button>
             </div>
           </template>

@@ -13,6 +13,11 @@ export interface SummaryVersion {
   errorCode: string | null;
   errorMessage: string | null;
   createdAt: string;
+  workflow: string;
+  phaseLabel: string;
+  remainingRequests: number;
+  planningPending: boolean;
+  resumeWillPlan: boolean;
 }
 export interface SummaryState {
   materialId: string;
@@ -25,6 +30,7 @@ export interface SummaryState {
   remainingToday: number;
   aiAvailable: boolean;
   blockedReason: string;
+  estimatedRequestsLowerBound: boolean;
 }
 export const summaryStatus: Record<string, string> = {
   QUEUED: "等待生成",

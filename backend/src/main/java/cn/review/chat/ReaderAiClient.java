@@ -271,7 +271,8 @@ public class ReaderAiClient {
                 job,
                 scene,
                 model,
-                scene.startsWith("SUMMARY_") ? "summary-v2" : "reader-v2",
+                List.of("SUMMARY_OUTLINE", "SUMMARY_TOPIC").contains(scene) ? "summary-v3"
+                    : scene.startsWith("SUMMARY_") ? "summary-v2" : "reader-v2",
                 fingerprint,
                 LocalDate.now(ZoneId.of("Asia/Shanghai")));
           });

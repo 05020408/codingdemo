@@ -100,6 +100,8 @@ Sprint 2 计划关联 Sprint 1 改进项，第二轮回顾检查落实效果。�
 
 ## 8 报告持续更新
 
+2026-11-09 补充[按主题生成摘要记录](records/thematic-summary-20261109.md)、[47项验证摘要](evidence/thematic-summary-20261109/verification-summary.json)和AI日志USE20261109-03/P-17。长课件从一次性最终汇总改为统一提纲、各主题独立撰写及程序合成，记录动态额度、恢复与V7迁移；旧成功版本保留。本轮无真实DeepSeek请求、无浏览器视觉核验，不以替身测试回填团队验收或关闭语义缺陷。
+
 2026-11-09 继续补充[最终汇总默认预算修复](records/summary-final-budget-20261109.md)、[40项验证摘要](evidence/summary-final-budget-20261109/verification-summary.json)和AI日志USE20261109-02/P-16：已有审计确认三段成功、FINAL默认8192截断，改为服务允许最大预算并扩展接收/等待；用户主动恢复仅重做FINAL。已有4次用户调用与本轮0次新付费调用分开记录，不将替身回归冒充真实课件已成功。
 
 2026-11-09 补充[摘要篇幅校验修复](records/summary-validation-20261109.md)、[38项验证摘要](evidence/summary-validation-20261109/verification-summary.json)和AI日志USE20261109-01/P-15：承接取消token要求移除残留字符规则，具体化来源/结构错误，修正提交提示与来源页数。未重发用户课件，无付费请求，不以替身测试声称原145页已成功。

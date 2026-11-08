@@ -33,6 +33,11 @@ public final class SummaryContent {
     int size = 0;
     for (Page page : pages) {
       if (page.text().isBlank()) continue;
+      if (size > 0 && page.text().length() <= PART_LIMIT && size + page.text().length() > PART_LIMIT) {
+        parts.add(List.copyOf(current));
+        current.clear();
+        size = 0;
+      }
       for (int offset = 0; offset < page.text().length(); ) {
         if (size == PART_LIMIT) {
           parts.add(List.copyOf(current));
@@ -40,6 +45,14 @@ public final class SummaryContent {
           size = 0;
         }
         int end = Math.min(page.text().length(), offset + PART_LIMIT - size);
+        boolean paragraphBreak = false;
+        if (end < page.text().length()) {
+          int paragraph = page.text().lastIndexOf('\n', end - 1);
+          if (paragraph >= offset + (end - offset) / 2) {
+            end = paragraph + 1;
+            paragraphBreak = true;
+          }
+        }
         if (end < page.text().length() && Character.isHighSurrogate(page.text().charAt(end - 1)))
           end--;
         if (end == offset) {
@@ -52,6 +65,11 @@ public final class SummaryContent {
         current.add(new Page(page.slideId(), page.pageNo(), page.revision(), page.hidden(), text));
         size += text.length();
         offset = end;
+        if (paragraphBreak) {
+          parts.add(List.copyOf(current));
+          current.clear();
+          size = 0;
+        }
       }
     }
     if (!current.isEmpty()) parts.add(List.copyOf(current));

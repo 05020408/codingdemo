@@ -151,6 +151,10 @@ public class SummaryWorker {
   void perform(Claim c) {
     var version = s.tx.execute(t -> fence(c));
     var part = s.db.queryForMap("SELECT * FROM material_summary_parts WHERE id=?", c.part());
+    if ("THEMATIC".equals(version.get("workflow")) && !"PART".equals(part.get("phase"))) {
+      new ThematicSummary(s, this).perform(c, version, part);
+      return;
+    }
     boolean fin = "FINAL".equals(part.get("kind"));
     List<SummaryContent.Page> pages =
         s.decode(version.get("source_snapshot"), new TypeReference<>() {});

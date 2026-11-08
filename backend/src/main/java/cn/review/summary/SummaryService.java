@@ -16,18 +16,26 @@ public class SummaryService {
   final ObjectMapper json;
   final ReaderAiClient ai;
   final IdempotencyService idem;
+  final boolean thematic;
 
+  @org.springframework.beans.factory.annotation.Autowired
   public SummaryService(
       JdbcTemplate db,
       TransactionTemplate tx,
       ObjectMapper json,
       ReaderAiClient ai,
       IdempotencyService idem) {
+    this(db, tx, json, ai, idem, true);
+  }
+
+  SummaryService(JdbcTemplate db, TransactionTemplate tx, ObjectMapper json,
+      ReaderAiClient ai, IdempotencyService idem, boolean thematic) {
     this.db = db;
     this.tx = tx;
     this.json = json;
     this.ai = ai;
     this.idem = idem;
+    this.thematic = thematic;
   }
 
   static String id() {
@@ -131,7 +139,25 @@ public class SummaryService {
         total,
         (String) row.get("error_code"),
         (String) row.get("error_message"),
-        row.get("created_at").toString());
+        row.get("created_at").toString(),
+        Objects.toString(row.get("workflow"), "LEGACY"),
+        phaseLabel(version),
+        db.queryForObject("SELECT COUNT(*) FROM material_summary_parts WHERE version_id=? AND status<>'SUCCEEDED' AND COALESCE(phase,'')<>'ASSEMBLE'", Integer.class, version),
+        !db.queryForList("SELECT id FROM material_summary_parts WHERE version_id=? AND phase='OUTLINE' AND status<>'SUCCEEDED'", version).isEmpty(),
+        upgradeable(row));
+  }
+
+  boolean upgradeable(Map<String,Object> row) {
+    return thematic && "LEGACY".equals(row.get("workflow"))
+        && List.of("FAILED", "CANCELLED").contains(row.get("status"))
+        && db.queryForObject("SELECT COUNT(*) FROM material_summary_parts WHERE version_id=? AND kind='PART' AND status='SUCCEEDED'", Integer.class, row.get("id")) > 1
+        && db.queryForObject("SELECT COUNT(*) FROM material_summary_parts WHERE version_id=? AND kind='PART' AND status<>'SUCCEEDED'", Integer.class, row.get("id")) == 0;
+  }
+
+  String phaseLabel(String version) {
+    var rows = db.queryForList("SELECT COALESCE(phase,kind) AS phase FROM material_summary_parts WHERE version_id=? AND status<>'SUCCEEDED' ORDER BY position_no LIMIT 1", String.class, version);
+    if (rows.isEmpty()) return "已完成";
+    return switch(rows.get(0)) { case "PART" -> "分段理解"; case "OUTLINE" -> "整理提纲"; case "TOPIC" -> "撰写主题"; case "ASSEMBLE" -> "合成文档"; default -> "生成摘要"; };
   }
 
   public Version version(String owner, String id) {
@@ -149,7 +175,7 @@ public class SummaryService {
     try {
       ready(material, pages);
       var chunks = SummaryContent.split(pages);
-      requests = chunks.size() == 1 ? 1 : chunks.size() + 1;
+      requests = chunks.size() == 1 ? 1 : chunks.size() + (thematic ? 2 : 1);
     } catch (ApiException e) {
       blocked = e.getMessage();
     }
@@ -176,7 +202,8 @@ public class SummaryService {
         requests,
         ai.remaining(owner),
         ai.available(),
-        blocked);
+        blocked,
+        thematic && requests > 1);
   }
 
   void ready(String material, List<SummaryContent.Page> pages) {
@@ -216,10 +243,10 @@ public class SummaryService {
               var pages = pages(material);
               ready(material, pages);
               var chunks = SummaryContent.split(pages);
-              int requests = chunks.size() == 1 ? 1 : chunks.size() + 1;
+              int requests = chunks.size() == 1 ? 1 : chunks.size() + (thematic ? 2 : 1);
               if (ai.remaining(owner) < requests)
                 throw new ApiException(
-                    429, "AI_QUOTA_EXCEEDED", "本课件预计需要" + requests + "次请求，当前额度不足，请调整额度或明日再试");
+                    429, "AI_QUOTA_EXCEEDED", "本课件至少需要" + requests + "次请求，提纲后确定主题数；当前额度不足，请明日再试");
               String version = id();
               int number = nextNumber(material);
               int empty = (int) pages.stream().filter(p -> p.text().isBlank()).count();
@@ -247,7 +274,7 @@ public class SummaryService {
                     pos++,
                     chunks.size() == 1 ? "FINAL" : "PART",
                     encode(chunk));
-              if (chunks.size() > 1)
+              if (chunks.size() > 1) {
                 db.update(
                     "INSERT INTO"
                         + " material_summary_parts(id,version_id,position_no,kind,input_snapshot)"
@@ -255,6 +282,12 @@ public class SummaryService {
                     id(),
                     version,
                     pos);
+                if (thematic) {
+                  db.update("UPDATE material_summary_versions SET workflow='THEMATIC' WHERE id=?", version);
+                  db.update("UPDATE material_summary_parts SET phase=CASE WHEN kind='PART' THEN 'PART' ELSE 'OUTLINE' END WHERE version_id=?", version);
+                  addAssembly(version);
+                }
+              }
               queueNext(owner, (String) m.get("course_id"), version);
               return new Ack(version);
             });
@@ -266,6 +299,10 @@ public class SummaryService {
         "SELECT COALESCE(MAX(version_no),0)+1 FROM material_summary_versions WHERE material_id=?",
         Integer.class,
         material);
+  }
+
+  void addAssembly(String version) {
+    db.update("INSERT INTO material_summary_parts(id,version_id,position_no,kind,phase,input_snapshot) VALUES(?,?,1000000,'FINAL','ASSEMBLE',JSON_ARRAY())", id(), version);
   }
 
   void queueNext(String owner, String course, String version) {
@@ -313,8 +350,15 @@ public class SummaryService {
                       material)
                   > 0) throw new ApiException(409, "SUMMARY_BUSY", "本课件还有摘要生成中");
               verifySource(owner, r);
-              if (!ai.available() || ai.remaining(owner) < 1)
+              var nextPhase = db.queryForList("SELECT COALESCE(phase,kind) FROM material_summary_parts WHERE version_id=? AND status<>'SUCCEEDED' ORDER BY position_no LIMIT 1", String.class, version);
+              boolean localOnly = !nextPhase.isEmpty() && "ASSEMBLE".equals(nextPhase.get(0));
+              if (!localOnly && (!ai.available() || ai.remaining(owner) < 1))
                 throw new ApiException(429, "AI_QUOTA_EXCEEDED", "AI未启用或今日额度不足，已完成进度保留");
+              if (upgradeable(r)) {
+                db.update("UPDATE material_summary_versions SET workflow='THEMATIC' WHERE id=?", version);
+                db.update("UPDATE material_summary_parts SET phase='OUTLINE' WHERE version_id=? AND kind='FINAL' AND status<>'SUCCEEDED'", version);
+                addAssembly(version);
+              }
               db.update(
                   "UPDATE material_summary_versions SET"
                       + " status='QUEUED',error_code=NULL,error_message=NULL,updated_at=CURRENT_TIMESTAMP(3)"
@@ -477,7 +521,12 @@ public class SummaryService {
       int totalSteps,
       String errorCode,
       String errorMessage,
-      String createdAt) {}
+      String createdAt,
+      String workflow,
+      String phaseLabel,
+      int remainingRequests,
+      boolean planningPending,
+      boolean resumeWillPlan) {}
 
   public record State(
       String materialId,
@@ -489,7 +538,8 @@ public class SummaryService {
       int estimatedRequests,
       int remainingToday,
       boolean aiAvailable,
-      String blockedReason) {}
+      String blockedReason,
+      boolean estimatedRequestsLowerBound) {}
 
   record Ack(String id) {}
 }

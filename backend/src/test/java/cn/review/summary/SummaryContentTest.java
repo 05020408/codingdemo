@@ -9,6 +9,23 @@ import org.junit.jupiter.api.Test;
 
 class SummaryContentTest {
   @Test
+  void ordinaryPagesStayWholeAndOversizedPagesPreferParagraphBoundaries() {
+    var parts = SummaryContent.split(List.of(
+        new SummaryContent.Page("a", 1, 1L, false, "甲".repeat(6000)),
+        new SummaryContent.Page("b", 2, 1L, false, "乙".repeat(6000)),
+        new SummaryContent.Page("c", 3, 1L, false, "丙".repeat(3000))));
+    assertThat(parts).hasSize(2);
+    assertThat(parts.get(0)).hasSize(1);
+    assertThat(parts.get(1).stream().map(SummaryContent.Page::slideId)).containsExactly("b", "c");
+    String longPage = "甲".repeat(7000) + "\n" + "乙".repeat(5000);
+    var longParts = SummaryContent.split(List.of(new SummaryContent.Page("d", 4, 1L, false, longPage)));
+    assertThat(longParts).hasSize(2);
+    assertThat(longParts.get(0).stream().map(SummaryContent.Page::text).reduce("", String::concat))
+        .isEqualTo("甲".repeat(7000) + "\n");
+    assertThat(longParts.stream().flatMap(List::stream).map(SummaryContent.Page::text).reduce("", String::concat)).isEqualTo(longPage);
+  }
+
+  @Test
   void splittingPreservesUnicodeAndAllNonemptyPages() {
     String text = "文".repeat(9999) + "😀" + "续文";
     var chunks =

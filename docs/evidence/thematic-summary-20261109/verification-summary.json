@@ -1,0 +1,88 @@
+{
+  "date": "2026-11-09",
+  "timezone": "Asia/Shanghai",
+  "applicationVersion": "0.4.4",
+  "scope": "Targeted summary and reader tests, not full backend regression",
+  "testEnvironment": "Native test database and local HTTP stub",
+  "suites": [
+    {
+      "name": "cn.review.summary.SummaryIntegrationTest",
+      "tests": 27,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "cn.review.summary.SummaryContentTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "cn.review.chat.ReaderChatIntegrationTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "totals": {
+    "tests": 47,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "frontend": {
+    "typecheck": "passed",
+    "productionBuild": "passed",
+    "modules": 70
+  },
+  "workflow": [
+    "PART",
+    "OUTLINE",
+    "TOPIC",
+    "ASSEMBLE"
+  ],
+  "thematicExample": {
+    "inputParts": 3,
+    "topics": 2,
+    "aiRequests": 6,
+    "stepsIncludingLocalAssembly": 7,
+    "finalAiCalls": 0
+  },
+  "newIntegrationScenarios": [
+    "outline/topics/ordered local assembly",
+    "retry only missing topic after truncation",
+    "explicit legacy final upgrade reuses successful parts",
+    "quota exhaustion and resume",
+    "local assembly with AI unavailable and zero quota",
+    "reject fabricated topic source"
+  ],
+  "splitCheck": "whole ordinary pages; oversized-page newline boundary checked over complete request chunk; all characters preserved",
+  "runtime": {
+    "migration": 7,
+    "migrationSuccessful": true,
+    "backend": "UP",
+    "database": "UP",
+    "frontendHttpStatus": 200,
+    "backupBeforeMigration": "private ignored runtime file",
+    "activeJobsBeforeRestart": 0,
+    "existingSuccessfulSummaryPreserved": true
+  },
+  "realDeepSeekCallsThisChange": 0,
+  "automaticPaidRetries": 0,
+  "browserVisualValidation": "not performed; no independently controllable browser window available",
+  "realLongDeckSemanticAcceptance": "not performed",
+  "remoteCi": "not run",
+  "remainingKnownSemanticIssues": [
+    "REG-02",
+    "REG-03"
+  ],
+  "limits": [
+    "input 10000 UTF-16 units per part, max 12 parts",
+    "provider output remains finite",
+    "topic count and actual quota cost known after outline",
+    "not recursive unlimited splitting"
+  ]
+}
