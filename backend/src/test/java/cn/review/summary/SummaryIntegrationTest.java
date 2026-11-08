@@ -45,6 +45,9 @@ class SummaryIntegrationTest {
   AtomicInteger calls = new AtomicInteger(), delay = new AtomicInteger();
   AtomicBoolean invalid = new AtomicBoolean();
   List<JsonNode> inputs = new CopyOnWriteArrayList<>();
+  List<JsonNode> requests = new CopyOnWriteArrayList<>();
+  AtomicInteger completionTokens = new AtomicInteger(80);
+  AtomicReference<String> finishReason = new AtomicReference<>("stop");
   CountDownLatch received;
 
   String id() {
@@ -98,6 +101,7 @@ class SummaryIntegrationTest {
           try {
             calls.incrementAndGet();
             var body = json.readTree(e.getRequestBody().readAllBytes());
+            requests.add(body);
             var raw = body.path("messages").path(1).path("content");
             var input =
                 json.readTree(raw.isArray() ? raw.path(0).path("text").asText() : raw.asText());
@@ -155,11 +159,11 @@ class SummaryIntegrationTest {
                         List.of(
                             Map.of(
                                 "finish_reason",
-                                "stop",
+                                finishReason.get(),
                                 "message",
                                 Map.of("content", json.writeValueAsString(result)))),
                         "usage",
-                        Map.of("prompt_tokens", 100, "completion_tokens", 80)));
+                        Map.of("prompt_tokens", 100, "completion_tokens", completionTokens.get())));
             e.getResponseHeaders().set("Content-Type", "application/json");
             e.sendResponseHeaders(200, bytes.length);
             e.getResponseBody().write(bytes);
@@ -244,6 +248,44 @@ class SummaryIntegrationTest {
     assertThat(reconstructed).isEqualTo(original);
     assertThat(v.completedSteps()).isEqualTo(3);
     assertThat(v.markdown()).contains("完整的开发思路");
+  }
+
+  @Test
+  void summaryRequestsOmitTokenLimitAndAcceptCompletionAboveOldPartLimit() {
+    completionTokens.set(2200);
+    db.update("UPDATE slides SET text_content=? WHERE id=?", "定义与条件".repeat(2300), first);
+    var v = generate();
+    assertThat(v.status()).isEqualTo("SUCCEEDED");
+    assertThat(requests).hasSize(3).allSatisfy(body -> assertThat(body.has("max_tokens")).isFalse());
+    assertThat(
+            db.queryForList(
+                "SELECT output_tokens FROM ai_calls WHERE owner_id=? ORDER BY created_at",
+                Long.class,
+                owner))
+        .containsExactly(2200L, 2200L, 2200L);
+  }
+
+  @Test
+  void providerTruncationIsExplicitAndRequiresUserRetry() {
+    finishReason.set("length");
+    completionTokens.set(8192);
+    var v = generate();
+    assertThat(v.status()).isEqualTo("FAILED");
+    assertThat(v.errorCode()).isEqualTo("AI_OUTPUT_TRUNCATED");
+    assertThat(v.markdown()).isNull();
+    assertThat(service.state(owner, material).current()).isNull();
+    assertThat(worker.runOne()).isFalse();
+    assertThat(calls.get()).isEqualTo(1);
+    assertThat(requests.get(0).has("max_tokens")).isFalse();
+    assertThat(
+            db.queryForObject(
+                "SELECT output_tokens FROM ai_calls WHERE owner_id=?", Long.class, owner))
+        .isEqualTo(8192L);
+    finishReason.set("stop");
+    service.retry(owner, v.id(), id());
+    assertThat(worker.runOne()).isTrue();
+    assertThat(service.version(owner, v.id()).status()).isEqualTo("SUCCEEDED");
+    assertThat(calls.get()).isEqualTo(2);
   }
 
   @Test

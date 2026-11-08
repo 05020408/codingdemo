@@ -109,6 +109,7 @@ docs/       需求、设计、Scrum 计划、AI 日志及实际执行记录
 | [Flash 全功能回归](docs/records/full-regression-20261107.md) | v0.4.4 定位校验修复、68 项回归、24 组功能检查及开放语义问题 |
 | [AI 专项可用性复核](docs/records/ai-usability-20261107.md) | 同日新一轮8次真实Flash调用全成功、38项专项测试及摘要语义限制 |
 | [界面文案精简](docs/records/compact-ui-20261108.md) | 11月8日减少重复说明、答疑按需展开、桌面与窄屏检查 |
+| [摘要输出预算调整](docs/records/summary-token-default-20261108.md) | 移除摘要请求token参数、明确截断错误、34项本地替身回归 |
 | [实验过程材料](docs/process-evidence.md) / [AI 使用日志](docs/ai-usage-log.md) | 报告证据、真实活动与人工审阅待办 |
 | [开发与版本管理](docs/development-workflow.md) / [变更记录](CHANGELOG.md) | 提交、推送、版本和配置规则 |
 

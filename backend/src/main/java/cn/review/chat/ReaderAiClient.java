@@ -198,7 +198,6 @@ public class ReaderAiClient {
       String scene,
       String system,
       Object input,
-      int outputLimit,
       BooleanSupplier cancelled,
       Validator<T> validator) {
     if (!available()) throw new ApiException(503, "AI_DISABLED", "AI尚未启用");
@@ -212,8 +211,6 @@ public class ReaderAiClient {
                   Map.of("type", "disabled"),
                   "temperature",
                   0.2,
-                  "max_tokens",
-                  outputLimit,
                   "response_format",
                   Map.of("type", "json_object"),
                   "messages",
@@ -304,7 +301,11 @@ public class ReaderAiClient {
               ? root.path("usage").path("completion_tokens").longValue()
               : null,
           call);
-      if (!root.path("choices").path(0).path("finish_reason").asText().equals("stop"))
+      String finishReason = root.path("choices").path(0).path("finish_reason").asText();
+      if (finishReason.equals("length"))
+        throw new ApiException(
+            502, "AI_OUTPUT_TRUNCATED", "AI 输出达到服务端长度上限，内容未完成；请检查后决定是否继续生成");
+      if (!finishReason.equals("stop"))
         throw new ApiException(502, "AI_INVALID_RESPONSE", "回答不完整，请重试");
       T answer =
           validator.validate(root.path("choices").path(0).path("message").path("content").asText());

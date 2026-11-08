@@ -195,7 +195,6 @@ public class SummaryWorker {
             fin ? "SUMMARY_FINAL" : "SUMMARY_PART",
             prompt,
             input,
-            fin ? 5500 : 1800,
             () -> cancelled(c),
             text -> SummaryContent.validate(s.json, text, allowed, fin ? 9000 : 3000));
     String markdown =

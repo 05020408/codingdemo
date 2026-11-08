@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-08",
+  "applicationVersion": "0.4.4",
+  "scope": "Summary token-parameter removal; local HTTP stub and test database only",
+  "suites": [
+    {
+      "name": "cn.review.summary.SummaryIntegrationTest",
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "cn.review.summary.SummaryContentTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "cn.review.chat.ReaderChatIntegrationTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "totals": {
+    "tests": 34,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "newRegressions": [
+    "summaryRequestsOmitTokenLimitAndAcceptCompletionAboveOldPartLimit",
+    "providerTruncationIsExplicitAndRequiresUserRetry"
+  ],
+  "realDeepSeekCalls": 0,
+  "userMaterialResubmitted": false,
+  "runtimeHealth": {
+    "backend": "UP",
+    "database": "UP",
+    "frontendHttp": 200
+  },
+  "limitations": [
+    "Provider default output budget still applies",
+    "Existing character/source validation retained",
+    "No real 145-page retry, browser run or remote CI in this increment"
+  ]
+}
