@@ -183,7 +183,7 @@ onBeforeUnmount(() => { disposed = true; generation++; window.removeEventListene
     <template v-else-if="material">
       <header class="reader-heading">
         <div class="reader-title">
-          <RouterLink class="back-link" :to="returnLocation">← {{ focusId ? "返回重点与定位结果" : route.query.from === 'history' ? "返回答疑记录" : courseName || "返回课程" }}</RouterLink>
+          <RouterLink class="button secondary reader-back-button" :to="returnLocation" :title="courseName ? `返回课程：${courseName}` : undefined"><AppIcon name="previous" :size="17" />{{ focusId ? "返回重点与定位结果" : route.query.from === 'history' ? "返回答疑记录" : "返回课程" }}</RouterLink>
           <div class="reader-title-line"><h1 :title="material.displayName">{{ material.displayName }}</h1><span class="reader-file-type">PPTX · {{ material.slideCount }} 页</span></div>
         </div>
         <div class="reader-view-actions">

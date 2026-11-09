@@ -1,15 +1,16 @@
 /* Reading desk: a quiet slate canvas, page markers and a separate question margin. */
 .reader-page {
-  --reader-panel-space: 178px;
-  --reader-slide-height: max(180px, calc(100dvh - 330px));
+  --reader-panel-space: 200px;
+  --reader-slide-height: max(180px, calc(100dvh - 352px));
   --reader-canvas: #e6ecf2;
   max-width: 2360px;
   padding: 20px 28px 28px;
 }
-.reader-page.with-focus { --reader-panel-space: 250px; --reader-slide-height: max(180px, calc(100dvh - 410px)); }
+.reader-page.with-focus { --reader-panel-space: 272px; --reader-slide-height: max(180px, calc(100dvh - 432px)); }
 .reader-page .reader-heading { gap: 18px; margin-bottom: 18px; }
 .reader-page .reader-title { flex: 1; }
-.reader-page .reader-heading .back-link { font-size: 12px; color: #69788d; }
+.reader-page .reader-heading .reader-back-button { min-height: 38px; padding: 8px 12px; font-size: 13px; border-color: #b8c9df; color: #334f78; background: #fff; max-width: 100%; }
+.reader-page .reader-heading .reader-back-button:hover { border-color: #1b8982; color: #18756f; background: #f3faf8; }
 .reader-title-line { display: flex; align-items: center; gap: 12px; margin-top: 8px; min-width: 0; }
 .reader-page .reader-heading h1 { margin: 0; font: 600 22px/1.5 "Microsoft YaHei", sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .reader-file-type { flex: none; font: 11px/1.5 Consolas, "Microsoft YaHei", monospace; color: #69788d; padding: 4px 8px; border: 1px solid #d7e1ee; border-radius: 4px; }

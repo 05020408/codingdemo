@@ -119,6 +119,7 @@ docs/       需求、设计、Scrum 计划、AI 日志及实际执行记录
 | [课程空间界面优化](docs/records/course-space-20261109.md) | 顶部导航、加宽课件区、紧凑信息与操作层级、多尺寸合成验证 |
 | [复习重点界面优化](docs/records/focus-desk-20261109.md) | 左侧添加/清单、右侧重点与课件依据、13种宽度及合成交互检查 |
 | [阅读页宽屏与答疑优化](docs/records/reader-desk-20261109.md) | 适合页面、加宽答疑和正文、横竖图及多尺寸合成检查 |
+| [阅读器返回按钮](docs/records/reader-return-20261109.md) | 明确返回入口、定位/历史上下文和草稿离开保护 |
 | [实验过程材料](docs/process-evidence.md) / [AI 使用日志](docs/ai-usage-log.md) | 报告证据、真实活动与人工审阅待办 |
 | [开发与版本管理](docs/development-workflow.md) / [变更记录](CHANGELOG.md) | 提交、推送、版本和配置规则 |
 

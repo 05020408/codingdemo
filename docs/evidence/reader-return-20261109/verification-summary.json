@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-09",
+  "fixture": "Synthetic APIs and self-authored SVG; fictitious account",
+  "widths": [
+    1920,
+    1366,
+    390,
+    320
+  ],
+  "checks": [
+    "visible outlined return course button at least 38px high",
+    "no page horizontal overflow",
+    "return course navigation",
+    "unsent draft confirmation: continue editing preserves draft, leave navigates",
+    "focus return label, selection/filter/page/hash preserved",
+    "history return label and session query"
+  ],
+  "pageErrors": [],
+  "realBackendWrites": 0,
+  "realAiCalls": 0,
+  "limitations": "UI fixture checks; no backend regression or live account acceptance"
+}
