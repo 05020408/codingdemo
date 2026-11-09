@@ -13,6 +13,7 @@ import "./course-workspace.css";
 import "./study-workspace.css";
 import "./compact.css";
 import "./reader-workspace.css";
+import "./home-workspace.css";
 
 const app = createApp(App);
 app.use(createPinia());

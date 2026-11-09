@@ -8,6 +8,7 @@ import AppIcon from "./components/AppIcon.vue";
 const auth = useAuth();
 const router = useRouter();
 const route = useRoute();
+const home = computed(() => route.path === '/');
 const reading = computed(() => route.path.startsWith('/materials/'));
 const locationLabel = computed(() => route.path.endsWith('/summary') ? '课件核心摘要' : route.path.startsWith('/materials/') ? '课件阅读' : route.path.startsWith('/courses/') ? '课程空间' : '我的课程');
 const logoutError = ref("");
@@ -26,8 +27,8 @@ async function logout() {
 }
 </script>
 <template>
-  <div v-if="auth.user" class="workspace" :class="{ 'reading-workspace': reading }">
-    <aside class="sidebar">
+  <div v-if="auth.user" class="workspace" :class="{ 'reading-workspace': reading, 'home-workspace': home }">
+    <aside v-if="!home" class="sidebar">
       <RouterLink to="/" class="brand" aria-label="知笺首页" title="知笺首页"
         ><span class="brand-mark">知</span
         ><span>知笺</span></RouterLink
@@ -49,13 +50,25 @@ async function logout() {
     </aside>
     <main class="main">
       <header class="topbar">
-        <nav aria-label="当前位置" class="workspace-breadcrumb">
+        <template v-if="home">
+          <div class="home-navigation">
+            <RouterLink to="/" class="brand" aria-label="知笺首页"><span class="brand-mark">知</span><span>知笺</span></RouterLink>
+            <nav aria-label="主导航"><RouterLink to="/" aria-current="page"><AppIcon name="courses" :size="17" />我的课程</RouterLink></nav>
+          </div>
+          <div class="home-account">
+            <span class="avatar" aria-hidden="true">{{ auth.user.displayName.slice(0, 1) }}</span>
+            <span class="home-account-name" :title="`${auth.user.displayName} (@${auth.user.username})`">{{ auth.user.displayName }}</span>
+            <button class="text-button" :disabled="leaving" @click="logout">{{ leaving ? '正在退出…' : '退出' }}</button>
+          </div>
+        </template>
+        <nav v-else aria-label="当前位置" class="workspace-breadcrumb">
           <RouterLink v-if="route.path !== '/'" to="/">我的课程</RouterLink>
           <AppIcon v-if="route.path !== '/'" name="chevron" :size="13" />
           <span aria-current="page">{{ locationLabel }}</span>
         </nav>
-        <span class="version-label">知笺 · 0.4.4</span>
+        <span v-if="!home" class="version-label">知笺 · 0.4.4</span>
       </header>
+      <p v-if="home && logoutError" role="alert" class="error home-logout-error">{{ logoutError }}</p>
       <CleanupStatus />
       <RouterView :key="$route.path" />
     </main>
