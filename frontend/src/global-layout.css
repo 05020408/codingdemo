@@ -1,0 +1,143 @@
+/* Shared study desk: book-spine accents, readable paper and one navigation shell. */
+:root {
+  --layout-width: 1760px;
+  --layout-gutter: clamp(20px, 4vw, 72px);
+  --layout-header: 72px;
+  --layout-paper: #fff;
+  --layout-ground: #f4f7fb;
+  --layout-border: #dce4ee;
+  --layout-title-font: "STZhongsong", "SimSun", serif;
+}
+.workspace { display: block; background: var(--layout-ground); }
+.workspace > .main { width: 100%; }
+.workspace .app-header { height: var(--layout-header); padding: 0 max(var(--layout-gutter), calc((100% - var(--layout-width)) / 2)); background: var(--layout-paper); border-bottom: 1px solid var(--layout-border); gap: 24px; }
+.workspace .app-header .home-navigation { gap: 36px; }
+.workspace .app-header .brand { font-size: 23px; }
+.workspace .app-header .brand .app-brand-name { display: inline; }
+.workspace .app-header .home-navigation nav > a { font-size: 14px; }
+.workspace .app-header .home-account-name { font-size: 13px; max-width: 160px; }
+.app-location { color: #69788d; font-size: 12px; padding-left: 24px; border-left: 1px solid var(--layout-border); white-space: nowrap; }
+.app-logout-error, .workspace .cleanup-status { max-width: var(--layout-width); margin: 18px max(var(--layout-gutter), calc((100% - var(--layout-width)) / 2)) 0; font-size: 13px; }
+.skip-link { position: absolute; left: 20px; top: -100px; padding: 12px 18px; background: #172640; color: #fff; border-radius: 6px; z-index: 100; }
+.skip-link:focus { top: 12px; }
+#main-content:focus { outline: none; }
+.workspace :is(button, a, input, textarea, select, summary):focus-visible, .login-layout :is(button, input):focus-visible { outline: 2px solid #1b8982; outline-offset: 3px; }
+.button { border-radius: 8px; }
+.page-back-button { min-height: 38px; padding: 8px 12px; font-size: 13px; color: #334f78; border-color: #b8c9df; background: #fff; }
+.page-back-button:hover { color: #18756f; border-color: #1b8982; background: #f3faf8; }
+.course-workspace .course-detail-page > .page-back-button { margin-bottom: 20px; }
+.home-workspace, .course-workspace { --home-width: var(--layout-width); --course-width: var(--layout-width); --home-gutter: var(--layout-gutter); --course-gutter: var(--layout-gutter); }
+.home-workspace .collection-page { padding-top: 36px; }
+.home-workspace .collection-heading { margin-bottom: 28px; }
+.course-workspace .course-detail-page { padding-top: 28px; }
+.workspace .dialog { border-color: var(--layout-border); border-radius: 12px; padding: 28px; }
+.workspace .dialog h2 { font: 600 24px/1.5 var(--layout-title-font); overflow-wrap: anywhere; }
+.workspace .dialog :is(input:not([type="checkbox"]), textarea, select) { font-size: 14px; }
+.workspace .dialog .button { min-height: 40px; font-size: 13px; }
+.workspace :is(.notice, .error, .success) { overflow-wrap: anywhere; }
+/* The reader needs more width than course lists or a prose document. */
+.reading-workspace:not(.summary-workspace) { --layout-width: 2360px; }
+.reading-workspace .reader-page { --reader-panel-space: 218px; --reader-slide-height: max(180px, calc(100dvh - 370px)); max-width: calc(var(--layout-width) + var(--layout-gutter) * 2); padding-left: var(--layout-gutter); padding-right: var(--layout-gutter); }
+.reading-workspace .reader-page.with-focus { --reader-panel-space: 290px; --reader-slide-height: max(180px, calc(100dvh - 450px)); }
+/* Summary versions sit beside a readable manuscript rather than a stretched text line. */
+.summary-workspace .summary-page { width: 100%; max-width: calc(var(--layout-width) + var(--layout-gutter) * 2); padding: 28px var(--layout-gutter) 64px; }
+.summary-workspace .summary-heading { align-items: center; margin-bottom: 28px; }
+.summary-workspace .summary-heading > div { min-width: 0; }
+.summary-workspace .summary-heading > .button { flex-shrink: 0; min-height: 40px; font-size: 13px; }
+.summary-workspace .summary-eyebrow { margin-top: 22px; font-size: 12px; letter-spacing: .04em; }
+.summary-workspace .summary-heading h1 { font: 600 clamp(25px, 2vw, 34px)/1.5 var(--layout-title-font); margin-bottom: 0; }
+.summary-workspace .summary-layout { grid-template-columns: 290px minmax(0, 1fr); gap: 28px; }
+.summary-workspace .summary-sidebar { gap: 12px; min-width: 0; padding: 20px; background: #fff; border: 1px solid var(--layout-border); border-radius: 10px; }
+.summary-workspace .summary-sidebar h2 { font-size: 17px; }
+.summary-workspace .summary-version { padding: 14px; overflow-wrap: anywhere; }
+.summary-workspace .summary-version strong { font-size: 14px; }
+.summary-workspace .summary-version.selected { border-left-color: #1b8982; background: #eef7f4; }
+.summary-workspace .summary-generate { gap: 12px; }
+.summary-workspace .summary-generate .button { min-height: 42px; font-size: 13px; }
+.summary-workspace .summary-paper { padding: 28px clamp(22px, 3vw, 56px); border-radius: 10px; }
+.summary-workspace .summary-paper-meta { font-size: 12px; line-height: 1.8; }
+.summary-workspace .summary-actions .button { min-height: 40px; padding: 9px 13px; font-size: 13px; }
+.summary-workspace .summary-prose { max-width: 78ch; margin: 0 auto; font-size: 16px; line-height: 2; }
+.summary-workspace .summary-prose h2 { font: 600 26px/1.5 var(--layout-title-font); }
+.summary-workspace .summary-prose :is(pre, table) { max-width: 100%; overflow-x: auto; }
+.summary-workspace .summary-empty { min-height: 260px; align-content: center; font-size: 15px; }
+.summary-workspace .summary-empty h2 { font: 600 26px/1.5 var(--layout-title-font); }
+.summary-workspace .summary-editor { font-size: 14px; }
+/* History uses the same selection and text hierarchy as the focus desk. */
+.course-workspace .course-chat-history > .section-line { padding-bottom: 16px; margin-bottom: 22px; gap: 12px; flex-wrap: wrap; }
+.course-workspace .course-chat-history > .section-line h2 { display: flex; align-items: center; gap: 12px; font-size: 21px; }
+.course-workspace .course-chat-history > .section-line > span { font-size: 12px; }
+.course-workspace .history-layout { grid-template-columns: 310px minmax(0, 1fr); gap: 26px; }
+.course-workspace .history-session-list { max-height: 620px; overflow: auto; padding: 3px; }
+.course-workspace .history-session-list h3 { font-size: 16px; margin-bottom: 8px; }
+.course-workspace .history-session-list button { padding: 16px; flex-shrink: 0; }
+.course-workspace .history-session-list button.selected { background: #eef7f4; border-color: #9bc5bd; box-shadow: inset 3px 0 #1b8982; }
+.course-workspace .history-session-list strong { font-size: 15px; }
+.course-workspace .history-session-list button > span { font-size: 12px; }
+.course-workspace .history-resume { margin-bottom: 14px; }
+.course-workspace .history-conversation .chat-heading { padding: 18px 22px; }
+.course-workspace .history-conversation .chat-heading h2 { font: 600 22px/1.5 var(--layout-title-font); }
+.course-workspace .history-conversation .chat-history { padding: 22px; }
+.course-workspace .history-conversation :is(.chat-question p, .chat-answer p) { font-size: 15px; line-height: 1.9; }
+.course-workspace .history-conversation .answer-disclosure { font-size: 13px; }
+.course-workspace .history-conversation :is(.chat-page-tag, .chat-cite-link, .chat-copy, .chat-limitations, .chat-hint) { font-size: 12px; }
+/* Login keeps the course-book identity while using the same form scale. */
+.login-layout { min-height: 100dvh; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); background: #f4f7fb; }
+.login-story { min-height: 100dvh; padding: clamp(32px, 4vw, 72px) clamp(32px, 6vw, 110px); background: #eaf1f8; }
+.login-story h1 { font: 600 clamp(36px, 3.5vw, 60px)/1.5 var(--layout-title-font); }
+.login-story > div:nth-child(2) { margin-bottom: 100px; }
+.login-panel { padding: 40px var(--layout-gutter); background: #fff; }
+.login-form { width: min(420px, 100%); margin: 24px 0; }
+.login-form h2 { font: 600 32px/1.5 var(--layout-title-font); }
+.login-form :is(input, .button) { min-height: 46px; font-size: 14px; }
+.login-form > label { font-size: 14px; }
+@media (max-width: 1100px) {
+  :root { --layout-gutter: 28px; }
+  .workspace .app-header .home-navigation { gap: 28px; }
+  .app-location { display: none; }
+  .summary-workspace .summary-layout { grid-template-columns: 250px minmax(0, 1fr); gap: 22px; }
+  .course-workspace .history-layout { grid-template-columns: 260px minmax(0, 1fr); gap: 20px; }
+}
+@media (max-width: 900px) {
+  .course-workspace .history-layout { grid-template-columns: minmax(0, 1fr); }
+  .course-workspace .history-session-list { max-height: 280px; }
+}
+@media (max-width: 760px) {
+  .summary-workspace .summary-layout { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .summary-workspace .summary-heading { align-items: flex-start; }
+  .summary-workspace .summary-sidebar { max-height: none; overflow: visible; }
+  .summary-workspace .summary-paper { padding: 20px; }
+  .summary-workspace .summary-prose { font-size: 15px; }
+}
+@media (max-width: 750px) {
+  :root { --layout-gutter: 18px; --layout-header: 64px; }
+  .workspace .app-header { gap: 12px; }
+  .workspace .app-header .home-navigation { gap: 22px; }
+  .workspace .app-header .brand { font-size: 19px; gap: 8px; }
+  .workspace .app-header .brand-mark { width: 32px; height: 38px; font-size: 22px; }
+  .workspace .app-header .home-navigation nav > a { font-size: 12px; border-bottom-width: 2px; }
+  .workspace .app-header .home-navigation nav > a > svg { display: none; }
+  .workspace .app-header .home-account { gap: 6px; }
+  .workspace .app-header .home-account-name { display: none; }
+  .workspace .app-header .avatar { display: inline-grid; width: 28px; height: 28px; }
+  .workspace .app-header .home-account .text-button { margin-left: 0; font-size: 12px; }
+  .home-workspace .collection-page, .course-workspace .course-detail-page { padding-top: 24px; }
+  .course-workspace .course-detail-page > .page-back-button { margin-bottom: 16px; }
+  .reading-workspace .reader-page, .reading-workspace .reader-page.with-focus { --reader-slide-height: 52dvh; padding-top: 18px; }
+  .summary-workspace .summary-page { padding-top: 24px; padding-bottom: 40px; }
+  .summary-workspace .summary-heading h1 { font-size: 25px; }
+  .summary-workspace .summary-prose h2 { font-size: 23px; }
+  .summary-workspace .summary-paper .summary-actions { gap: 8px; }
+  .course-workspace .history-conversation .chat-history { padding: 16px; }
+  .course-workspace .history-conversation :is(.chat-question p, .chat-answer p) { font-size: 14px; }
+  .workspace .dialog { padding: 22px 18px; }
+  .workspace .dialog-actions { gap: 10px; flex-wrap: wrap; }
+  .login-layout { grid-template-columns: minmax(0, 1fr); }
+  .login-story { min-height: auto; padding: 24px var(--layout-gutter); border-right: 0; border-bottom: 1px solid #dce4ee; }
+  .login-story > div:nth-child(2) { margin: 20px 0 0; }
+  .login-story h1 { font-size: 28px; margin: 0; }
+  .login-story h1 br { display: none; }
+  .login-panel { padding: 28px var(--layout-gutter) 40px; }
+  .login-form { margin: 0; }
+  .login-form h2 { font-size: 28px; }
+}

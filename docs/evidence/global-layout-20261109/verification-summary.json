@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-09",
+  "fixture": "Intercepted APIs, self-authored summary/answer/SVG, fictitious account",
+  "widths": [
+    2560,
+    1920,
+    1440,
+    1100,
+    900,
+    761,
+    760,
+    751,
+    750,
+    641,
+    640,
+    390,
+    320
+  ],
+  "pages": [
+    "home",
+    "course materials",
+    "reader",
+    "summary",
+    "chat history",
+    "login/register"
+  ],
+  "checks": [
+    "one shared header, no sidebar, brand/account/logout",
+    "header 72px desktop and 64px mobile",
+    "one main landmark and skip link focus",
+    "no horizontal page overflow",
+    "course and summary return controls",
+    "summary prose line width and internal long code scroll",
+    "summary version/select/adopt/edit/dirty guard/save via stubs",
+    "generation confirmation cancel without submission",
+    "summary empty/failed/running/load failure",
+    "history select/resume/source-deleted/failure recovery",
+    "logout failure and success via stubs",
+    "login/register fields and success/failure via stubs",
+    "cleanup failure visible"
+  ],
+  "pageErrors": [],
+  "stubWriteCount": 7,
+  "realBackendWrites": 0,
+  "realAiCalls": 0,
+  "limitations": "UI fixtures; no live authentication, real summary generation, backend or remote CI acceptance"
+}

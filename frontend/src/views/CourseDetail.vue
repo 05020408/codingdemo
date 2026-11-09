@@ -38,7 +38,7 @@ onBeforeUnmount(() => { disposed = true; generation++; });
 
 <template>
   <section class="page-content course-detail-page" :style="course ? courseTheme(course.id) : undefined">
-    <RouterLink class="back-link" to="/">← 我的课程</RouterLink>
+    <RouterLink class="button secondary page-back-button" to="/"><AppIcon name="previous" :size="17" />返回我的课程</RouterLink>
     <div v-if="loading" class="state-panel" role="status">正在加载课程空间…</div>
     <div v-else-if="error" class="state-panel">
       <h2>暂时无法打开这门课程</h2>

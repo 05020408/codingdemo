@@ -5,6 +5,7 @@ import { ApiError, message, request } from "../api";
 import type { SummaryState, SummaryVersion } from "../summary";
 import { summaryStatus } from "../summary";
 import MarkdownDocument from "../components/MarkdownDocument";
+import AppIcon from "../components/AppIcon.vue";
 import "../summary.css";
 const route = useRoute(),
   id = computed(() => String(route.params.id));
@@ -182,12 +183,11 @@ onBeforeUnmount(() => {
     <template v-if="state">
       <header class="summary-heading">
         <div>
-          <RouterLink class="back-link" :to="`/courses/${state.courseId}`"
-            >← 返回课程</RouterLink
+          <RouterLink class="button secondary page-back-button" :to="`/courses/${state.courseId}`"
+            ><AppIcon name="previous" :size="17" />返回课程</RouterLink
           >
           <p class="summary-eyebrow">课件核心摘要</p>
           <h1>{{ state.materialName }}</h1>
-          <p class="muted">核心内容与复习清单</p>
         </div>
         <RouterLink class="button secondary" :to="`/materials/${id}/read`"
           >阅读课件 →</RouterLink
@@ -300,7 +300,7 @@ onBeforeUnmount(() => {
             </div>
           </div>
         </aside>
-        <main class="summary-paper">
+        <article class="summary-paper" aria-label="课件摘要正文">
           <template v-if="version">
             <div class="summary-paper-meta">
               <span
@@ -420,7 +420,7 @@ onBeforeUnmount(() => {
               生成核心内容与复习清单，阅读时可附带提问。
             </p>
           </div>
-        </main>
+        </article>
       </div>
     </template>
     <p v-else-if="!loading" class="error">

@@ -100,6 +100,8 @@ Sprint 2 计划关联 Sprint 1 改进项，第二轮回顾检查落实效果。�
 
 ## 8 报告持续更新
 
+2026-11-09 补充[全局布局统一](records/global-layout-20261109.md)、[六类页面截图与统计](evidence/global-layout-20261109/README.md)及USE20261109-11/P-25。使用frontend-design技能统一导航、返回、内容对齐和摘要/历史/登录布局；构建与合成检查通过，无真实业务写入或AI调用，不替代正式团队验收。
+
 2026-11-09 补充[阅读器返回按钮修正](records/reader-return-20261109.md)、[界面证据](evidence/reader-return-20261109/README.md)及USE20261109-10/P-24，保留用户对返回入口不明显的真实反馈、修改与验证；无真实业务写入或AI调用。
 
 2026-11-09 补充[阅读页宽屏与答疑优化](records/reader-desk-20261109.md)、[适配与交互证据](evidence/reader-desk-20261109/README.md)和USE20261109-09/P-23。按截图使用frontend-design技能，记录加宽/字号、适合页面、横竖图及11种宽度和3个额外视口检查；真实业务写入和AI调用0，不替代后端与正式团队验收。

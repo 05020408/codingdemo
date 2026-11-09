@@ -10,7 +10,7 @@ const router = useRouter();
 const route = useRoute();
 const home = computed(() => route.path === '/');
 const courseSpace = computed(() => route.path.startsWith('/courses/'));
-const topNavigation = computed(() => home.value || courseSpace.value);
+const summarySpace = computed(() => route.path.endsWith('/summary'));
 const reading = computed(() => route.path.startsWith('/materials/'));
 const locationLabel = computed(() => route.path.endsWith('/summary') ? '课件核心摘要' : route.path.startsWith('/materials/') ? '课件阅读' : route.path.startsWith('/courses/') ? '课程空间' : '我的课程');
 const logoutError = ref("");
@@ -29,48 +29,22 @@ async function logout() {
 }
 </script>
 <template>
-  <div v-if="auth.user" class="workspace" :class="{ 'reading-workspace': reading, 'home-workspace': home, 'course-workspace': courseSpace }">
-    <aside v-if="!topNavigation" class="sidebar">
-      <RouterLink to="/" class="brand" aria-label="知笺首页" title="知笺首页"
-        ><span class="brand-mark">知</span
-        ><span>知笺</span></RouterLink
-      >
-      <RouterLink to="/" class="nav-item" aria-label="我的课程" title="我的课程"
-        ><AppIcon name="courses" /><span class="nav-item-text">我的课程</span></RouterLink
-      >
-      <div class="account">
-        <span class="avatar">{{ auth.user.displayName.slice(0, 1) }}</span>
-        <div>
-          <strong>{{ auth.user.displayName }}</strong
-          ><small>@{{ auth.user.username }}</small>
-        </div>
-        <button class="text-button" :disabled="leaving" @click="logout">
-          退出
-        </button>
+  <div v-if="auth.user" class="workspace" :class="{ 'reading-workspace': reading, 'home-workspace': home, 'course-workspace': courseSpace, 'summary-workspace': summarySpace }">
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
+    <header class="topbar app-header">
+      <div class="home-navigation">
+        <RouterLink to="/" class="brand" aria-label="知笺首页"><span class="brand-mark">知</span><span class="app-brand-name">知笺</span></RouterLink>
+        <nav aria-label="主导航"><RouterLink to="/" :aria-current="home ? 'page' : undefined"><AppIcon name="courses" :size="17" />我的课程</RouterLink></nav>
+        <span v-if="!home" class="app-location">{{ locationLabel }}</span>
       </div>
-      <p v-if="logoutError" role="alert" class="error">{{ logoutError }}</p>
-    </aside>
-    <main class="main">
-      <header class="topbar">
-        <template v-if="topNavigation">
-          <div class="home-navigation">
-            <RouterLink to="/" class="brand" aria-label="知笺首页"><span class="brand-mark">知</span><span>知笺</span></RouterLink>
-            <nav aria-label="主导航"><RouterLink to="/" :aria-current="home ? 'page' : undefined"><AppIcon name="courses" :size="17" />我的课程</RouterLink></nav>
-          </div>
-          <div class="home-account">
-            <span class="avatar" aria-hidden="true">{{ auth.user.displayName.slice(0, 1) }}</span>
-            <span class="home-account-name" :title="`${auth.user.displayName} (@${auth.user.username})`">{{ auth.user.displayName }}</span>
-            <button class="text-button" :disabled="leaving" @click="logout">{{ leaving ? '正在退出…' : '退出' }}</button>
-          </div>
-        </template>
-        <nav v-else aria-label="当前位置" class="workspace-breadcrumb">
-          <RouterLink v-if="route.path !== '/'" to="/">我的课程</RouterLink>
-          <AppIcon v-if="route.path !== '/'" name="chevron" :size="13" />
-          <span aria-current="page">{{ locationLabel }}</span>
-        </nav>
-        <span v-if="!topNavigation" class="version-label">知笺 · 0.4.4</span>
-      </header>
-      <p v-if="topNavigation && logoutError" role="alert" class="error home-logout-error">{{ logoutError }}</p>
+      <div class="home-account">
+        <span class="avatar" aria-hidden="true">{{ auth.user.displayName.slice(0, 1) }}</span>
+        <span class="home-account-name" :title="`${auth.user.displayName} (@${auth.user.username})`">{{ auth.user.displayName }}</span>
+        <button class="text-button" :disabled="leaving" @click="logout">{{ leaving ? '正在退出…' : '退出' }}</button>
+      </div>
+    </header>
+    <main id="main-content" class="main" tabindex="-1">
+      <p v-if="logoutError" role="alert" class="error app-logout-error">{{ logoutError }}</p>
       <CleanupStatus />
       <RouterView :key="$route.path" />
     </main>
