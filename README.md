@@ -123,6 +123,7 @@ docs/       需求、设计、Scrum 计划、AI 日志及实际执行记录
 | [阅读页宽屏与答疑优化](docs/records/reader-desk-20261109.md) | 适合页面、加宽答疑和正文、横竖图及多尺寸合成检查 |
 | [阅读器返回按钮](docs/records/reader-return-20261109.md) | 明确返回入口、定位/历史上下文和草稿离开保护 |
 | [全局导航与布局](docs/records/global-layout-20261109.md) | 统一导航、返回、内容宽度，摘要/历史/登录及六类页面合成检查 |
+| [计网演示课程](docs/records/network-demo-20261109.md) | 本地课件体验账号、三份真实课件、重点/摘要/答疑及演示顺序 |
 | [实验过程材料](docs/process-evidence.md) / [AI 使用日志](docs/ai-usage-log.md) | 报告证据、真实活动与人工审阅待办 |
 | [开发与版本管理](docs/development-workflow.md) / [变更记录](CHANGELOG.md) | 提交、推送、版本和配置规则 |
 
