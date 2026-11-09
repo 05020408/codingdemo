@@ -1,0 +1,54 @@
+{
+  "date": "2026-11-09",
+  "fixture": "Synthetic API, self-authored SVG slides and answer text, fictitious account",
+  "widths": [
+    2560,
+    1920,
+    1440,
+    1280,
+    1101,
+    1100,
+    1024,
+    751,
+    750,
+    390,
+    320
+  ],
+  "additionalViewports": [
+    {
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "width": 1920,
+      "height": 720
+    },
+    {
+      "width": 2560,
+      "height": 1440
+    }
+  ],
+  "checks": [
+    "fit page has no canvas scrolling at default zoom",
+    "desktop chat 380-460px and 15px answer text",
+    "read/chat panels responsive with settings expanded",
+    "focus/Escape and hide/show preserve draft",
+    "outline toggle",
+    "citation navigation",
+    "4:3 and portrait aspect ratios fit without distortion",
+    "150% zoom scrolls only inside canvas",
+    "invalid page input",
+    "image failure and retry",
+    "reading progress failure and retry",
+    "summary/image/follow send parameters via stub",
+    "running stop and manual retry via stubs",
+    "focus context and return query",
+    "AI unavailable and history readable",
+    "material load failure retry and preview not ready"
+  ],
+  "pageErrors": [],
+  "stubWriteCount": 13,
+  "realBackendWrites": 0,
+  "realAiCalls": 0,
+  "limitations": "No real AI, PPT conversion, live session or backend regression acceptance"
+}

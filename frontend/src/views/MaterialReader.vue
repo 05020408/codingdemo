@@ -12,6 +12,7 @@ const material = ref<Material | null>(null), courseName = ref("");
 const slides = ref<Slide[]>([]), page = ref(1), pageInput = ref("1");
 const loading = ref(true), error = ref(""), pageError = ref("");
 const imageError = ref(false), imageLoading = ref(true), imageRevision = ref(0);
+const imageRatio = ref(16 / 9);
 const saveError = ref(""), savedPage = ref<number | null>(null);
 const focusContext = ref(""), outlineOpen = ref(true), chatOpen = ref(true);
 const focused = ref(false);
@@ -83,6 +84,11 @@ function save(target: number) {
       if (!disposed) saveError.value = "阅读位置未保存：" + message(cause);
     }
   });
+}
+function imageLoaded(event: Event) {
+  const image = event.target as HTMLImageElement;
+  if (image.naturalWidth && image.naturalHeight) imageRatio.value = image.naturalWidth / image.naturalHeight;
+  imageLoading.value = false;
 }
 function scrollThumbnail() {
   const item = thumbnails.value?.querySelector<HTMLElement>(`[data-page="${page.value}"]`);
@@ -200,10 +206,10 @@ onBeforeUnmount(() => { disposed = true; generation++; window.removeEventListene
         <div class="reader-content">
           <div class="reader-toolbar">
             <div class="page-controls"><button class="icon-button" :disabled="page === 1" aria-label="上一页" title="上一页" @click="go(page - 1)"><AppIcon name="previous" :size="19" /></button><form class="page-jump" @submit.prevent="go(Number(pageInput))"><label for="reader-page-number" class="sr-only">跳转页码</label><input id="reader-page-number" v-model="pageInput" inputmode="numeric" autocomplete="off" :aria-invalid="!!pageError" aria-describedby="reader-page-total" /><span id="reader-page-total">/ {{ material.slideCount }}</span><button type="submit" class="text-button">跳转</button></form><button class="icon-button" :disabled="page === material.slideCount" aria-label="下一页" title="下一页" @click="go(page + 1)"><AppIcon name="chevron" :size="19" /></button></div>
-            <div class="reader-canvas-tools"><div class="zoom-controls"><AppIcon name="zoom" :size="16" /><label for="reader-zoom" class="sr-only">课件缩放</label><select id="reader-zoom" v-model.number="zoom"><option :value="100">适合宽度</option><option v-for="value in [125, 150, 175, 200]" :key="value" :value="value">{{ value }}%</option></select></div><button class="icon-button reader-focus-toggle" :aria-pressed="focused" :aria-label="focused ? '退出专注阅读' : '专注阅读'" :title="focused ? '退出专注阅读（Esc）' : '专注阅读'" @click="focused = !focused; setPanel('read')"><AppIcon :name="focused ? 'restore' : 'expand'" :size="18" /></button></div>
+            <div class="reader-canvas-tools"><div class="zoom-controls"><AppIcon name="zoom" :size="16" /><label for="reader-zoom" class="sr-only">课件缩放</label><select id="reader-zoom" v-model.number="zoom"><option :value="100">适合页面</option><option v-for="value in [125, 150, 175, 200]" :key="value" :value="value">{{ value }}%</option></select></div><button class="icon-button reader-focus-toggle" :aria-pressed="focused" :aria-label="focused ? '退出专注阅读' : '专注阅读'" :title="focused ? '退出专注阅读（Esc）' : '专注阅读'" @click="focused = !focused; setPanel('read')"><AppIcon :name="focused ? 'restore' : 'expand'" :size="18" /></button></div>
           </div>
           <p v-if="pageError" class="error" role="alert">{{ pageError }}</p>
-          <div ref="canvas" class="slide-viewport" tabindex="0" aria-label="课件页面，可使用左右方向键翻页"><div class="slide-paper" :style="{ width: zoom + '%' }" :aria-busy="imageLoading"><div v-if="imageError" class="image-error" role="alert"><AppIcon name="file" :size="28" /><p>页面图片加载失败，请检查网络后重试。</p><button class="button secondary" @click="imageError = false; imageLoading = true; imageRevision++">重新加载图片</button></div><template v-else><p v-if="imageLoading" class="image-loading" role="status">正在加载第 {{ page }} 页…</p><img :key="`${page}-${imageRevision}`" :src="selected?.previewUrl ? selected.previewUrl + '?v=' + imageRevision : undefined" :alt="`${material.displayName}，原始第 ${page} 页`" @load="imageLoading = false" @error="imageLoading = false; imageError = true" /></template></div></div>
+          <div ref="canvas" class="slide-viewport" :class="{ 'fit-page': zoom === 100 }" tabindex="0" aria-label="课件页面，可使用左右方向键翻页"><div class="slide-paper" :style="{ width: zoom === 100 ? 'min(100%, calc(var(--reader-slide-height) * var(--reader-slide-ratio)))' : zoom + '%', '--reader-slide-ratio': imageRatio }" :aria-busy="imageLoading"><div v-if="imageError" class="image-error" role="alert"><AppIcon name="file" :size="28" /><p>页面图片加载失败，请检查网络后重试。</p><button class="button secondary" @click="imageError = false; imageLoading = true; imageRevision++">重新加载图片</button></div><template v-else><p v-if="imageLoading" class="image-loading" role="status">正在加载第 {{ page }} 页…</p><img :key="`${page}-${imageRevision}`" :src="selected?.previewUrl ? selected.previewUrl + '?v=' + imageRevision : undefined" :alt="`${material.displayName}，原始第 ${page} 页`" @load="imageLoaded" @error="imageLoading = false; imageError = true" /></template></div></div>
           <div class="reader-page-track" :aria-label="`当前第 ${page} 页，共 ${material.slideCount} 页`" role="img"><span :style="{ width: (page / material.slideCount * 100) + '%' }"></span></div>
           <div class="reading-status" role="status"><span class="original-page">原页 {{ String(page).padStart(3, '0') }}<span v-if="selected?.isHidden" class="stage-badge">隐藏页</span><span class="reader-key-hint">← → 翻页</span></span><span v-if="!saveError"><AppIcon v-if="savedPage === page" name="check" :size="14" />{{ savedPage === page ? "位置已保存" : savedPage === null ? "翻页后自动保存" : "正在保存位置…" }}</span></div>
           <p v-if="saveError" class="error" role="alert">{{ saveError }}<button class="text-button" @click="save(page)">重新保存</button></p>
