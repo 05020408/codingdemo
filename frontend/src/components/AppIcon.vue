@@ -19,6 +19,8 @@ const paths = {
   chat: "M4 4h16v13H9l-5 4V4 M8 8h8 M8 12h5",
   download: "M12 3v13 M7 11l5 5 5-5 M4 17v4h16v-4",
   zoom: "M21 21l-5-5 M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0 M10 6v8 M6 10h8",
+  expand: "M8 3H3v5 M16 3h5v5 M3 16v5h5 M21 16v5h-5",
+  restore: "M3 8h5V3 M21 8h-5V3 M8 21v-5H3 M16 21v-5h5",
 };
 withDefaults(defineProps<{ name: keyof typeof paths; size?: number }>(), {
   size: 20,

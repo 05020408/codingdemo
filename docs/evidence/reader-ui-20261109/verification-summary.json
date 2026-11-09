@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-09",
+  "fixture": "Synthetic intercepted API and self-authored SVG, no user data",
+  "desktop": [
+    1440,
+    960
+  ],
+  "responsiveWidths": [
+    1024,
+    390,
+    320
+  ],
+  "checks": [
+    "focus mode hides panels, Escape restores draft",
+    "next/jump validates page and updates URL and question page",
+    "150% zoom",
+    "collapse preserves draft",
+    "read/chat switching preserves draft",
+    "question options accessible",
+    "no horizontal page overflow",
+    "no page errors or unmocked API requests"
+  ],
+  "realAiCalls": 0,
+  "backendBusinessMutations": 0,
+  "limitations": "Visual fixture verification; no real AI answer or real PPT rendering tested"
+}

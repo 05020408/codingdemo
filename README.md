@@ -113,6 +113,7 @@ docs/       需求、设计、Scrum 计划、AI 日志及实际执行记录
 | [摘要篇幅校验修复](docs/records/summary-validation-20261109.md) | 撤销残留字符规则、细化错误和任务状态、38项相关回归 |
 | [最终汇总默认预算修复](docs/records/summary-final-budget-20261109.md) | 采用服务允许最大预算、保留3段仅恢复汇总、40项相关回归 |
 | [长课件按主题生成](docs/records/thematic-summary-20261109.md) | 多段理解、统一提纲、逐主题撰写及本地合成，47项相关回归 |
+| [阅读界面优化](docs/records/reader-ui-20261109.md) | 统一画布、专注模式、目录/答疑与桌面及窄屏合成验证 |
 | [实验过程材料](docs/process-evidence.md) / [AI 使用日志](docs/ai-usage-log.md) | 报告证据、真实活动与人工审阅待办 |
 | [开发与版本管理](docs/development-workflow.md) / [变更记录](CHANGELOG.md) | 提交、推送、版本和配置规则 |
 

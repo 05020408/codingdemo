@@ -14,6 +14,7 @@ const loading = ref(true), error = ref(""), pageError = ref("");
 const imageError = ref(false), imageLoading = ref(true), imageRevision = ref(0);
 const saveError = ref(""), savedPage = ref<number | null>(null);
 const focusContext = ref(""), outlineOpen = ref(true), chatOpen = ref(true);
+const focused = ref(false);
 const readerPanel = ref(route.query.panel === "chat" ? "chat" : "read");
 const zoom = ref(100), thumbnails = ref<HTMLElement>(), canvas = ref<HTMLElement>();
 const focusId = computed(() => typeof route.query.focus === "string" ? route.query.focus : "");
@@ -124,8 +125,18 @@ function setPanel(panel: string) {
   void router.replace({ query: { ...route.query, panel: panel === "chat" ? "chat" : undefined } });
 }
 function toggleChat() {
+  if (focused.value) {
+    focused.value = false;
+    chatOpen.value = true;
+    setPanel("chat");
+    return;
+  }
   chatOpen.value = !chatOpen.value;
   setPanel(chatOpen.value ? "chat" : "read");
+}
+function toggleOutline() {
+  if (focused.value) { focused.value = false; outlineOpen.value = true; }
+  else outlineOpen.value = !outlineOpen.value;
 }
 function sessionChanged(session: string) {
   if (!disposed && (route.query.chat || "") !== session)
@@ -137,6 +148,10 @@ function openSource(target: number) {
   void router.replace({ query: { ...route.query, page: String(page.value), panel: undefined } });
 }
 function key(event: KeyboardEvent) {
+  if (event.key === "Escape" && focused.value && !(event.target instanceof Element && event.target.closest("dialog"))) {
+    focused.value = false;
+    return;
+  }
   if (loading.value || error.value || event.altKey || event.ctrlKey || event.metaKey ||
     (event.target instanceof Element && event.target.closest("input,textarea,button,select,summary,a,[contenteditable],[role=dialog]"))) return;
   if (event.key === "ArrowRight" && page.value < (material.value?.slideCount ?? 1)) { event.preventDefault(); go(page.value + 1); }
@@ -153,7 +168,7 @@ onBeforeUnmount(() => { disposed = true; generation++; window.removeEventListene
 </script>
 
 <template>
-  <section class="reader-page" :class="{ 'with-focus': !!focusContext }">
+  <section class="reader-page" :class="{ 'with-focus': !!focusContext, 'is-focused': focused }">
     <div v-if="loading" class="state-panel" role="status">正在打开课件，恢复上次阅读位置…</div>
     <div v-else-if="error" class="state-panel">
       <h2>暂时无法打开课件</h2><p class="error" role="alert">{{ error }}</p>
@@ -163,12 +178,12 @@ onBeforeUnmount(() => { disposed = true; generation++; window.removeEventListene
       <header class="reader-heading">
         <div class="reader-title">
           <RouterLink class="back-link" :to="returnLocation">← {{ focusId ? "返回重点与定位结果" : route.query.from === 'history' ? "返回答疑记录" : courseName || "返回课程" }}</RouterLink>
-          <h1>{{ material.displayName }}</h1><p>{{ material.slideCount }} 页<span class="reader-key-hint"> · ← → 翻页</span></p>
+          <div class="reader-title-line"><h1 :title="material.displayName">{{ material.displayName }}</h1><span class="reader-file-type">PPTX · {{ material.slideCount }} 页</span></div>
         </div>
         <div class="reader-view-actions">
-          <RouterLink class="button secondary" :to="`/materials/${id}/summary`">核心摘要</RouterLink>
-          <button class="button secondary" :aria-expanded="outlineOpen" aria-controls="page-directory" @click="outlineOpen = !outlineOpen"><AppIcon name="outline" :size="18" />页面目录</button>
-          <button class="button" :class="chatOpen ? 'primary' : 'secondary'" :aria-expanded="chatOpen" aria-controls="reader-answer-panel" @click="toggleChat"><AppIcon name="chat" :size="18" />{{ chatOpen ? "收起答疑" : "打开答疑" }}</button>
+          <RouterLink class="button secondary" :to="`/materials/${id}/summary`"><AppIcon name="file" :size="16" />核心摘要</RouterLink>
+          <button class="button secondary reader-directory-toggle" :aria-expanded="outlineOpen && !focused" aria-controls="page-directory" @click="toggleOutline"><AppIcon name="outline" :size="18" />目录</button>
+          <button class="button" :class="chatOpen && !focused ? 'primary' : 'secondary'" :aria-expanded="chatOpen && !focused" aria-controls="reader-answer-panel" @click="toggleChat"><AppIcon name="chat" :size="18" />AI 答疑</button>
           <a v-if="material.capabilities.canDownload" class="icon-button reader-download" :href="material.originalDownloadUrl + '?disposition=attachment'" aria-label="下载课件原件" title="下载原件"><AppIcon name="download" /></a>
         </div>
       </header>
@@ -177,23 +192,24 @@ onBeforeUnmount(() => { disposed = true; generation++; window.removeEventListene
         <button :class="{ active: readerPanel === 'read' }" :aria-pressed="readerPanel === 'read'" @click="setPanel('read')"><AppIcon name="file" :size="17" />课件阅读<span>第 {{ page }} 页</span></button>
         <button :class="{ active: readerPanel === 'chat' }" :aria-pressed="readerPanel === 'chat'" @click="setPanel('chat')"><AppIcon name="chat" :size="17" />AI 答疑</button>
       </nav>
-      <div class="reader-layout" :class="{ 'has-outline': outlineOpen, 'has-chat': chatOpen, 'show-chat': readerPanel === 'chat' }">
-        <aside v-show="outlineOpen" id="page-directory" class="page-directory" aria-label="课件页面目录">
-          <div class="directory-heading"><span>页面目录</span><span>{{ slides.length }}</span></div>
+      <div class="reader-layout" :class="{ 'has-outline': outlineOpen && !focused, 'has-chat': chatOpen && !focused, 'show-chat': readerPanel === 'chat' && !focused }">
+        <aside v-show="outlineOpen && !focused" id="page-directory" class="page-directory" aria-label="课件页面目录">
+          <div class="directory-heading"><span>页面目录</span><span>{{ page }} / {{ slides.length }}</span></div>
           <div ref="thumbnails" class="thumbnail-list"><button v-for="slide in slides" :key="slide.id" class="thumbnail-item" :class="{ selected: slide.pageNo === page }" :data-page="slide.pageNo" :aria-current="slide.pageNo === page ? 'page' : undefined" :aria-label="`第 ${slide.pageNo} 页${slide.isHidden ? '，隐藏页' : ''}`" :title="slide.title || `第 ${slide.pageNo} 页`" @click="go(slide.pageNo)"><img v-if="slide.thumbnailUrl" :src="slide.thumbnailUrl" alt="" loading="lazy" /><span><b>{{ String(slide.pageNo).padStart(2, '0') }}</b><small v-if="slide.isHidden">隐藏页</small></span></button></div>
         </aside>
         <div class="reader-content">
           <div class="reader-toolbar">
             <div class="page-controls"><button class="icon-button" :disabled="page === 1" aria-label="上一页" title="上一页" @click="go(page - 1)"><AppIcon name="previous" :size="19" /></button><form class="page-jump" @submit.prevent="go(Number(pageInput))"><label for="reader-page-number" class="sr-only">跳转页码</label><input id="reader-page-number" v-model="pageInput" inputmode="numeric" autocomplete="off" :aria-invalid="!!pageError" aria-describedby="reader-page-total" /><span id="reader-page-total">/ {{ material.slideCount }}</span><button type="submit" class="text-button">跳转</button></form><button class="icon-button" :disabled="page === material.slideCount" aria-label="下一页" title="下一页" @click="go(page + 1)"><AppIcon name="chevron" :size="19" /></button></div>
-            <div class="zoom-controls"><AppIcon name="zoom" :size="16" /><label for="reader-zoom" class="sr-only">课件缩放</label><select id="reader-zoom" v-model.number="zoom"><option :value="100">适合宽度</option><option v-for="value in [125, 150, 175, 200]" :key="value" :value="value">{{ value }}%</option></select></div>
+            <div class="reader-canvas-tools"><div class="zoom-controls"><AppIcon name="zoom" :size="16" /><label for="reader-zoom" class="sr-only">课件缩放</label><select id="reader-zoom" v-model.number="zoom"><option :value="100">适合宽度</option><option v-for="value in [125, 150, 175, 200]" :key="value" :value="value">{{ value }}%</option></select></div><button class="icon-button reader-focus-toggle" :aria-pressed="focused" :aria-label="focused ? '退出专注阅读' : '专注阅读'" :title="focused ? '退出专注阅读（Esc）' : '专注阅读'" @click="focused = !focused; setPanel('read')"><AppIcon :name="focused ? 'restore' : 'expand'" :size="18" /></button></div>
           </div>
           <p v-if="pageError" class="error" role="alert">{{ pageError }}</p>
           <div ref="canvas" class="slide-viewport" tabindex="0" aria-label="课件页面，可使用左右方向键翻页"><div class="slide-paper" :style="{ width: zoom + '%' }" :aria-busy="imageLoading"><div v-if="imageError" class="image-error" role="alert"><AppIcon name="file" :size="28" /><p>页面图片加载失败，请检查网络后重试。</p><button class="button secondary" @click="imageError = false; imageLoading = true; imageRevision++">重新加载图片</button></div><template v-else><p v-if="imageLoading" class="image-loading" role="status">正在加载第 {{ page }} 页…</p><img :key="`${page}-${imageRevision}`" :src="selected?.previewUrl ? selected.previewUrl + '?v=' + imageRevision : undefined" :alt="`${material.displayName}，原始第 ${page} 页`" @load="imageLoading = false" @error="imageLoading = false; imageError = true" /></template></div></div>
-          <div class="reading-status" role="status"><span class="original-page">原页 {{ String(page).padStart(3, '0') }}<span v-if="selected?.isHidden" class="stage-badge">隐藏页</span></span><span v-if="!saveError"><AppIcon v-if="savedPage === page" name="check" :size="14" />{{ savedPage === page ? "位置已保存" : savedPage === null ? "翻页后自动保存" : "正在保存位置…" }}</span></div>
+          <div class="reader-page-track" :aria-label="`当前第 ${page} 页，共 ${material.slideCount} 页`" role="img"><span :style="{ width: (page / material.slideCount * 100) + '%' }"></span></div>
+          <div class="reading-status" role="status"><span class="original-page">原页 {{ String(page).padStart(3, '0') }}<span v-if="selected?.isHidden" class="stage-badge">隐藏页</span><span class="reader-key-hint">← → 翻页</span></span><span v-if="!saveError"><AppIcon v-if="savedPage === page" name="check" :size="14" />{{ savedPage === page ? "位置已保存" : savedPage === null ? "翻页后自动保存" : "正在保存位置…" }}</span></div>
           <p v-if="saveError" class="error" role="alert">{{ saveError }}<button class="text-button" @click="save(page)">重新保存</button></p>
           <details class="slide-text"><summary>本页文字</summary><pre>{{ selected?.text || "本页暂无可提取文字。图片、公式和图表请以课件页面为准。" }}</pre></details>
         </div>
-        <ReaderChat v-show="chatOpen" id="reader-answer-panel" :course-id="material.courseId" :material-id="material.id" :material-name="material.displayName" :slide="selected" :session-id="typeof route.query.chat === 'string' ? route.query.chat : undefined" collapsible @close="toggleChat" @navigate="openSource" @session-change="sessionChanged" />
+        <ReaderChat v-show="chatOpen && !focused" id="reader-answer-panel" :course-id="material.courseId" :material-id="material.id" :material-name="material.displayName" :slide="selected" :session-id="typeof route.query.chat === 'string' ? route.query.chat : undefined" collapsible @close="toggleChat" @navigate="openSource" @session-change="sessionChanged" />
       </div>
     </template>
   </section>
