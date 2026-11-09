@@ -37,7 +37,7 @@ onBeforeUnmount(() => { disposed = true; generation++; });
 </script>
 
 <template>
-  <section class="page-content course-detail-page">
+  <section class="page-content course-detail-page" :style="course ? courseTheme(course.id) : undefined">
     <RouterLink class="back-link" to="/">← 我的课程</RouterLink>
     <div v-if="loading" class="state-panel" role="status">正在加载课程空间…</div>
     <div v-else-if="error" class="state-panel">
@@ -50,8 +50,10 @@ onBeforeUnmount(() => { disposed = true; generation++; });
         <div class="course-cover-mark" aria-hidden="true">{{ course.name.slice(0, 1) }}</div>
         <div class="course-overview-content">
           <h1>{{ course.name }}</h1>
+          <div class="course-overview-meta">
           <p v-if="course.remark" class="course-remark">{{ course.remark }}</p>
           <p class="course-dates">更新于 {{ formatDate(course.updatedAt) }}</p>
+          </div>
         </div>
         <CourseActions :course="course" labelled @saved="saved" @deleted="router.replace('/')" />
       </header>

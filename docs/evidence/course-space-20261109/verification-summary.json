@@ -1,0 +1,45 @@
+{
+  "date": "2026-11-09",
+  "fixture": "Synthetic intercepted APIs, fictitious account/course/materials",
+  "widths": [
+    1920,
+    2560,
+    1440,
+    1050,
+    751,
+    750,
+    390,
+    320
+  ],
+  "checks": [
+    "top navigation without sidebar",
+    "no horizontal overflow",
+    "read/summary/download links",
+    "processing details and failed-stage retry",
+    "invalid upload rejected; multipart upload via stub",
+    "delete exact-name confirmation and cancel",
+    "course edit modal",
+    "focus/chat/material tabs and narrow layouts",
+    "pagination",
+    "empty/list and course failure recovery",
+    "logout error visible"
+  ],
+  "pageErrors": [],
+  "stubWrites": [
+    {
+      "path": "/api/courses/demo-course/materials",
+      "method": "POST"
+    },
+    {
+      "path": "/api/materials/material-3/processing-retries",
+      "method": "POST"
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST"
+    }
+  ],
+  "realBackendWrites": 0,
+  "realAiCalls": 0,
+  "limitations": "No real PPT conversion/upload, deletion, AI content or backend validation tested"
+}

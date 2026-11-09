@@ -312,7 +312,7 @@ onBeforeUnmount(() => {
           <p class="material-meta">
             {{ size(item.sizeBytes) }} · {{ item.slideCount ? item.slideCount + " 页" : "页数待解析" }} · {{ formatDate(item.createdAt) }} 上传
           </p>
-          <p :class="['material-availability', availability(item).tone]" role="status"><span aria-hidden="true" class="availability-dot"></span>{{ availability(item).text }}</p>
+          <div class="material-status-line"><p :class="['material-availability', availability(item).tone]" role="status"><span aria-hidden="true" class="availability-dot"></span>{{ availability(item).text }}</p>
           <details class="material-processing" :open="hasStageError(item)">
             <summary>处理详情</summary>
           <div class="stage-row">
@@ -354,9 +354,9 @@ onBeforeUnmount(() => {
             上次成功的预览仍可阅读。
           </p>
           </details>
+          </div>
         </div>
         <div class="material-actions">
-          <RouterLink class="button secondary" :to="`/materials/${item.id}/summary`">核心摘要</RouterLink>
           <RouterLink
             v-if="item.capabilities.canReadPreview"
             class="button primary"
@@ -364,7 +364,9 @@ onBeforeUnmount(() => {
             >打开课件<AppIcon name="arrow" :size="17" /></RouterLink
           ><span v-else-if="processing(item)" class="muted" role="status"
             >预览准备中…</span
-          ><a
+          >
+          <RouterLink class="button secondary" :to="`/materials/${item.id}/summary`"><AppIcon name="file" :size="16" />核心摘要</RouterLink>
+          <div class="material-secondary-actions"><a
             v-if="item.capabilities.canDownload"
             class="text-button"
             :href="item.originalDownloadUrl + '?disposition=attachment'"
@@ -372,6 +374,7 @@ onBeforeUnmount(() => {
           ><button class="text-button delete-link" :aria-label="`删除课件：${item.displayName}`" @click="askDelete(item)">
             删除课件
           </button>
+          </div>
         </div>
       </article>
     </div>

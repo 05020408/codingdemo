@@ -14,6 +14,7 @@ import "./study-workspace.css";
 import "./compact.css";
 import "./reader-workspace.css";
 import "./home-shelf.css";
+import "./course-space.css";
 
 const app = createApp(App);
 app.use(createPinia());
