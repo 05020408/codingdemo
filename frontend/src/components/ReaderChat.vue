@@ -65,7 +65,7 @@ interface Conversation {
 interface Capabilities {
   aiAvailable: boolean;
   imageAvailable: boolean;
-  remainingToday: number;
+  remainingToday: number | null;
 }
 const sessions = ref<Session[]>([]),
   selected = ref(""),
@@ -201,7 +201,7 @@ async function init() {
   }
 }
 async function send() {
-  if (busy.value || active.value || loading.value || props.readonly || !props.slide || !caps.value?.aiAvailable || (!uncertain.value && caps.value.remainingToday <= 0)) return;
+  if (busy.value || active.value || loading.value || props.readonly || !props.slide || !caps.value?.aiAvailable || (!uncertain.value && (caps.value.remainingToday !== null && caps.value.remainingToday <= 0))) return;
   if (!attempt) {
     if (!question.value.trim() || [...question.value.trim()].length > 2000)
       return;
@@ -256,7 +256,7 @@ async function send() {
   }
 }
 async function retry(turn: Turn) {
-  if (busy.value || active.value || props.readonly || !caps.value?.aiAvailable || caps.value.remainingToday <= 0) return;
+  if (busy.value || active.value || props.readonly || !caps.value?.aiAvailable || (caps.value.remainingToday !== null && caps.value.remainingToday <= 0)) return;
   busy.value = true;
   error.value = "";
   if (!retryAttempt || retryAttempt.id !== turn.id)
@@ -520,10 +520,10 @@ onBeforeUnmount(() => {
               turn.sources.every((s) => s.available && !s.changed)
             "
             class="text-button"
-            :disabled="busy || active || !caps?.aiAvailable || caps.remainingToday <= 0"
+            :disabled="busy || active || !caps?.aiAvailable || (caps.remainingToday !== null && caps.remainingToday <= 0)"
             @click="retry(turn)"
           >
-            重试（消耗额度）</button
+            重试回答</button
           ><button
             v-if="!readonly"
             class="text-button"
@@ -549,7 +549,7 @@ onBeforeUnmount(() => {
       <div class="chat-context">
         <div><span class="chat-context-caption">{{ uncertain ? "待确认的提问来源" : "提问页" }}</span><span class="chat-current-page">第 {{ uncertain ? pendingPage : slide.pageNo }} 页{{ slide.isHidden && !uncertain ? ' · 隐藏页' : '' }}</span></div
         ><span v-if="caps?.aiAvailable"
-          >今日剩余 {{ caps.remainingToday }} 次</span
+          >{{ caps.remainingToday === null ? '请求次数不限' : `今日剩余 ${caps.remainingToday} 次` }}</span
         >
       </div>
       <div class="chat-shortcuts">
@@ -626,7 +626,7 @@ onBeforeUnmount(() => {
             !caps?.aiAvailable ||
             !question.trim() ||
             [...question.trim()].length > 2000 ||
-            (!uncertain && caps.remainingToday <= 0)
+            (!uncertain && (caps.remainingToday !== null && caps.remainingToday <= 0))
           "
         >
           {{

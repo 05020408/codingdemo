@@ -264,3 +264,7 @@ sources 仅返回来源摘要 `{slideId,materialId,materialName,pageNo,imageAtta
 POST turns 增加可选 `summaryVersionId`；缺省不发送摘要，跨课件/跨账号/未成功版本拒绝。Turn 增加可空 `summary:{versionId,number,origin,stale,unavailable}`，正文快照不透传。来源已变化时允许明确选择旧摘要为背景并标记；全文与页面/历史合计超过60000个UTF-16单元返回 CONTEXT_TOO_LARGE，不静默截断摘要。通用 GET jobs 可查询本人有效课件的摘要步骤任务。
 
 摘要错误含 SUMMARY_TEXT_NOT_READY、SUMMARY_NO_TEXT、SUMMARY_TOO_LARGE、SUMMARY_NOT_READY、SUMMARY_NOT_RETRYABLE、SUMMARY_BUSY、SUMMARY_CANCELLED、SUMMARY_INCOMPLETE、SOURCE_CHANGED、VERSION_CONFLICT 及共享 AI 错误；具体码以源码与测试为准。关闭页面不取消后台任务；主动停止不承诺上游停止计费。
+
+## 2026-11-09 日请求次数策略
+
+启用AI后，账号每日请求次数默认不限，定位、阅读答疑及摘要一致。`AI_DAILY_REQUEST_LIMIT<=0`为不限，正整数为显式共享日限额；AI_ENABLED=false或无Key仍不可用。chat-capabilities及摘要State的`remainingToday`改为可空整数：null表示不限、0表示无可用次数或AI关闭，正整数表示显式限额的剩余次数；始终结合aiAvailable判断能力。前端null时不因次数禁用生成/发送/重试，显示“请求次数不限”。不使用虚构的大整数作为无限次数，调用审计和同任务幂等约束保留。

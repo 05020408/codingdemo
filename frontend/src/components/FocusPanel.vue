@@ -602,7 +602,7 @@ onBeforeUnmount(() => {
               :disabled="busy || selected.matchStatus === 'RUNNING'"
             />AI 辅助判断</label
           ><small v-if="useAi" class="muted"
-            >将重点和候选页文字发送给 DeepSeek，消耗 1 次额度。</small
+            >将重点和候选页文字发送给 DeepSeek，发起一次 AI 请求。</small
           ><small v-if="!caps.readyMaterials" class="muted"
             >请先上传课件，并等待文字提取和搜索索引完成。</small
           >

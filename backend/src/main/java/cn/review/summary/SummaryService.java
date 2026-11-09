@@ -244,7 +244,7 @@ public class SummaryService {
               ready(material, pages);
               var chunks = SummaryContent.split(pages);
               int requests = chunks.size() == 1 ? 1 : chunks.size() + (thematic ? 2 : 1);
-              if (ai.remaining(owner) < requests)
+              if (!ai.canRequest(owner, requests))
                 throw new ApiException(
                     429, "AI_QUOTA_EXCEEDED", "本课件至少需要" + requests + "次请求，提纲后确定主题数；当前额度不足，请明日再试");
               String version = id();
@@ -352,7 +352,7 @@ public class SummaryService {
               verifySource(owner, r);
               var nextPhase = db.queryForList("SELECT COALESCE(phase,kind) FROM material_summary_parts WHERE version_id=? AND status<>'SUCCEEDED' ORDER BY position_no LIMIT 1", String.class, version);
               boolean localOnly = !nextPhase.isEmpty() && "ASSEMBLE".equals(nextPhase.get(0));
-              if (!localOnly && (!ai.available() || ai.remaining(owner) < 1))
+              if (!localOnly && (!ai.available() || !ai.canRequest(owner, 1)))
                 throw new ApiException(429, "AI_QUOTA_EXCEEDED", "AI未启用或今日额度不足，已完成进度保留");
               if (upgradeable(r)) {
                 db.update("UPDATE material_summary_versions SET workflow='THEMATIC' WHERE id=?", version);
@@ -536,7 +536,7 @@ public class SummaryService {
       Version current,
       List<Version> versions,
       int estimatedRequests,
-      int remainingToday,
+      Integer remainingToday,
       boolean aiAvailable,
       String blockedReason,
       boolean estimatedRequestsLowerBound) {}

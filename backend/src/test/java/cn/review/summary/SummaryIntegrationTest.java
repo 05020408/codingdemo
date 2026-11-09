@@ -614,6 +614,23 @@ class SummaryIntegrationTest {
   }
 
   @Test
+  void unlimitedSummaryCanGenerateAfterPreviousAttemptsExceedTen() {
+    for (int i = 0; i < 11; i++) {
+      db.update("INSERT INTO ai_calls(id,owner_id,course_id,scene,model,prompt_version,request_fingerprint,quota_date,status)"
+          + " VALUES(?,?,?,'READER_CHAT','stub','test',REPEAT('0',64),?,'FAILED')",
+          id(), owner, course, java.time.LocalDate.now(java.time.ZoneId.of("Asia/Shanghai")));
+    }
+    var unlimited = new SummaryService(db, tx, json, client(0), idem);
+    assertThat(unlimited.state(owner, material).remainingToday()).isNull();
+    var v = unlimited.generate(owner, material, id());
+    new SummaryWorker(unlimited).runOne();
+    assertThat(unlimited.version(owner, v.id()).status()).isEqualTo("SUCCEEDED");
+    assertThat(calls).hasValue(1);
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM ai_calls WHERE owner_id=?", Integer.class, owner))
+        .isEqualTo(12);
+  }
+
+  @Test
   void cancellationDiscardsLateResultAndDoesNotAutomaticallyRetry() throws Exception {
     var v = service.generate(owner, material, id());
     delay.set(1200);

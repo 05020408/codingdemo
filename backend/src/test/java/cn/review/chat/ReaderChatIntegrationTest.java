@@ -346,6 +346,35 @@ class ReaderChatIntegrationTest {
   }
 
   @Test
+  void unlimitedChatAndFocusKeepAuditBeyondTheOldDailyLimit() throws Exception {
+    var unlimited = client(0, true);
+    var service = new ChatService(db, tx, json, unlimited, materials, idem,
+        new cn.review.summary.SummaryService(db, tx, json, unlimited, idem));
+    var task = new ChatWorker(service, unlimited);
+    assertThat(service.capabilities(owner, material).remainingToday()).isNull();
+    assertThat(json.writeValueAsString(service.capabilities(owner, material)))
+        .contains("\"remainingToday\":null");
+    for (int i = 0; i < 12; i++) {
+      var turn = service.send(owner, session, new ChatService.Send("解释", first, false, false), id());
+      task.runOne();
+      assertThat(service.turn(owner, turn.id()).status()).isEqualTo("SUCCEEDED");
+    }
+    content.set(response("{\"matches\":[]}"));
+    var ranker = new cn.review.search.DeepSeekReranker(db, tx, json, true, "synthetic-key",
+        "http://127.0.0.1:" + server.getAddress().getPort(), "deepseek-flash", 0);
+    var candidates = List.of(new cn.review.search.SearchCatalog.Candidate(
+        first, material, "合成课件", 1, "测试", "个体和互动", 1, false));
+    assertThat(ranker.rank(owner, course, id(), "个体和互动", candidates).warning()).isNull();
+    assertThat(calls).hasValue(13);
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM ai_calls WHERE owner_id=?", Integer.class, owner))
+        .isEqualTo(13);
+    assertThat(unlimited.remaining(owner)).isNull();
+    assertThat(client(0, false).available()).isFalse();
+    assertThat(client(0, false).remaining(owner)).isZero();
+    assertThat(client(1, true).remaining(owner)).isZero();
+  }
+
+  @Test
   void imageUsesOnlySelectedOwnedAssetAndAcceptsImageCitation() throws Exception {
     String asset = id(), key = "chat-test/" + asset + ".png";
     var path = storage.resolve(key);

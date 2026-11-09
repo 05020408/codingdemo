@@ -251,11 +251,10 @@ onBeforeUnmount(() => {
           </button>
           <div class="summary-generate">
             <p>
-              {{ state.versions.length ? "重新生成" : "生成" }}{{ state.estimatedRequestsLowerBound ? '至少' : '预计' }} {{ state.estimatedRequests }} 次请求 · 今日剩余
-              {{ state.remainingToday }} 次
+              {{ state.versions.length ? "重新生成" : "生成" }}{{ state.estimatedRequestsLowerBound ? '至少' : '预计' }} {{ state.estimatedRequests }} 次请求 · {{ state.remainingToday === null ? '请求次数不限' : `今日剩余 ${state.remainingToday} 次` }}
             </p>
-            <p v-if="state.estimatedRequestsLowerBound" class="muted">主题数由提纲确定，额度不足时保留进度，可次日继续。</p>
-            <details class="compact-help"><summary>生成说明</summary><p>将课件提取文字交由 DeepSeek 整理，与答疑、定位共用每日额度。图片、图表和公式可能未覆盖，请核对原课件。</p></details>
+            <p v-if="state.estimatedRequestsLowerBound" class="muted">主题数由提纲确定，已完成的步骤会保留。</p>
+            <details class="compact-help"><summary>生成说明</summary><p>将课件提取文字交由 DeepSeek 整理。图片、图表和公式可能未覆盖，请核对原课件。</p></details>
             <button
               class="button primary"
               :disabled="
@@ -265,7 +264,7 @@ onBeforeUnmount(() => {
                 editing ||
                 !state.aiAvailable ||
                 !!state.blockedReason ||
-                state.estimatedRequests > state.remainingToday
+                (state.remainingToday !== null && state.estimatedRequests > state.remainingToday)
               "
               @click="confirmGeneration = !confirmGeneration"
             >
@@ -278,7 +277,7 @@ onBeforeUnmount(() => {
               AI 尚未启用，已有摘要仍可阅读和编辑。
             </p>
             <p
-              v-else-if="state.estimatedRequests > state.remainingToday"
+              v-else-if="(state.remainingToday !== null && state.estimatedRequests > state.remainingToday)"
               class="muted"
             >
               当前额度不足，已保存的摘要不会受影响。
@@ -406,11 +405,11 @@ onBeforeUnmount(() => {
                   uncertain ||
                   !!active ||
                   version.stale ||
-                  (version.remainingRequests > 0 && (!state.aiAvailable || state.remainingToday < 1))
+                  (version.remainingRequests > 0 && (!state.aiAvailable || (state.remainingToday !== null && state.remainingToday < 1)))
                 "
                 @click="mutate(`/api/summary-generations/${version.id}/retry`)"
               >
-                {{ version.remainingRequests === 0 ? '合成文档（不消耗额度）' : '继续生成（消耗额度）' }}
+                {{ version.remainingRequests === 0 ? '合成文档' : '继续生成' }}
               </button>
             </div>
           </template>

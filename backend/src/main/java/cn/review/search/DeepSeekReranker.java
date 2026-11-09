@@ -58,7 +58,7 @@ public class DeepSeekReranker {
   }
 
   public boolean available() {
-    return enabled && !key.isBlank() && limit > 0;
+    return enabled && !key.isBlank();
   }
 
   public Result rank(
@@ -113,7 +113,7 @@ public class DeepSeekReranker {
                     job)
                 > 0) throw new ApiException(409, "AI_ALREADY_ATTEMPTED", "本次任务已调用过 AI");
             LocalDate date = LocalDate.now(ZoneId.of("Asia/Shanghai"));
-            if (db.queryForObject(
+            if (limit > 0 && db.queryForObject(
                     "SELECT COUNT(*) FROM ai_calls WHERE owner_id=? AND quota_date=?",
                     Long.class,
                     owner,

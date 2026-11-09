@@ -66,15 +66,17 @@ public class ReaderAiClient {
   }
 
   public boolean available() {
-    return enabled && !key.isBlank() && limit > 0;
+    return enabled && !key.isBlank();
   }
 
   public boolean visionAvailable() {
     return available() && vision && model.equals("deepseek-flash");
   }
 
-  public int remaining(String owner) {
+  /** Null means no daily request limit; disabled AI still reports zero. */
+  public Integer remaining(String owner) {
     if (!available()) return 0;
+    if (limit <= 0) return null;
     return Math.max(
         0,
         limit
@@ -83,6 +85,11 @@ public class ReaderAiClient {
                 Integer.class,
                 owner,
                 LocalDate.now(ZoneId.of("Asia/Shanghai"))));
+  }
+
+  public boolean canRequest(String owner, int requests) {
+    Integer remaining = remaining(owner);
+    return remaining == null || remaining >= requests;
   }
 
   public Answer ask(
@@ -259,7 +266,7 @@ public class ReaderAiClient {
                     job,
                     scene)
                 > 0) throw new ApiException(409, "AI_ALREADY_ATTEMPTED", "本次任务已尝试调用，请明确重试");
-            if (remaining(owner) == 0)
+            if (!canRequest(owner, 1))
               throw new ApiException(429, "AI_QUOTA_EXCEEDED", "今日 AI 次数已用完，明日可继续");
             db.update(
                 "INSERT INTO"

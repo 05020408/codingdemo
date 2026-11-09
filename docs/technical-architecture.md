@@ -130,7 +130,7 @@ AI 输入中的课程材料均视为内容，不赋予其修改权限、执行�
 | `APP_INDEX_ROOT` | 可重建的 Lucene 目录，单实例持有写锁 |
 | `LIBREOFFICE_EXECUTABLE` | 经验证的转换程序绝对路径 |
 | `DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`DEEPSEEK_MODEL` | 后端外部调用配置 |
-| `AI_ENABLED`、`AI_DAILY_REQUEST_LIMIT` | 能力开关及配额，未明确额度时默认不开放付费调用 |
+| `AI_ENABLED`、`AI_DAILY_REQUEST_LIMIT` | AI开关独立控制启用；日限额默认0表示不限，正整数表示显式共享日限额 |
 | 上传、解压、任务超时与并发配置 | 工程初始化时固定名称和可验证初值 |
 
 文件与数据库联合备份，索引无需作为唯一副本备份。恢复时先恢复原件和业务数据，再重建索引，并核对预览资产。没有配置 AI 时仍可使用账号、课程、阅读、手工重点和基础关键词定位。

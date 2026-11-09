@@ -27,7 +27,7 @@ export interface SummaryState {
   current: SummaryVersion | null;
   versions: SummaryVersion[];
   estimatedRequests: number;
-  remainingToday: number;
+  remainingToday: number | null;
   aiAvailable: boolean;
   blockedReason: string;
   estimatedRequestsLowerBound: boolean;

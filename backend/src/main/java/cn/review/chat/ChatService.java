@@ -532,7 +532,7 @@ public class ChatService {
   public record Capabilities(
       boolean aiAvailable,
       boolean imageAvailable,
-      int remainingToday,
+      Integer remainingToday,
       int maxQuestionLength,
       int maxTurns) {}
 
