@@ -117,6 +117,7 @@ docs/       需求、设计、Scrum 计划、AI 日志及实际执行记录
 | [首页布局调整](docs/records/home-layout-20261109.md) | 首页去侧栏、顶部账号、居中课程区与响应式验证 |
 | [课程书架视觉优化](docs/records/home-shelf-20261109.md) | 根据宽屏截图扩大比例、册页封面、统一工具行及三课程验证 |
 | [课程空间界面优化](docs/records/course-space-20261109.md) | 顶部导航、加宽课件区、紧凑信息与操作层级、多尺寸合成验证 |
+| [复习重点界面优化](docs/records/focus-desk-20261109.md) | 左侧添加/清单、右侧重点与课件依据、13种宽度及合成交互检查 |
 | [实验过程材料](docs/process-evidence.md) / [AI 使用日志](docs/ai-usage-log.md) | 报告证据、真实活动与人工审阅待办 |
 | [开发与版本管理](docs/development-workflow.md) / [变更记录](CHANGELOG.md) | 提交、推送、版本和配置规则 |
 

@@ -1,0 +1,48 @@
+{
+  "date": "2026-11-09",
+  "fixture": "Synthetic intercepted API, fictitious course/points/materials",
+  "widths": [
+    1920,
+    2560,
+    1440,
+    1101,
+    1100,
+    951,
+    950,
+    751,
+    750,
+    651,
+    650,
+    390,
+    320
+  ],
+  "checks": [
+    "side-by-side composer and selected detail on desktop",
+    "no horizontal overflow",
+    "select and URL restore",
+    "editing/cancel/save and locate disabled with unsaved edits",
+    "mastery update and both filters",
+    "AI/keyword locate payload via stubs",
+    "confirm/reject/show rejected",
+    "manual page validation and link via stub",
+    "delete dialog cancel only",
+    "single and editable bulk add via stubs",
+    "source unavailable, review required, preview unavailable",
+    "list/result error recovery",
+    "no match and AI fallback warning",
+    "running disabled state",
+    "pagination",
+    "empty and AI unavailable",
+    "visible keyboard focus"
+  ],
+  "pageErrors": [],
+  "stubWriteMethods": [
+    "PATCH",
+    "POST",
+    "PUT"
+  ],
+  "stubWriteCount": 10,
+  "realBackendWrites": 0,
+  "realAiCalls": 0,
+  "limitations": "UI fixtures only; no real AI, real course edits/deletion or backend acceptance"
+}

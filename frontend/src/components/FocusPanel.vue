@@ -435,6 +435,13 @@ onBeforeUnmount(() => {
         {{ caps.totalMaterials }} 份课件可检索</span
       >
     </div>
+    <p v-if="notice" class="notice" role="status">{{ notice }}</p>
+    <div v-if="error" role="alert" class="error">
+      <p>{{ error }}</p>
+      <button class="text-button" @click="load()">刷新状态</button>
+    </div>
+    <div class="focus-layout">
+      <aside class="focus-sidebar" aria-label="重点管理">
     <form
       class="focus-create"
       @submit.prevent="bulk && !preview.length ? split() : create()"
@@ -484,22 +491,7 @@ onBeforeUnmount(() => {
         已按换行和编号拆分，可修改后确认添加。
       </p>
     </form>
-    <p v-if="notice" class="notice" role="status">{{ notice }}</p>
-    <div v-if="error" role="alert" class="error">
-      <p>{{ error }}</p>
-      <button class="text-button" @click="load()">刷新状态</button>
-    </div>
-    <div v-if="loading" class="state-panel" role="status">
-      正在加载复习重点…
-    </div>
-    <div v-else-if="!items.length && !selected && !mastery && !match && !error" class="state-panel">
-      <h3>从一个重点开始复习</h3>
-      <p>
-        添加重点，定位到课件原页。
-      </p>
-    </div>
-    <div v-else class="focus-layout">
-      <aside class="focus-list" aria-label="重点清单">
+      <div v-if="!loading && (items.length || selected || mastery || match || error)" class="focus-list" role="region" aria-label="重点清单">
         <div class="focus-list-heading"><h3>重点清单</h3><span>{{ total }} 条</span></div>
         <div class="focus-filters"><label for="focus-filter">掌握情况</label
         ><select id="focus-filter" :value="mastery" :disabled="busy" @change="filterBy('mastery', $event)">
@@ -546,8 +538,14 @@ onBeforeUnmount(() => {
             下一页
           </button>
         </div>
+      </div>
       </aside>
-      <div v-if="selected" id="focus-results" ref="detailPanel" class="focus-detail" :aria-busy="resultLoading">
+      <div v-if="loading" class="state-panel" role="status">正在加载复习重点…</div>
+      <div v-else-if="!items.length && !selected && !mastery && !match && !error" class="state-panel">
+        <h3>从一个重点开始复习</h3>
+        <p>添加重点，定位到课件原页。</p>
+      </div>
+      <div v-else-if="selected" id="focus-results" ref="detailPanel" class="focus-detail" :aria-busy="resultLoading">
         <div class="section-line">
           <span class="eyebrow">当前重点</span>
           <button
