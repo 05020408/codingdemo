@@ -84,6 +84,10 @@ onBeforeUnmount(() => { disposed = true; generation++; });
     </div>
     <p v-if="notice" role="status" class="notice"><AppIcon name="check" :size="17" />{{ notice }}</p>
     <div class="collection-toolbar">
+      <div class="collection-caption">
+        <h2>{{ query ? "搜索结果" : "全部课程" }}<span v-if="!loading && !error" class="count">{{ total }} 门</span></h2>
+        <span v-if="query" class="muted">“{{ query }}”</span>
+      </div>
       <form class="course-search" role="search" @submit.prevent="search">
         <AppIcon name="search" :size="19" />
         <label for="course-search" class="sr-only">搜索课程名称或备注</label>
@@ -92,10 +96,6 @@ onBeforeUnmount(() => { disposed = true; generation++; });
         <button class="search-submit" type="submit">搜索</button>
       </form>
       <span class="collection-sort"><AppIcon name="clock" :size="15" />按最近更新排序</span>
-    </div>
-    <div class="collection-caption">
-      <h2>{{ query ? "搜索结果" : "全部课程" }}<span v-if="!loading && !error" class="count">{{ total }} 门</span></h2>
-      <span v-if="query" class="muted">“{{ query }}”</span>
     </div>
     <div v-if="loading" class="course-grid skeleton-grid" role="status" aria-label="正在加载课程">
       <span class="sr-only">正在加载全部课程…</span>
@@ -121,7 +121,7 @@ onBeforeUnmount(() => { disposed = true; generation++; });
     <div v-else class="course-grid">
       <article v-for="course in courses" :key="course.id" class="course-card" :style="courseTheme(course.id)">
         <RouterLink :to="`/courses/${course.id}`" class="course-card-link">
-          <div class="card-top"><span class="course-bookmark"><AppIcon name="file" :size="22" /></span></div>
+          <div class="card-top" aria-hidden="true"><span class="course-bookmark">{{ course.name.slice(0, 1) }}</span><span class="course-cover-lines"></span></div>
           <h3>{{ course.name }}</h3>
           <p v-if="course.remark" class="course-card-remark">{{ course.remark }}</p>
           <div class="card-footer"><span>{{ formatDate(course.updatedAt) }} 更新</span><strong>进入课程<AppIcon name="arrow" :size="16" /></strong></div>

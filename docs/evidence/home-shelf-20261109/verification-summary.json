@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-09",
+  "fixture": "Intercepted synthetic API with fictitious courses and account",
+  "widths": [
+    1440,
+    1920,
+    2560,
+    900,
+    390,
+    320
+  ],
+  "checks": [
+    "homepage sidebar absent; brand, nav, account/logout accessible",
+    "fluid course grid up to 1760px; no page overflow; three-course sample at 1920/2560/390/320",
+    "pagination and query URL restoration",
+    "search empty/reset",
+    "add/edit modal opens and closes",
+    "empty/loading-failure/retry",
+    "logout failure remains visible and retry navigates to login"
+  ],
+  "pageErrors": [],
+  "realBackendMutations": 0,
+  "realAiCalls": 0,
+  "limitations": "No real authentication or course CRUD submitted; not backend acceptance"
+}
