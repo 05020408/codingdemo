@@ -1,5 +1,13 @@
 <script setup lang="ts">
 const paths = {
+  network: "M9 3h6v5H9z M3 16h6v5H3z M15 16h6v5h-6z M12 8v4 M6 16v-4h12v4",
+  chip: "M6 6h12v12H6z M9 9h6v6H9z M9 3v3 M15 3v3 M9 18v3 M15 18v3 M3 9h3 M3 15h3 M18 9h3 M18 15h3",
+  database: "M20 6c0 1.66-3.58 3-8 3S4 7.66 4 6s3.58-3 8-3 8 1.34 8 3v12c0 1.66-3.58 3-8 3s-8-1.34-8-3V6 M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3",
+  computer: "M3 4h18v13H3z M8 21h8 M12 17v4",
+  math: "M18 4H6l7 8-7 8h12",
+  language: "M3 5h12 M9 3v2 M12 5c-1 6-4 9-8 11 M5 8c1 3 4 6 7 8 M14 21l4-11 4 11 M15.5 17h5",
+  code: "M8 6l-6 6 6 6 M16 6l6 6-6 6 M14 3l-4 18",
+  book: "M12 5v16 M12 5C9 3 5 3 2 4v15c3-1 7-1 10 2 3-3 7-3 10-2V4c-3-1-7-1-10 1",
   courses: "M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z",
   add: "M12 5v14 M5 12h14",
   search: "M21 21l-5-5 M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0",

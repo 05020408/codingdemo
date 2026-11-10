@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { message, request } from "../api";
 import type { Course } from "../api";
-import { courseTheme, formatDate } from "../coursePresentation";
+import { courseIcon, courseTheme, formatDate } from "../coursePresentation";
 import AppIcon from "../components/AppIcon.vue";
 import CourseActions from "../components/CourseActions.vue";
 import MaterialList from "../components/MaterialList.vue";
@@ -47,7 +47,7 @@ onBeforeUnmount(() => { disposed = true; generation++; });
     </div>
     <template v-else-if="course">
       <header class="course-overview" :style="courseTheme(course.id)">
-        <div class="course-cover-mark" aria-hidden="true">{{ course.name.slice(0, 1) }}</div>
+        <div class="course-cover-mark" aria-hidden="true"><AppIcon class="course-subject-icon" :name="courseIcon(course.name)" :size="30" /></div>
         <div class="course-overview-content">
           <h1>{{ course.name }}</h1>
           <div class="course-overview-meta">

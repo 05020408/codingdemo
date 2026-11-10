@@ -94,6 +94,7 @@
   .home-workspace .course-card-link { min-height: 294px; padding: 0 22px; }
   .home-workspace .card-top { margin: 0 -22px; padding: 18px 22px; min-height: 98px; }
   .home-workspace .course-bookmark { width: 46px; height: 58px; font-size: 25px; }
+  .home-workspace .course-bookmark .course-subject-icon { width: 26px; height: 26px; }
   .home-workspace .course-card h3 { font-size: 24px; margin-top: 20px; }
   .home-workspace .course-card-remark { font-size: 13px; }
   .home-workspace .card-footer { font-size: 11px; }

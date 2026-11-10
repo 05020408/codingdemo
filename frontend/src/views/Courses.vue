@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { message, request } from "../api";
 import type { Course, Page } from "../api";
-import { courseTheme, formatDate } from "../coursePresentation";
+import { courseIcon, courseTheme, formatDate } from "../coursePresentation";
 import AppIcon from "../components/AppIcon.vue";
 import CourseActions from "../components/CourseActions.vue";
 import CourseForm from "../components/CourseForm.vue";
@@ -121,7 +121,7 @@ onBeforeUnmount(() => { disposed = true; generation++; });
     <div v-else class="course-grid">
       <article v-for="course in courses" :key="course.id" class="course-card" :style="courseTheme(course.id)">
         <RouterLink :to="`/courses/${course.id}`" class="course-card-link">
-          <div class="card-top" aria-hidden="true"><span class="course-bookmark">{{ course.name.slice(0, 1) }}</span><span class="course-cover-lines"></span></div>
+          <div class="card-top" aria-hidden="true"><span class="course-bookmark"><AppIcon class="course-subject-icon" :name="courseIcon(course.name)" :size="30" /></span><span class="course-cover-lines"></span></div>
           <h3>{{ course.name }}</h3>
           <p v-if="course.remark" class="course-card-remark">{{ course.remark }}</p>
           <div class="card-footer"><span>{{ formatDate(course.updatedAt) }} 更新</span><strong>进入课程<AppIcon name="arrow" :size="16" /></strong></div>
