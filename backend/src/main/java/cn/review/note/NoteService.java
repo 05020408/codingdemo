@@ -1,59 +1,62 @@
 package cn.review.note;
 
 import cn.review.common.ApiException;
-import cn.review.common.IdempotencyService;
 import cn.review.course.CourseMapper;
 import cn.review.course.CourseRow;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class NoteService {
+  private static final int MAX_LENGTH = 250000;
+  private static final String SOURCE_STATUS = """
+      CASE WHEN m.id IS NULL OR m.status<>'ACTIVE' THEN 'DELETED'
+           WHEN m.mapping_status='VERIFIED' AND m.pdf_asset_id IS NOT NULL THEN 'AVAILABLE'
+           ELSE 'UNAVAILABLE' END AS source_status
+      """;
   private final JdbcTemplate db;
   private final CourseMapper courses;
-  private final IdempotencyService idempotency;
 
-  public NoteService(JdbcTemplate db, CourseMapper courses, IdempotencyService idempotency) {
+  public NoteService(JdbcTemplate db, CourseMapper courses) {
     this.db = db;
     this.courses = courses;
-    this.idempotency = idempotency;
   }
 
-  public Created create(String owner, String course, Create input, String key) {
+  public Document get(String owner, String course, String material) {
     requireActive(courses.byOwner(course, owner));
-    var clean = new Create(
-        ApiException.text(input.slideId(), "来源页面", 36, 36),
-        ApiException.text(input.title(), "笔记标题", 0, 100),
-        ApiException.text(input.body(), "笔记正文", 1, 8000));
-    var result = idempotency.execute(owner, "CREATE_NOTE", course, key, clean, 201, Created.class, () -> {
-      // Course and material deletion take the course lock before changing the source state.
-      requireActive(courses.lock(course, owner));
-      var sources = db.query("""
-          SELECT s.material_id,m.display_name,s.page_no
-          FROM slides s JOIN materials m ON m.id=s.material_id
-          WHERE s.id=? AND m.course_id=? AND m.status='ACTIVE'
-            AND m.mapping_status='VERIFIED' AND s.deleted_at IS NULL AND s.preview_asset_id IS NOT NULL
-          """, (rs, row) -> new Source(
-              rs.getString("material_id"), rs.getString("display_name"), rs.getInt("page_no")),
-          clean.slideId(), course);
-      if (sources.isEmpty()) {
-        throw new ApiException(404, "SOURCE_UNAVAILABLE", "来源页面已不可用，请检查课件状态");
-      }
-      Source source = sources.get(0);
-      String id = UUID.randomUUID().toString();
+    return document(owner, course, material);
+  }
+
+  @Transactional
+  public Document save(String owner, String course, String material, Save input) {
+    // Use the same lock as course and material deletion before reading or changing the document.
+    requireActive(courses.lock(course, owner));
+    Document current = document(owner, course, material);
+    if ("DELETED".equals(current.sourceStatus())) {
+      throw new ApiException(409, "SOURCE_UNAVAILABLE", "课件已删除，已保存的笔记仍可查看和下载");
+    }
+    if (input.expectedVersion() == null || input.expectedVersion() < 0 || input.markdown() == null
+        || input.markdown().length() > Math.max(MAX_LENGTH, current.markdown().length())) {
+      throw new ApiException(400, "VALIDATION_FAILED", "笔记内容过长或版本参数不正确");
+    }
+    // If the previous response was lost, retrying the same content gets the saved version.
+    if (current.markdown().equals(input.markdown())) return current;
+    if (current.version() != input.expectedVersion()) throw ApiException.conflict();
+    if (current.version() == 0) {
       db.update("""
-          INSERT INTO notes(id,owner_id,course_id,title,body,source_material_id,source_slide_id,
-                            source_material_name,source_page_no)
-          VALUES(?,?,?,?,?,?,?,?,?)
-          """, id, owner, course, clean.title(), clean.body(), source.materialId(),
-          clean.slideId(), source.materialName(), source.pageNo());
-      return new Created(id);
-    });
-    requireActive(courses.byOwner(course, owner));
-    return result;
+          INSERT INTO material_notes(material_id,course_id,owner_id,material_name,markdown)
+          VALUES(?,?,?,?,?)
+          """, material, course, owner, current.materialName(), input.markdown());
+    } else {
+      db.update("""
+          UPDATE material_notes SET markdown=?,row_version=row_version+1,updated_at=CURRENT_TIMESTAMP(3)
+          WHERE material_id=? AND course_id=? AND owner_id=?
+          """, input.markdown(), material, course, owner);
+    }
+    return document(owner, course, material);
   }
 
   public Page list(String owner, String course, int page, int size) {
@@ -61,38 +64,51 @@ public class NoteService {
     if (page < 1 || page > 1000000 || size < 1 || size > 100) {
       throw new ApiException(400, "VALIDATION_FAILED", "分页参数不正确");
     }
-    long total = db.queryForObject(
-        "SELECT COUNT(*) FROM notes WHERE course_id=? AND owner_id=?", Long.class, course, owner);
+    Long total = db.queryForObject(
+        "SELECT COUNT(*) FROM material_notes WHERE course_id=? AND owner_id=?", Long.class, course, owner);
     var items = db.query("""
-        SELECT n.*, CASE
-          WHEN m.id IS NULL OR m.status<>'ACTIVE' THEN 'DELETED'
-          WHEN m.mapping_status='VERIFIED' AND s.id IS NOT NULL
-            AND s.deleted_at IS NULL AND s.preview_asset_id IS NOT NULL THEN 'AVAILABLE'
-          ELSE 'UNAVAILABLE' END AS source_status
-        FROM notes n
-        LEFT JOIN materials m ON m.id=n.source_material_id AND m.course_id=n.course_id
-        LEFT JOIN slides s ON s.id=n.source_slide_id AND s.material_id=m.id AND s.page_no=n.source_page_no
+        SELECT n.material_id,n.material_name,n.updated_at, %s
+        FROM material_notes n
+        LEFT JOIN materials m ON m.id=n.material_id AND m.course_id=n.course_id
         WHERE n.course_id=? AND n.owner_id=?
-        ORDER BY n.updated_at DESC,n.id DESC LIMIT ? OFFSET ?
-        """, (rs, row) -> new View(
-            rs.getString("id"), rs.getString("title"), rs.getString("body"),
-            rs.getString("source_material_id"), rs.getString("source_material_name"),
-            rs.getInt("source_page_no"), rs.getString("source_status"),
-            rs.getTimestamp("created_at").toInstant(), rs.getTimestamp("updated_at").toInstant()),
-        course, owner, size, (page - 1) * size);
+        ORDER BY n.updated_at DESC,n.material_id DESC LIMIT ? OFFSET ?
+        """.formatted(SOURCE_STATUS), (rs, row) -> new Entry(
+            rs.getString("material_id"), rs.getString("material_name"), rs.getString("source_status"),
+            rs.getTimestamp("updated_at").toInstant()), course, owner, size, (page - 1) * size);
     requireActive(courses.byOwner(course, owner));
     return new Page(items, page, size, total);
+  }
+
+  private Document document(String owner, String course, String material) {
+    var rows = db.query("""
+        SELECT n.material_id,n.material_name,n.markdown,n.row_version,n.updated_at,
+               COALESCE(m.slide_count,0) AS page_count, %s
+        FROM material_notes n
+        LEFT JOIN materials m ON m.id=n.material_id AND m.course_id=n.course_id
+        WHERE n.course_id=? AND n.owner_id=? AND n.material_id=?
+        """.formatted(SOURCE_STATUS), (rs, row) -> new Document(
+            rs.getString("material_id"), rs.getString("material_name"), rs.getString("markdown"),
+            rs.getLong("row_version"), rs.getInt("page_count"), rs.getString("source_status"),
+            rs.getTimestamp("updated_at").toInstant()), course, owner, material);
+    if (!rows.isEmpty()) return rows.get(0);
+    var sources = db.query("""
+        SELECT m.id,m.display_name,m.slide_count, %s
+        FROM materials m
+        WHERE m.id=? AND m.course_id=? AND m.status='ACTIVE'
+        """.formatted(SOURCE_STATUS), (rs, row) -> new Document(
+            rs.getString("id"), rs.getString("display_name"), "", 0, rs.getInt("slide_count"),
+            rs.getString("source_status"), null), material, course);
+    if (sources.isEmpty()) throw ApiException.missing();
+    return sources.get(0);
   }
 
   private void requireActive(CourseRow row) {
     if (row == null || !"ACTIVE".equals(row.status())) throw ApiException.missing();
   }
 
-  private record Source(String materialId, String materialName, int pageNo) {}
-
-  public record Create(String slideId, String title, String body) {}
-  public record Created(String id) {}
-  public record View(String id, String title, String body, String materialId, String materialName,
-                     int pageNo, String sourceStatus, Instant createdAt, Instant updatedAt) {}
-  public record Page(List<View> items, int page, int size, long total) {}
+  public record Save(String markdown, Long expectedVersion) {}
+  public record Document(String materialId, String materialName, String markdown, long version,
+                         int pageCount, String sourceStatus, Instant updatedAt) {}
+  public record Entry(String materialId, String materialName, String sourceStatus, Instant updatedAt) {}
+  public record Page(List<Entry> items, int page, int size, long total) {}
 }

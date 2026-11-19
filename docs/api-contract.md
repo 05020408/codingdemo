@@ -269,11 +269,13 @@ POST turns 增加可选 `summaryVersionId`；缺省不发送摘要，跨课件/�
 
 启用AI后，账号每日请求次数默认不限，定位、阅读答疑及摘要一致。`AI_DAILY_REQUEST_LIMIT<=0`为不限，正整数为显式共享日限额；AI_ENABLED=false或无Key仍不可用。chat-capabilities及摘要State的`remainingToday`改为可空整数：null表示不限、0表示无可用次数或AI关闭，正整数表示显式限额的剩余次数；始终结合aiAvailable判断能力。前端null时不因次数禁用生成/发送/重试，显示“请求次数不限”。不使用虚构的大整数作为无限次数，调用审计和同任务幂等约束保留。
 
-## Sprint 2 课件页笔记
+## Sprint 2 课件 Markdown 笔记
 
 | 接口 | 请求与结果 |
 | --- | --- |
-| `POST /api/courses/{courseId}/notes` | 提交 `slideId`、可选 `title` 和正文 `body`，需要 CSRF 和 `Idempotency-Key`。返回 201 与 `{id}`。标题最多 100 个字符，正文为 1–8000 个字符。 |
-| `GET /api/courses/{courseId}/notes` | 使用 `page`、`size` 分页，默认 1、20。返回 `{items,page,size,total}`，按最近更新时间和 ID 倒序。 |
+| `GET /api/courses/{courseId}/notes` | 使用 `page`、`size` 分页，默认 1、20。每份已保存文档返回一条元数据，按更新时间和课件 ID 倒序。 |
+| `GET /api/courses/{courseId}/notes/{materialId}` | 返回笔记正文、版本和课件状态。未保存过的有效课件返回空正文和版本 0。 |
+| `PUT /api/courses/{courseId}/notes/{materialId}` | 提交 `{markdown,expectedVersion}`，需要 CSRF。相同内容可重试，正文不同且版本过期返回 409 `VERSION_CONFLICT`。 |
+| `GET /api/courses/{courseId}/notes/{materialId}/download` | 下载已保存的 UTF-8 Markdown 文件。 |
 
-列表包含 `id`、`title`、`body`、`materialId`、`materialName`、`pageNo`、`sourceStatus`、`createdAt`、`updatedAt`。来源名称和原始页码在保存时由服务端查询。`sourceStatus` 取值为 `AVAILABLE`、`DELETED` 或 `UNAVAILABLE`。笔记在课件删除后保留正文和来源摘要，在课程删除时随课程清理。无权访问课程返回 404，无法从该课程确认来源时返回 404 `SOURCE_UNAVAILABLE`。
+文档包含 `materialId`、`materialName`、`markdown`、`version`、`pageCount`、`sourceStatus` 和 `updatedAt`。来源状态为 `AVAILABLE`、`DELETED` 或 `UNAVAILABLE`。页码引用使用 Markdown 链接 `[第 21 页](#page-21)`，在知笺预览内跳转到该笔记所属的课件。课件删除后，已保存文档可预览和下载，写操作返回 409 `SOURCE_UNAVAILABLE`。课程删除时清理文档和历史逐页笔记。无权访问课程返回 404。

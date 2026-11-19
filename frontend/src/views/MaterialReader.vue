@@ -5,7 +5,7 @@ import { message, request } from "../api";
 import type { Course, Material, Page, ReadingProgress, Slide } from "../api";
 import AppIcon from "../components/AppIcon.vue";
 import ReaderChat from "../components/ReaderChat.vue";
-import SlideNoteForm from "../components/SlideNoteForm.vue";
+import MaterialNoteWindow from "../components/MaterialNoteWindow.vue";
 
 const route = useRoute(), router = useRouter();
 const id = String(route.params.id);
@@ -19,8 +19,9 @@ const focusContext = ref(""), outlineOpen = ref(true), chatOpen = ref(true);
 const focused = ref(false);
 const readerPanel = ref(route.query.panel === "chat" ? "chat" : "read");
 const zoom = ref(100), thumbnails = ref<HTMLElement>(), canvas = ref<HTMLElement>();
-const noteSource = ref<{ slideId: string; materialName: string; pageNo: number }>();
-const noteSaved = ref(false);
+const noteOpen = ref(route.query.notes === "open");
+const noteMounted = ref(noteOpen.value);
+const noteToggle = ref<HTMLButtonElement>();
 const focusId = computed(() => typeof route.query.focus === "string" ? route.query.focus : "");
 const selected = computed(() => slides.value.find(s => s.pageNo === page.value));
 const returnToNotes = computed(() => route.query.from === "notes" && !focusId.value);
@@ -158,18 +159,12 @@ function openSource(target: number) {
   readerPanel.value = "read";
   void router.replace({ query: { ...route.query, page: String(page.value), panel: undefined } });
 }
-function openNote() {
-  const slide = selected.value;
-  if (!material.value || !slide?.previewUrl) return;
-  noteSaved.value = false;
-  noteSource.value = { slideId: slide.id, materialName: material.value.displayName, pageNo: slide.pageNo };
-}
-function savedNote() {
-  noteSource.value = undefined;
-  noteSaved.value = true;
+function toggleNote() {
+  noteOpen.value = !noteOpen.value;
+  if (noteOpen.value) noteMounted.value = true;
+  else noteToggle.value?.focus();
 }
 function key(event: KeyboardEvent) {
-  if (noteSource.value) return;
   if (event.key === "Escape" && focused.value && !(event.target instanceof Element && event.target.closest("dialog"))) {
     focused.value = false;
     return;
@@ -185,12 +180,18 @@ watch(() => route.query.panel, value => {
   readerPanel.value = value === "chat" ? "chat" : "read";
   if (value === "chat") chatOpen.value = true;
 });
+watch([noteOpen, loading], async ([open, busy]) => {
+  if (!open || busy || !window.matchMedia("(max-width: 750px)").matches) return;
+  if (readerPanel.value !== "read") setPanel("read");
+  await nextTick();
+  if (noteOpen.value) canvas.value?.closest(".reader-content")?.scrollIntoView({ block: "start" });
+});
 onMounted(() => { void load(); window.addEventListener("keydown", key); });
 onBeforeUnmount(() => { disposed = true; generation++; window.removeEventListener("keydown", key); });
 </script>
 
 <template>
-  <section class="reader-page" :class="{ 'with-focus': !!focusContext, 'is-focused': focused }">
+  <section class="reader-page" :class="{ 'with-focus': !!focusContext, 'is-focused': focused, 'has-note-window': noteOpen }">
     <div v-if="loading" class="state-panel" role="status">正在打开课件，恢复上次阅读位置…</div>
     <div v-else-if="error" class="state-panel">
       <h2>暂时无法打开课件</h2><p class="error" role="alert">{{ error }}</p>
@@ -206,15 +207,13 @@ onBeforeUnmount(() => { disposed = true; generation++; window.removeEventListene
           <RouterLink class="button secondary" :to="`/materials/${id}/summary`"><AppIcon name="file" :size="16" />核心摘要</RouterLink>
           <button class="button secondary reader-directory-toggle" :aria-expanded="outlineOpen && !focused" aria-controls="page-directory" @click="toggleOutline"><AppIcon name="outline" :size="18" />目录</button>
           <button class="button" :class="chatOpen && !focused ? 'primary' : 'secondary'" :aria-expanded="chatOpen && !focused" aria-controls="reader-answer-panel" @click="toggleChat"><AppIcon name="chat" :size="18" />AI 答疑</button>
-          <button type="button" class="button secondary" :disabled="!selected?.previewUrl" @click="openNote"><AppIcon name="edit" :size="17" />记笔记</button>
+          <button ref="noteToggle" type="button" class="button secondary" :aria-expanded="noteOpen" aria-controls="material-note-window" @click="toggleNote"><AppIcon name="edit" :size="17" />{{ noteOpen ? "收起笔记" : "记笔记" }}</button>
           <a v-if="material.capabilities.canDownload" class="icon-button reader-download" :href="material.originalDownloadUrl + '?disposition=attachment'" aria-label="下载课件原件" title="下载原件"><AppIcon name="download" /></a>
         </div>
       </header>
-      <p v-if="noteSaved" class="notice reader-note-saved" role="status">
-        <span>笔记已保存</span>
-        <RouterLink class="text-button" :to="{ path: `/courses/${material.courseId}`, query: { tab: 'notes' } }">查看笔记</RouterLink>
-      </p>
-      <SlideNoteForm v-if="noteSource" :course-id="material.courseId" :source="noteSource" @close="noteSource = undefined" @saved="savedNote" />
+      <MaterialNoteWindow v-if="noteMounted" :course-id="material.courseId" :material-id="material.id"
+        :open="noteOpen" :current-page="selected?.previewUrl ? page : null"
+        @close="toggleNote" @page="openSource" />
       <aside v-if="focusContext" class="reader-focus-context"><span class="focus-context-label">正在核对的重点</span><p>{{ focusContext }}</p><RouterLink :to="returnLocation">返回定位结果<AppIcon name="arrow" :size="15" /></RouterLink></aside>
       <nav class="reader-panel-tabs" aria-label="阅读面板">
         <button :class="{ active: readerPanel === 'read' }" :aria-pressed="readerPanel === 'read'" @click="setPanel('read')"><AppIcon name="file" :size="17" />课件阅读<span>第 {{ page }} 页</span></button>

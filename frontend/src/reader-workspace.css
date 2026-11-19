@@ -15,7 +15,9 @@
 .reader-page .reader-heading h1 { margin: 0; font: 600 22px/1.5 "Microsoft YaHei", sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .reader-file-type { flex: none; font: 11px/1.5 Consolas, "Microsoft YaHei", monospace; color: #69788d; padding: 4px 8px; border: 1px solid #d7e1ee; border-radius: 4px; }
 .reader-page .reader-view-actions { gap: 6px; flex-wrap: wrap; }
-.reader-note-saved { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+@media (max-width: 750px) {
+  .reader-page.has-note-window::after { content: ""; display: block; height: min(400px, 49dvh); }
+}
 .reader-page .reader-view-actions .button { min-height: 40px; padding: 8px 12px; font-size: 13px; }
 .reader-page .reader-layout { gap: 18px; }
 .reader-page .reader-layout.has-outline { grid-template-columns: 124px minmax(0, 1fr); }

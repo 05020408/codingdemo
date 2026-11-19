@@ -8,9 +8,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import cn.review.common.ApiException;
 import cn.review.material.*;
 import com.fasterxml.jackson.databind.*;
+import db.migration.V10__merge_slide_notes;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
+import org.flywaydb.core.api.migration.Context;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -237,64 +239,104 @@ class MaterialIntegrationTest {
   }
 
   @Test
-  void slideNotesUseVerifiedSourcesAndSurviveOnlyMaterialDeletion() throws Exception {
+  void markdownNotesMigrateSaveOneDocumentAndSurviveOnlyMaterialDeletion() throws Exception {
     previewSuccess();
     Client c = login(), other = login();
     String course = course(c), unrelated = course(c);
     String material = upload(c, course, MaterialFixtures.deck(true), key()).path("materialId").asText();
-    String slide = slides(c, material).get(2).path("id").asText();
-    String endpoint = "/api/courses/" + course + "/notes";
-    String saveKey = key();
-    var input = Map.of("slideId", slide, "body", "这是无文字的第 3 页\n这条笔记仍然可以保存");
-
-    mvc.perform(as(c, body(post(endpoint), input)).header("Idempotency-Key", saveKey))
-        .andExpect(status().isNotFound())
-        .andExpect(jsonPath("$.code").value("SOURCE_UNAVAILABLE"));
+    String list = "/api/courses/" + course + "/notes";
+    String endpoint = list + "/" + material;
+    mvc.perform(get(endpoint).session(c.session())).andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.version").value(0));
+    mvc.perform(get(list).session(c.session())).andExpect(jsonPath("$.data.total").value(0));
+    mvc.perform(get(endpoint + "/download").session(c.session())).andExpect(status().isNotFound());
     drain();
-    mvc.perform(as(c, body(post("/api/courses/" + unrelated + "/notes"), input))
-            .header("Idempotency-Key", key()))
-        .andExpect(status().isNotFound());
-    mvc.perform(as(other, body(post(endpoint), input)).header("Idempotency-Key", key()))
-        .andExpect(status().isNotFound());
-    mvc.perform(get(endpoint).session(other.session())).andExpect(status().isNotFound());
 
-    String note = data(mvc.perform(as(c, body(post(endpoint), input)).header("Idempotency-Key", saveKey))
-            .andExpect(status().isCreated()).andReturn()).path("id").asText();
-    mvc.perform(as(c, body(post(endpoint), input)).header("Idempotency-Key", saveKey))
-        .andExpect(status().isCreated()).andExpect(jsonPath("$.data.id").value(note));
+    var pages = slides(c, material);
+    String owner = db.queryForObject("SELECT owner_id FROM courses WHERE id=?", String.class, course);
+    String firstBody = "第 1 页原始正文\n<标签> " + Character.toString(96).repeat(3);
+    String secondBody = "第 3 页原始正文";
+    for (int page : List.of(1, 3)) {
+      db.update("""
+          INSERT INTO notes(id,owner_id,course_id,title,body,source_material_id,source_slide_id,
+                            source_material_name,source_page_no,created_at)
+          VALUES(?,?,?,'已有笔记',?,?,?,'样例.pptx',?,TIMESTAMPADD(SECOND,?,CURRENT_TIMESTAMP(3)))
+          """, key(), owner, course, page == 1 ? firstBody : secondBody, material,
+          pages.get(page - 1).path("id").asText(), page, page);
+    }
+    try (var connection = db.getDataSource().getConnection()) {
+      Context migration = mock(Context.class);
+      when(migration.getConnection()).thenReturn(connection);
+      new V10__merge_slide_notes().migrate(migration);
+    }
+    String merged = data(mvc.perform(get(endpoint).session(c.session()))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.data.version").value(1))
+        .andReturn()).path("markdown").asText();
+    assertThat(merged).containsSubsequence("[第 1 页](#page-1)", firstBody, "[第 3 页](#page-3)", secondBody);
+    String markdown = merged + "\n\n# 小结\n[第 2 页](#page-2)\n";
+    var input = Map.of("markdown", markdown, "expectedVersion", 1);
+    mvc.perform(as(c, body(put("/api/courses/" + unrelated + "/notes/" + material), input)))
+        .andExpect(status().isNotFound());
+    mvc.perform(as(other, body(put(endpoint), input))).andExpect(status().isNotFound());
+    mvc.perform(get(list).session(other.session())).andExpect(status().isNotFound());
+    mvc.perform(get(endpoint + "/download").session(other.session())).andExpect(status().isNotFound());
+    for (int attempt = 0; attempt < 2; attempt++) {
+      mvc.perform(as(c, body(put(endpoint), input))).andExpect(status().isOk())
+          .andExpect(jsonPath("$.data.version").value(2));
+    }
+    mvc.perform(as(c, body(put(endpoint), Map.of("markdown", "旧窗口的修改", "expectedVersion", 1))))
+        .andExpect(status().isConflict());
+    mvc.perform(get(list).session(c.session())).andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.total").value(1))
+        .andExpect(jsonPath("$.data.items[0].materialId").value(material));
     mvc.perform(get(endpoint).session(c.session()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.total").value(1))
-        .andExpect(jsonPath("$.data.items[0].id").value(note))
-        .andExpect(jsonPath("$.data.items[0].body").value(input.get("body")))
-        .andExpect(jsonPath("$.data.items[0].materialName").value("样例.pptx"))
-        .andExpect(jsonPath("$.data.items[0].pageNo").value(3))
-        .andExpect(jsonPath("$.data.items[0].sourceStatus").value("AVAILABLE"));
+        .andExpect(jsonPath("$.data.markdown").value(markdown))
+        .andExpect(jsonPath("$.data.pageCount").value(4))
+        .andExpect(jsonPath("$.data.sourceStatus").value("AVAILABLE"));
 
     mvc.perform(as(c, delete("/api/materials/" + material).param("expectedVersion", "1")
             .header("Idempotency-Key", key())))
         .andExpect(status().isAccepted());
-    mvc.perform(as(c, body(post(endpoint), input)).header("Idempotency-Key", key()))
-        .andExpect(status().isNotFound());
+    mvc.perform(as(c, body(put(endpoint), input))).andExpect(status().isConflict());
     drain();
     mvc.perform(get(endpoint).session(c.session()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.items[0].body").value(input.get("body")))
-        .andExpect(jsonPath("$.data.items[0].materialName").value("样例.pptx"))
-        .andExpect(jsonPath("$.data.items[0].pageNo").value(3))
-        .andExpect(jsonPath("$.data.items[0].sourceStatus").value("DELETED"));
-    mvc.perform(as(c, body(post(endpoint), input)).header("Idempotency-Key", saveKey))
-        .andExpect(status().isCreated()).andExpect(jsonPath("$.data.id").value(note));
+        .andExpect(jsonPath("$.data.materialName").value("样例.pptx"))
+        .andExpect(jsonPath("$.data.sourceStatus").value("DELETED"));
+    mvc.perform(get(endpoint + "/download").session(c.session())).andExpect(status().isOk())
+        .andExpect(content().bytes(markdown.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
 
     mvc.perform(as(c, delete("/api/courses/" + course).param("expectedVersion", "1")
             .header("Idempotency-Key", key())))
         .andExpect(status().isAccepted());
     mvc.perform(get(endpoint).session(c.session())).andExpect(status().isNotFound());
-    mvc.perform(as(c, body(post(endpoint), input)).header("Idempotency-Key", saveKey))
-        .andExpect(status().isNotFound());
     drain();
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM material_notes WHERE course_id=?", Integer.class, course))
+        .isZero();
     assertThat(db.queryForObject("SELECT COUNT(*) FROM notes WHERE course_id=?", Integer.class, course))
         .isZero();
+  }
+
+  @Test
+  void firstSaveCreatesExactlyOneDocumentPerPpt() throws Exception {
+    Client c = login();
+    String course = course(c);
+    String material = upload(c, course, MaterialFixtures.deck(false), key()).path("materialId").asText();
+    String endpoint = "/api/courses/" + course + "/notes/" + material;
+    mvc.perform(as(c, body(put(endpoint), Map.of("markdown", "", "expectedVersion", 0))))
+        .andExpect(status().isOk()).andExpect(jsonPath("$.data.version").value(0));
+    var first = Map.of("markdown", "# 标题\n\n  原样保留  \n", "expectedVersion", 0);
+    for (int attempt = 0; attempt < 2; attempt++) {
+      mvc.perform(as(c, body(put(endpoint), first))).andExpect(status().isOk())
+          .andExpect(jsonPath("$.data.version").value(1))
+          .andExpect(jsonPath("$.data.markdown").value(first.get("markdown")));
+    }
+    mvc.perform(as(c, body(put(endpoint), Map.of("markdown", "另一窗口首次保存", "expectedVersion", 0))))
+        .andExpect(status().isConflict());
+    assertThat(db.queryForObject(
+        "SELECT COUNT(*) FROM material_notes WHERE course_id=?", Integer.class, course)).isEqualTo(1);
+    drain();
   }
 
   @Test
