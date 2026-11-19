@@ -103,7 +103,8 @@
 .chat-citation blockquote { margin: 6px 0 0; white-space: pre-wrap; line-height: 1.9; }
 .chat-citation > span { display: block; margin-top: 6px; line-height: 1.8; }
 .chat-limitations { margin-top: 14px; padding: 10px 12px; background: #faf6ed; color: #79633d; font-size: 11px; white-space: pre-wrap; overflow-wrap: anywhere; }
-.chat-copy { display: block; margin-top: 9px; font-size: 11px; }
+.chat-answer-actions { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 9px; }
+.chat-copy { font-size: 11px; }
 .chat-failed { color: #875834; padding: 12px; background: #fcf6ed; border: 1px solid #ecdfcc; border-radius: 6px; font-size: 12px; }
 .chat-failed strong { font-size: 12px; }
 .chat-failed p { margin-top: 5px; overflow-wrap: anywhere; }

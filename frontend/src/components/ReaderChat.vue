@@ -10,6 +10,8 @@ import {
 import { onBeforeRouteLeave } from "vue-router";
 import { ApiError, message, request } from "../api";
 import type { Slide } from "../api";
+import { formatAnswerNote } from "../answerNote";
+import type { AnswerNoteClip } from "../answerNote";
 import type { SummaryState } from "../summary";
 import { useAuth } from "../stores/auth";
 import AppIcon from "./AppIcon.vue";
@@ -23,7 +25,9 @@ const props = defineProps<{
   readonly?: boolean;
   collapsible?: boolean;
 }>();
-const emit = defineEmits<{ navigate: [page: number]; close: []; sessionChange: [id: string] }>();
+const emit = defineEmits<{
+  navigate: [page: number]; close: []; sessionChange: [id: string]; answerNote: [clip: AnswerNoteClip];
+}>();
 interface Session {
   id: string;
   title: string;
@@ -308,6 +312,11 @@ async function copy(turn: Turn) {
 function cite(turn: Turn, id: string) {
   return turn.sources.find((s) => s.slideId === id);
 }
+
+function saveAnswerToNote(turn: Turn) {
+  if (props.readonly || !props.materialId || turn.status !== "SUCCEEDED" || !turn.answer) return;
+  emit("answerNote", formatAnswerNote({ ...turn, answer: turn.answer }, props.materialId));
+}
 function leave(event: BeforeUnloadEvent) {
   if (auth.user && (question.value.trim() || uncertain.value)) {
     event.preventDefault();
@@ -506,9 +515,13 @@ onBeforeUnmount(() => {
             <summary>回答限制</summary>
             <p class="chat-limitations">{{ turn.answer.limitations }}</p>
           </details>
-          <button class="text-button chat-copy" @click="copy(turn)">
-            {{ copied === turn.id ? "已复制" : "复制回答" }}
-          </button>
+          <div class="chat-answer-actions">
+            <button type="button" class="text-button chat-copy" @click="copy(turn)">
+              {{ copied === turn.id ? "已复制" : "复制回答" }}
+            </button>
+            <button v-if="!readonly && materialId && turn.status === 'SUCCEEDED'" type="button"
+              class="text-button chat-copy" @click="saveAnswerToNote(turn)">保存到课件笔记</button>
+          </div>
         </template>
         <div v-else class="chat-failed">
           <strong>{{ turn.status === 'CANCELLED' ? '本轮已停止' : turn.status === 'UNKNOWN' ? '本轮结果待确认' : '本轮未完成' }}</strong>

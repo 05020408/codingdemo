@@ -2,13 +2,17 @@
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { onBeforeRouteLeave, onBeforeRouteUpdate } from "vue-router";
 import { ApiError, message, request } from "../api";
+import { appendAnswerNote } from "../answerNote";
+import type { AnswerNoteClip } from "../answerNote";
 import { noteEndpoint, noteFilename } from "../materialNotes";
 import type { NoteDocument } from "../materialNotes";
 import AppIcon from "./AppIcon.vue";
 
 const NoteMarkdown = defineAsyncComponent(() => import("./NoteMarkdown.vue"));
-const props = defineProps<{ courseId: string; materialId: string; open: boolean; currentPage: number | null }>();
-const emit = defineEmits<{ close: []; page: [page: number] }>();
+const props = defineProps<{
+  courseId: string; materialId: string; open: boolean; currentPage: number | null; answerClips: AnswerNoteClip[];
+}>();
+const emit = defineEmits<{ close: []; page: [page: number]; answersHandled: [ids: string[]] }>();
 const mobileHeight = defineModel<number>("mobileHeight");
 const endpoint = noteEndpoint(props.courseId, props.materialId);
 const smallestFloatingWidth = 751;
@@ -20,10 +24,14 @@ const documentNote = ref<NoteDocument>();
 const draft = ref("");
 const mode = ref<"edit" | "preview">("edit");
 const loadError = ref("");
+const loadingNote = ref(true);
 const saveError = ref("");
+const answerNotice = ref("");
 const conflict = ref(false);
 const saving = ref(false);
 const dirty = computed(() => !!documentNote.value && draft.value !== documentNote.value.markdown);
+const needsProtection = computed(() => dirty.value || props.answerClips.length > 0);
+const maxLength = computed(() => Math.max(250000, documentNote.value?.markdown.length ?? 0));
 let saveTimer: number | undefined;
 let pending: Promise<void> | null = null;
 let alive = true;
@@ -57,6 +65,7 @@ function queueSave() {
 async function load() {
   stopTimer();
   const current = ++loadGeneration;
+  loadingNote.value = true;
   loadError.value = "";
   try {
     const note = await request<NoteDocument>(endpoint);
@@ -64,9 +73,12 @@ async function load() {
     documentNote.value = note;
     draft.value = note.markdown;
     saveError.value = "";
+    answerNotice.value = "";
     conflict.value = false;
   } catch (cause) {
     if (alive && current === loadGeneration) loadError.value = message(cause);
+  } finally {
+    if (alive && current === loadGeneration) loadingNote.value = false;
   }
 }
 
@@ -108,10 +120,61 @@ async function canLeave() {
   stopTimer();
   if (pending) await pending;
   if (dirty.value && !saveError.value) await saveNow();
-  if (!dirty.value) return true;
-  const leave = window.confirm("笔记还有未保存的修改。要离开吗？");
+  if (!needsProtection.value) return true;
+  const leave = window.confirm(dirty.value
+    ? "笔记还有未保存的修改。要离开吗？"
+    : "还有未加入笔记的回答。要离开吗？");
   if (!leave) queueSave();
   return leave;
+}
+
+async function revealAnswer(position: number) {
+  mode.value = "edit";
+  await nextTick();
+  const field = editor.value;
+  if (!field || !props.open) return;
+  field.focus({ preventScroll: true });
+  field.setSelectionRange(position, position);
+
+  // Measure wrapped lines the same way as the textarea so long answers open at their heading.
+  const style = getComputedStyle(field);
+  const measure = document.createElement("div");
+  const cursor = document.createElement("span");
+  Object.assign(measure.style, {
+    position: "fixed", inset: "0 auto auto 0", visibility: "hidden", pointerEvents: "none",
+    width: field.clientWidth + "px", padding: style.padding, font: style.font,
+    boxSizing: "border-box", whiteSpace: "pre-wrap", overflowWrap: "break-word",
+  });
+  measure.append(field.value.slice(0, position), cursor);
+  cursor.textContent = "\u200b";
+  document.body.append(measure);
+  field.scrollTop = Math.max(0, cursor.offsetTop - 12);
+  measure.remove();
+}
+
+function applyAnswers() {
+  if (loadingNote.value || !documentNote.value || !props.answerClips.length) return;
+  let text = draft.value;
+  let position: number | undefined;
+  let added = false;
+  let limitReached = false;
+  const clips = props.answerClips;
+  for (const clip of clips) {
+    const result = appendAnswerNote(text, clip);
+    if (result.added && result.markdown.length > maxLength.value) {
+      limitReached = true;
+      continue;
+    }
+    text = result.markdown;
+    position = result.position;
+    added ||= result.added;
+  }
+  draft.value = text;
+  answerNotice.value = limitReached
+    ? "笔记空间不足，请精简内容后再加入回答。"
+    : added ? "回答已加入编辑区" : "这条回答已在笔记中";
+  emit("answersHandled", clips.map(clip => clip.id));
+  if (position !== undefined) void revealAnswer(position);
 }
 
 async function insertPage() {
@@ -227,7 +290,8 @@ function fitViewport() {
 }
 
 watch(draft, queueSave);
-watch(dirty, value => {
+watch([() => props.answerClips, documentNote, loadingNote], applyAnswers);
+watch(needsProtection, value => {
   if (value) window.addEventListener("beforeunload", protectDraft);
   else window.removeEventListener("beforeunload", protectDraft);
 });
@@ -271,6 +335,7 @@ onBeforeUnmount(() => {
       </header>
       <div v-if="loadError && !documentNote" class="note-load">
         <p class="error" role="alert">{{ loadError }}</p>
+        <p v-if="answerClips.length" class="muted">重新载入后会继续加入所选回答。</p>
         <button type="button" class="button secondary" @click="load">重新载入</button>
       </div>
       <p v-else-if="!documentNote" class="note-load muted" role="status">正在加载笔记…</p>
@@ -281,11 +346,11 @@ onBeforeUnmount(() => {
             <button type="button" :aria-pressed="mode === 'edit'" @click="mode = 'edit'">编辑</button>
             <button type="button" :aria-pressed="mode === 'preview'" @click="mode = 'preview'">预览</button>
           </div>
-          <button type="button" class="button secondary note-insert" :disabled="!currentPage"
+          <button type="button" class="button secondary note-insert" :disabled="!currentPage || loadingNote"
             @click="insertPage">插入第 {{ currentPage ?? '—' }} 页引用</button>
         </div>
         <textarea v-show="mode === 'edit'" ref="editor" v-model="draft" class="note-editor"
-          :maxlength="Math.max(250000, documentNote.markdown.length)" aria-label="Markdown 笔记正文"
+          :maxlength="maxLength" :disabled="loadingNote" aria-label="Markdown 笔记正文"
           placeholder="用 Markdown 记录这份课件…" spellcheck="false"></textarea>
         <div v-if="mode === 'preview'" class="note-preview">
           <NoteMarkdown v-if="draft.trim()" :content="draft" :page-count="documentNote.pageCount"
@@ -296,9 +361,10 @@ onBeforeUnmount(() => {
           <span>{{ loadError || saveError }}</span>
           <button v-if="conflict" type="button" class="text-button" @click="reloadLatest">载入已保存的版本</button>
         </div>
+        <p v-if="answerNotice" class="note-answer-notice muted" role="status">{{ answerNotice }}</p>
         <footer class="note-window-footer">
           <span class="muted" role="status">{{ saving ? "保存中…" : saveError ? "修改未保存" : dirty ? "等待保存…" : documentNote.version ? "已保存" : "尚未编辑" }}</span>
-          <button type="button" class="button secondary" :disabled="!dirty || saving || conflict" @click="saveNow">保存</button>
+          <button type="button" class="button secondary" :disabled="!dirty || saving || conflict || loadingNote" @click="saveNow">保存</button>
           <button type="button" class="button secondary" :disabled="!draft && !documentNote.version" @click="downloadDraft">下载 .md</button>
         </footer>
       </template>
@@ -330,6 +396,7 @@ onBeforeUnmount(() => {
 .note-window-error, .note-load { padding: 8px 14px; }
 .note-window-error { flex: none; color: #a53939; font-size: 12px; }
 .note-window-error button { margin-inline-start: 8px; }
+.note-answer-notice { margin: 5px 12px 0; font-size: 12px; }
 .note-window-footer { padding-inline: 24px; }
 .note-window-footer > span { flex: 1; font-size: 12px; }
 .note-resize { touch-action: none; border: 0; background: transparent; padding: 0; color: #8295ae; }

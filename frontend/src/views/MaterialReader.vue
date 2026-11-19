@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router";
 import { message, request } from "../api";
 import type { Course, Material, Page, ReadingProgress, Slide } from "../api";
+import type { AnswerNoteClip } from "../answerNote";
 import AppIcon from "../components/AppIcon.vue";
 import ReaderChat from "../components/ReaderChat.vue";
 import MaterialNoteWindow from "../components/MaterialNoteWindow.vue";
@@ -23,6 +24,7 @@ const noteOpen = ref(route.query.notes === "open");
 const noteMounted = ref(noteOpen.value);
 const noteToggle = ref<HTMLButtonElement>();
 const noteMobileHeight = ref<number>();
+const answerClips = ref<AnswerNoteClip[]>([]);
 const focusId = computed(() => typeof route.query.focus === "string" ? route.query.focus : "");
 const selected = computed(() => slides.value.find(s => s.pageNo === page.value));
 const returnToNotes = computed(() => route.query.from === "notes" && !focusId.value);
@@ -165,6 +167,16 @@ function toggleNote() {
   if (noteOpen.value) noteMounted.value = true;
   else noteToggle.value?.focus();
 }
+function appendAnswer(clip: AnswerNoteClip) {
+  noteOpen.value = true;
+  noteMounted.value = true;
+  if (!answerClips.value.some(item => item.id === clip.id)) {
+    answerClips.value = [...answerClips.value, clip];
+  }
+}
+function acknowledgeAnswers(ids: string[]) {
+  answerClips.value = answerClips.value.filter(clip => !ids.includes(clip.id));
+}
 function key(event: KeyboardEvent) {
   if (event.key === "Escape" && focused.value && !(event.target instanceof Element && event.target.closest("dialog"))) {
     focused.value = false;
@@ -215,7 +227,7 @@ onBeforeUnmount(() => { disposed = true; generation++; window.removeEventListene
       </header>
       <MaterialNoteWindow v-if="noteMounted" :course-id="material.courseId" :material-id="material.id"
         v-model:mobile-height="noteMobileHeight" :open="noteOpen" :current-page="selected?.previewUrl ? page : null"
-        @close="toggleNote" @page="openSource" />
+        :answer-clips="answerClips" @answers-handled="acknowledgeAnswers" @close="toggleNote" @page="openSource" />
       <aside v-if="focusContext" class="reader-focus-context"><span class="focus-context-label">正在核对的重点</span><p>{{ focusContext }}</p><RouterLink :to="returnLocation">返回定位结果<AppIcon name="arrow" :size="15" /></RouterLink></aside>
       <nav class="reader-panel-tabs" aria-label="阅读面板">
         <button :class="{ active: readerPanel === 'read' }" :aria-pressed="readerPanel === 'read'" @click="setPanel('read')"><AppIcon name="file" :size="17" />课件阅读<span>第 {{ page }} 页</span></button>
@@ -238,7 +250,7 @@ onBeforeUnmount(() => { disposed = true; generation++; window.removeEventListene
           <p v-if="saveError" class="error" role="alert">{{ saveError }}<button class="text-button" @click="save(page)">重新保存</button></p>
           <details class="slide-text"><summary>本页文字</summary><pre>{{ selected?.text || "本页暂无可提取文字。图片、公式和图表请以课件页面为准。" }}</pre></details>
         </div>
-        <ReaderChat v-show="chatOpen && !focused" id="reader-answer-panel" :course-id="material.courseId" :material-id="material.id" :material-name="material.displayName" :slide="selected" :session-id="typeof route.query.chat === 'string' ? route.query.chat : undefined" collapsible @close="toggleChat" @navigate="openSource" @session-change="sessionChanged" />
+        <ReaderChat v-show="chatOpen && !focused" id="reader-answer-panel" :course-id="material.courseId" :material-id="material.id" :material-name="material.displayName" :slide="selected" :session-id="typeof route.query.chat === 'string' ? route.query.chat : undefined" collapsible @close="toggleChat" @navigate="openSource" @session-change="sessionChanged" @answer-note="appendAnswer" />
       </div>
     </template>
   </section>
