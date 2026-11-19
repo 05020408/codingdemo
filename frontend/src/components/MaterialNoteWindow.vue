@@ -9,8 +9,10 @@ import AppIcon from "./AppIcon.vue";
 const NoteMarkdown = defineAsyncComponent(() => import("./NoteMarkdown.vue"));
 const props = defineProps<{ courseId: string; materialId: string; open: boolean; currentPage: number | null }>();
 const emit = defineEmits<{ close: []; page: [page: number] }>();
+const mobileHeight = defineModel<number>("mobileHeight");
 const endpoint = noteEndpoint(props.courseId, props.materialId);
 const smallestFloatingWidth = 751;
+const edgeGap = 8;
 const panel = ref<HTMLElement>();
 const heading = ref<HTMLElement>();
 const editor = ref<HTMLTextAreaElement>();
@@ -28,11 +30,17 @@ let alive = true;
 let loadGeneration = 0;
 
 const location = ref<{ x: number; y: number }>();
+const size = ref<{ width: number; height: number }>();
 let pointer: { id: number; dx: number; dy: number } | null = null;
-const placement = computed(() => location.value && {
-  "--note-x": location.value.x + "px",
-  "--note-y": location.value.y + "px",
-});
+type ResizeEdge = "left" | "right" | "top";
+let resizePointer: { id: number; edge: ResizeEdge; x: number; y: number; bounds: DOMRect } | null = null;
+const placement = computed(() => ({
+  "--note-x": location.value ? location.value.x + "px" : undefined,
+  "--note-y": location.value ? location.value.y + "px" : undefined,
+  "--note-width": size.value ? size.value.width + "px" : undefined,
+  "--note-height": size.value ? size.value.height + "px" : undefined,
+  "--note-mobile-size": mobileHeight.value ? mobileHeight.value + "px" : undefined,
+}));
 
 function stopTimer() {
   window.clearTimeout(saveTimer);
@@ -137,8 +145,8 @@ function move(x: number, y: number) {
   if (!panel.value || window.innerWidth < smallestFloatingWidth) return;
   const { width, height } = panel.value.getBoundingClientRect();
   location.value = {
-    x: Math.max(8, Math.min(x, window.innerWidth - width - 8)),
-    y: Math.max(8, Math.min(y, window.innerHeight - height - 8)),
+    x: Math.max(edgeGap, Math.min(x, window.innerWidth - width - edgeGap)),
+    y: Math.max(edgeGap, Math.min(y, window.innerHeight - height - edgeGap)),
   };
 }
 
@@ -165,7 +173,56 @@ function keyboardMove(event: KeyboardEvent) {
   move(left + offset[0], top + offset[1]);
 }
 
+function boundedSize(value: number, minimum: number, maximum: number) {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
+function resize(edge: ResizeEdge, bounds: DOMRect, dx: number, dy: number) {
+  if (edge === "top") {
+    if (window.innerWidth >= smallestFloatingWidth) return;
+    const viewportHeight = window.innerHeight;
+    mobileHeight.value = boundedSize(
+      bounds.height - dy, Math.min(220, viewportHeight * 0.49), Math.min(620, viewportHeight * 0.72),
+    );
+    return;
+  }
+  if (window.innerWidth < smallestFloatingWidth) return;
+  const fromLeft = edge === "left";
+  const width = boundedSize(
+    bounds.width + (fromLeft ? -dx : dx), 310,
+    fromLeft ? bounds.right - edgeGap : window.innerWidth - bounds.left - edgeGap,
+  );
+  const height = boundedSize(bounds.height + dy, 260, window.innerHeight - bounds.top - edgeGap);
+  size.value = { width, height };
+  location.value = { x: fromLeft ? bounds.right - width : bounds.left, y: bounds.top };
+}
+
+function startResize(event: PointerEvent, edge: ResizeEdge) {
+  if (!panel.value || !event.isPrimary || event.button !== 0) return;
+  resizePointer = {
+    id: event.pointerId, edge, x: event.clientX, y: event.clientY,
+    bounds: panel.value.getBoundingClientRect(),
+  };
+  (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+}
+
+function dragResize(event: PointerEvent) {
+  if (!resizePointer || resizePointer.id !== event.pointerId) return;
+  const { edge, x, y, bounds } = resizePointer;
+  resize(edge, bounds, event.clientX - x, event.clientY - y);
+}
+
+function keyboardResize(event: KeyboardEvent, edge: ResizeEdge) {
+  if (!panel.value) return;
+  const horizontal = event.key === "ArrowLeft" ? -20 : event.key === "ArrowRight" ? 20 : 0;
+  const vertical = event.key === "ArrowUp" ? -20 : event.key === "ArrowDown" ? 20 : 0;
+  if (!vertical && (!horizontal || edge === "top")) return;
+  event.preventDefault();
+  resize(edge, panel.value.getBoundingClientRect(), edge === "left" ? -horizontal : horizontal, vertical);
+}
+
 function fitViewport() {
+  resizePointer = null;
   if (location.value && props.open) move(location.value.x, location.value.y);
 }
 
@@ -200,6 +257,9 @@ onBeforeUnmount(() => {
   <Teleport to="body">
     <section v-show="open" id="material-note-window" ref="panel" class="note-window"
       :style="placement" aria-labelledby="material-note-heading" @keydown.stop>
+      <button type="button" class="note-resize note-resize-top" aria-label="调整笔记面板高度" title="拖动或用上下方向键调整高度"
+        @pointerdown="startResize($event, 'top')" @pointermove="dragResize"
+        @lostpointercapture="resizePointer = null" @keydown="keyboardResize($event, 'top')"></button>
       <header class="note-window-header">
         <div class="note-drag" @pointerdown="startMove" @pointermove="drag"
           @lostpointercapture="pointer = null" @pointercancel="pointer = null">
@@ -242,12 +302,18 @@ onBeforeUnmount(() => {
           <button type="button" class="button secondary" :disabled="!draft && !documentNote.version" @click="downloadDraft">下载 .md</button>
         </footer>
       </template>
+      <button v-for="edge in (['left', 'right'] as const)" :key="edge" type="button"
+        class="note-resize note-resize-corner" :class="'note-resize-' + edge"
+        :aria-label="edge === 'left' ? '从左下角调整笔记窗口大小' : '从右下角调整笔记窗口大小'"
+        title="拖动或用方向键调整宽高"
+        @pointerdown="startResize($event, edge)" @pointermove="dragResize"
+        @lostpointercapture="resizePointer = null" @keydown="keyboardResize($event, edge)"></button>
     </section>
   </Teleport>
 </template>
 
 <style scoped>
-.note-window { position: fixed; z-index: 25; left: var(--note-x, auto); right: 24px; top: var(--note-y, min(120px, 12vh)); display: flex; flex-direction: column; width: min(420px, calc(100vw - 32px)); height: min(560px, 82dvh); min-width: 0; background: #fff; border: 1px solid #c8d7e7; border-radius: 12px; box-shadow: 0 16px 48px #17264030; overflow: hidden; }
+.note-window { position: fixed; z-index: 25; left: var(--note-x, auto); right: 24px; top: var(--note-y, min(120px, 12vh)); display: flex; flex-direction: column; width: min(var(--note-width, 420px), calc(100vw - 32px)); height: min(var(--note-height, min(560px, 82dvh)), calc(100dvh - 16px)); min-width: 0; background: #fff; border: 1px solid #c8d7e7; border-radius: 12px; box-shadow: 0 16px 48px #17264030; overflow: hidden; }
 .note-window-header { display: flex; flex: none; align-items: center; justify-content: space-between; gap: 6px; padding: 5px 10px 5px 14px; background: #edf4fa; border-bottom: 1px solid #d9e4ee; }
 .note-drag { display: flex; flex: 1; align-items: center; gap: 9px; min-height: 36px; cursor: move; touch-action: none; user-select: none; color: var(--accent); }
 .note-drag h2 { margin: 0; color: var(--ink); font-size: 16px; }
@@ -264,9 +330,23 @@ onBeforeUnmount(() => {
 .note-window-error, .note-load { padding: 8px 14px; }
 .note-window-error { flex: none; color: #a53939; font-size: 12px; }
 .note-window-error button { margin-inline-start: 8px; }
+.note-window-footer { padding-inline: 24px; }
 .note-window-footer > span { flex: 1; font-size: 12px; }
+.note-resize { touch-action: none; border: 0; background: transparent; padding: 0; color: #8295ae; }
+.note-resize:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.note-resize-top { display: none; }
+.note-resize-corner { position: absolute; bottom: 0; width: 23px; height: 23px; }
+.note-resize-corner::after { content: ""; position: absolute; bottom: 5px; width: 11px; height: 11px; border-bottom: 2px solid currentColor; }
+.note-resize-right { right: 0; cursor: nwse-resize; }
+.note-resize-right::after { right: 5px; border-right: 2px solid currentColor; }
+.note-resize-left { left: 0; cursor: nesw-resize; }
+.note-resize-left::after { left: 5px; border-left: 2px solid currentColor; }
 @media (max-width: 750px) {
-  .note-window { top: auto; right: 0; bottom: 0; left: 0; width: 100%; height: min(400px, 49dvh); border-radius: 12px 12px 0 0; }
+  .note-window { top: auto; right: 0; bottom: 0; left: 0; width: 100%; height: var(--reader-note-mobile-height); border-radius: 12px 12px 0 0; }
   .note-drag { cursor: default; touch-action: auto; }
+  .note-resize-corner { display: none; }
+  .note-resize-top { display: grid; place-items: center; flex: 0 0 22px; width: 100%; background: #edf4fa; cursor: ns-resize; }
+  .note-resize-top::after { content: ""; width: 34px; height: 4px; border-radius: 8px; background: currentColor; }
+  .note-window-footer { padding-inline: 12px; }
 }
 </style>

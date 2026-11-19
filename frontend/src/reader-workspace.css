@@ -16,7 +16,10 @@
 .reader-file-type { flex: none; font: 11px/1.5 Consolas, "Microsoft YaHei", monospace; color: #69788d; padding: 4px 8px; border: 1px solid #d7e1ee; border-radius: 4px; }
 .reader-page .reader-view-actions { gap: 6px; flex-wrap: wrap; }
 @media (max-width: 750px) {
-  .reader-page.has-note-window::after { content: ""; display: block; height: min(400px, 49dvh); }
+  .reader-page.has-note-window, .note-window {
+    --reader-note-mobile-height: clamp(min(220px, 49dvh), var(--note-mobile-size, min(400px, 49dvh)), min(620px, 72dvh));
+  }
+  .reader-page.has-note-window::after { content: ""; display: block; height: var(--reader-note-mobile-height); }
 }
 .reader-page .reader-view-actions .button { min-height: 40px; padding: 8px 12px; font-size: 13px; }
 .reader-page .reader-layout { gap: 18px; }

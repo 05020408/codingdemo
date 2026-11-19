@@ -22,6 +22,7 @@ const zoom = ref(100), thumbnails = ref<HTMLElement>(), canvas = ref<HTMLElement
 const noteOpen = ref(route.query.notes === "open");
 const noteMounted = ref(noteOpen.value);
 const noteToggle = ref<HTMLButtonElement>();
+const noteMobileHeight = ref<number>();
 const focusId = computed(() => typeof route.query.focus === "string" ? route.query.focus : "");
 const selected = computed(() => slides.value.find(s => s.pageNo === page.value));
 const returnToNotes = computed(() => route.query.from === "notes" && !focusId.value);
@@ -191,7 +192,8 @@ onBeforeUnmount(() => { disposed = true; generation++; window.removeEventListene
 </script>
 
 <template>
-  <section class="reader-page" :class="{ 'with-focus': !!focusContext, 'is-focused': focused, 'has-note-window': noteOpen }">
+  <section class="reader-page" :class="{ 'with-focus': !!focusContext, 'is-focused': focused, 'has-note-window': noteOpen }"
+    :style="noteMobileHeight ? { '--note-mobile-size': noteMobileHeight + 'px' } : undefined">
     <div v-if="loading" class="state-panel" role="status">正在打开课件，恢复上次阅读位置…</div>
     <div v-else-if="error" class="state-panel">
       <h2>暂时无法打开课件</h2><p class="error" role="alert">{{ error }}</p>
@@ -212,7 +214,7 @@ onBeforeUnmount(() => { disposed = true; generation++; window.removeEventListene
         </div>
       </header>
       <MaterialNoteWindow v-if="noteMounted" :course-id="material.courseId" :material-id="material.id"
-        :open="noteOpen" :current-page="selected?.previewUrl ? page : null"
+        v-model:mobile-height="noteMobileHeight" :open="noteOpen" :current-page="selected?.previewUrl ? page : null"
         @close="toggleNote" @page="openSource" />
       <aside v-if="focusContext" class="reader-focus-context"><span class="focus-context-label">正在核对的重点</span><p>{{ focusContext }}</p><RouterLink :to="returnLocation">返回定位结果<AppIcon name="arrow" :size="15" /></RouterLink></aside>
       <nav class="reader-panel-tabs" aria-label="阅读面板">
