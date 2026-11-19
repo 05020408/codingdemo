@@ -462,6 +462,7 @@ public class MaterialPipeline {
           db.queryForList("SELECT id FROM courses WHERE id=? FOR UPDATE", claim.course());
           live(claim);
           if (claim.type().equals("COURSE_PURGE")) {
+            db.update("DELETE FROM notes WHERE course_id=?", claim.course());
             db.update(
                 "DELETE t FROM chat_turns t JOIN chat_sessions s ON s.id=t.session_id WHERE"
                     + " s.course_id=?",

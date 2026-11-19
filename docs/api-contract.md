@@ -268,3 +268,12 @@ POST turns 增加可选 `summaryVersionId`；缺省不发送摘要，跨课件/�
 ## 2026-11-09 日请求次数策略
 
 启用AI后，账号每日请求次数默认不限，定位、阅读答疑及摘要一致。`AI_DAILY_REQUEST_LIMIT<=0`为不限，正整数为显式共享日限额；AI_ENABLED=false或无Key仍不可用。chat-capabilities及摘要State的`remainingToday`改为可空整数：null表示不限、0表示无可用次数或AI关闭，正整数表示显式限额的剩余次数；始终结合aiAvailable判断能力。前端null时不因次数禁用生成/发送/重试，显示“请求次数不限”。不使用虚构的大整数作为无限次数，调用审计和同任务幂等约束保留。
+
+## Sprint 2 课件页笔记
+
+| 接口 | 请求与结果 |
+| --- | --- |
+| `POST /api/courses/{courseId}/notes` | 提交 `slideId`、可选 `title` 和正文 `body`，需要 CSRF 和 `Idempotency-Key`。返回 201 与 `{id}`。标题最多 100 个字符，正文为 1–8000 个字符。 |
+| `GET /api/courses/{courseId}/notes` | 使用 `page`、`size` 分页，默认 1、20。返回 `{items,page,size,total}`，按最近更新时间和 ID 倒序。 |
+
+列表包含 `id`、`title`、`body`、`materialId`、`materialName`、`pageNo`、`sourceStatus`、`createdAt`、`updatedAt`。来源名称和原始页码在保存时由服务端查询。`sourceStatus` 取值为 `AVAILABLE`、`DELETED` 或 `UNAVAILABLE`。笔记在课件删除后保留正文和来源摘要，在课程删除时随课程清理。无权访问课程返回 404，无法从该课程确认来源时返回 404 `SOURCE_UNAVAILABLE`。

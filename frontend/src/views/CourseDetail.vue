@@ -9,10 +9,11 @@ import CourseActions from "../components/CourseActions.vue";
 import MaterialList from "../components/MaterialList.vue";
 import FocusPanel from "../components/FocusPanel.vue";
 import ChatHistory from "../components/ChatHistory.vue";
+import CourseNotes from "../components/CourseNotes.vue";
 
 const route = useRoute(), router = useRouter();
 const course = ref<Course | null>(null), loading = ref(true), error = ref(""), notice = ref("");
-const tab = computed(() => ["focus", "chat"].includes(String(route.query.tab)) ? String(route.query.tab) : "materials");
+const tab = computed(() => ["focus", "chat", "notes"].includes(String(route.query.tab)) ? String(route.query.tab) : "materials");
 let generation = 0, disposed = false;
 async function load() {
   const current = ++generation;
@@ -62,9 +63,11 @@ onBeforeUnmount(() => { disposed = true; generation++; });
         <RouterLink :to="{ query: { ...route.query, tab: 'materials' } }" :class="{ active: tab === 'materials' }" :aria-current="tab === 'materials' ? 'page' : undefined"><AppIcon name="file" :size="18" />课程课件</RouterLink>
         <RouterLink :to="{ query: { ...route.query, tab: 'focus' } }" :class="{ active: tab === 'focus' }" :aria-current="tab === 'focus' ? 'page' : undefined"><span class="tab-glyph" aria-hidden="true">重</span>复习重点</RouterLink>
         <RouterLink :to="{ query: { ...route.query, tab: 'chat' } }" :class="{ active: tab === 'chat' }" :aria-current="tab === 'chat' ? 'page' : undefined"><span class="tab-glyph" aria-hidden="true">问</span>答疑记录</RouterLink>
+        <RouterLink :to="{ query: { tab: 'notes', notePage: route.query.notePage } }" :class="{ active: tab === 'notes' }" :aria-current="tab === 'notes' ? 'page' : undefined"><AppIcon name="edit" :size="18" />笔记</RouterLink>
       </nav>
       <FocusPanel v-if="tab === 'focus'" :key="course.id" :course-id="course.id" />
       <ChatHistory v-else-if="tab === 'chat'" :course-id="course.id" />
+      <CourseNotes v-else-if="tab === 'notes'" :course-id="course.id" />
       <MaterialList v-else :course-id="course.id" />
     </template>
   </section>

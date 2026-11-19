@@ -96,6 +96,6 @@
 }
 @media (max-width: 380px) {
   .course-workspace .material-actions { padding-left: 0; }
-  .course-workspace .course-tabs { gap: 14px; }
-  .course-workspace .course-tabs a { font-size: 11px; }
+  .course-workspace .course-tabs { gap: 8px; }
+  .course-workspace .course-tabs a { font-size: 11px; gap: 4px; }
 }

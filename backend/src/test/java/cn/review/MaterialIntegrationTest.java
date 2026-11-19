@@ -237,6 +237,67 @@ class MaterialIntegrationTest {
   }
 
   @Test
+  void slideNotesUseVerifiedSourcesAndSurviveOnlyMaterialDeletion() throws Exception {
+    previewSuccess();
+    Client c = login(), other = login();
+    String course = course(c), unrelated = course(c);
+    String material = upload(c, course, MaterialFixtures.deck(true), key()).path("materialId").asText();
+    String slide = slides(c, material).get(2).path("id").asText();
+    String endpoint = "/api/courses/" + course + "/notes";
+    String saveKey = key();
+    var input = Map.of("slideId", slide, "body", "这是无文字的第 3 页\n这条笔记仍然可以保存");
+
+    mvc.perform(as(c, body(post(endpoint), input)).header("Idempotency-Key", saveKey))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("SOURCE_UNAVAILABLE"));
+    drain();
+    mvc.perform(as(c, body(post("/api/courses/" + unrelated + "/notes"), input))
+            .header("Idempotency-Key", key()))
+        .andExpect(status().isNotFound());
+    mvc.perform(as(other, body(post(endpoint), input)).header("Idempotency-Key", key()))
+        .andExpect(status().isNotFound());
+    mvc.perform(get(endpoint).session(other.session())).andExpect(status().isNotFound());
+
+    String note = data(mvc.perform(as(c, body(post(endpoint), input)).header("Idempotency-Key", saveKey))
+            .andExpect(status().isCreated()).andReturn()).path("id").asText();
+    mvc.perform(as(c, body(post(endpoint), input)).header("Idempotency-Key", saveKey))
+        .andExpect(status().isCreated()).andExpect(jsonPath("$.data.id").value(note));
+    mvc.perform(get(endpoint).session(c.session()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.total").value(1))
+        .andExpect(jsonPath("$.data.items[0].id").value(note))
+        .andExpect(jsonPath("$.data.items[0].body").value(input.get("body")))
+        .andExpect(jsonPath("$.data.items[0].materialName").value("样例.pptx"))
+        .andExpect(jsonPath("$.data.items[0].pageNo").value(3))
+        .andExpect(jsonPath("$.data.items[0].sourceStatus").value("AVAILABLE"));
+
+    mvc.perform(as(c, delete("/api/materials/" + material).param("expectedVersion", "1")
+            .header("Idempotency-Key", key())))
+        .andExpect(status().isAccepted());
+    mvc.perform(as(c, body(post(endpoint), input)).header("Idempotency-Key", key()))
+        .andExpect(status().isNotFound());
+    drain();
+    mvc.perform(get(endpoint).session(c.session()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.items[0].body").value(input.get("body")))
+        .andExpect(jsonPath("$.data.items[0].materialName").value("样例.pptx"))
+        .andExpect(jsonPath("$.data.items[0].pageNo").value(3))
+        .andExpect(jsonPath("$.data.items[0].sourceStatus").value("DELETED"));
+    mvc.perform(as(c, body(post(endpoint), input)).header("Idempotency-Key", saveKey))
+        .andExpect(status().isCreated()).andExpect(jsonPath("$.data.id").value(note));
+
+    mvc.perform(as(c, delete("/api/courses/" + course).param("expectedVersion", "1")
+            .header("Idempotency-Key", key())))
+        .andExpect(status().isAccepted());
+    mvc.perform(get(endpoint).session(c.session())).andExpect(status().isNotFound());
+    mvc.perform(as(c, body(post(endpoint), input)).header("Idempotency-Key", saveKey))
+        .andExpect(status().isNotFound());
+    drain();
+    assertThat(db.queryForObject("SELECT COUNT(*) FROM notes WHERE course_id=?", Integer.class, course))
+        .isZero();
+  }
+
+  @Test
   void retryKeepsStablePagesAndLastGoodPreview() throws Exception {
     previewSuccess();
     Client c = login();
